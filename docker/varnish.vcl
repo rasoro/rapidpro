@@ -2,6 +2,9 @@ vcl 4.0;
 
 backend default {
   .host = "BACKEND_ADDRESS";
+  .probe = {
+    .timeout = 99999s;
+  }
 }
 
 sub vcl_recv {
