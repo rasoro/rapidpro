@@ -6,8 +6,6 @@ backend default {
     .timeout = 99999s;
     .interval = 99999s;
   }
-  .connect_timeout = 99999s;
-  .between_bytes_timeout = 99999s;
 }
 
 sub vcl_recv {
