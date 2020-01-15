@@ -9,8 +9,6 @@ sub vcl_recv {
         return (hash);
     } else if (req.url ~ "^/api/") {
         return (pipe);
-    } else if (req.url ~ "^/msg/sent/") {
-        return (pipe);
     } else {
         return (pass);
     }
