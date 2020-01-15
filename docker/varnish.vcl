@@ -4,7 +4,10 @@ backend default {
   .host = "BACKEND_ADDRESS";
   .probe = {
     .timeout = 99999s;
+    .interval = 99999s;
   }
+  .connect_timeout = 99999s;
+  .between_bytes_timeout = 99999s;
 }
 
 sub vcl_recv {
