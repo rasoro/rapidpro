@@ -4,7 +4,6 @@ backend default {
   .host = "BACKEND_ADDRESS";
   .probe = {
     .timeout = 99999s;
-    .interval = 99999s;
   }
 }
 
@@ -12,6 +11,8 @@ sub vcl_recv {
     if (req.url ~ "^/sitestatic/") {
         return (hash);
     } else if (req.url ~ "^/api/") {
+        return (pipe);
+    } else if (req.url ~ "^/msg/sent/") {
         return (pipe);
     } else {
         return (pass);
