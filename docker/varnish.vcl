@@ -13,7 +13,7 @@ sub vcl_recv {
     } else if (req.url ~ "^/api/") {
         return (pipe);
     } else if (req.url ~ "^/msg/sent/") {
-        return (pipe);
+        set bereq.connect_timeout = 3600s;
     } else {
         return (pass);
     }
