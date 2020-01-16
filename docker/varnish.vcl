@@ -2,9 +2,9 @@ vcl 4.0;
 
 backend default {
   .host = "BACKEND_ADDRESS";
-  .probe = {
-    .timeout = 99999s;
-  }
+  .connect_timeout = 180s;
+  .first_byte_timeout = 1h;
+  .between_bytes_timeout = 10m;
 }
 
 sub vcl_recv {
@@ -12,9 +12,6 @@ sub vcl_recv {
         return (hash);
     } else if (req.url ~ "^/api/") {
         return (pipe);
-    } else if (req.url ~ "^/msg/sent/") {
-        set bereq.connect_timeout = 3600s;
-        return (pass);
     } else {
         return (pass);
     }
