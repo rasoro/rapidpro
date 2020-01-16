@@ -8,7 +8,6 @@ backend default {
 }
 
 sub vcl_recv {
-    set bereq.http.connection = "close";
     if (req.url ~ "^/sitestatic/") {
         return (hash);
     } else if (req.url ~ "^/api/") {
