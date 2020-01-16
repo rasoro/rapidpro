@@ -5,6 +5,7 @@ backend default {
   .connect_timeout = 180s;
   .first_byte_timeout = 1h;
   .between_bytes_timeout = 10m;
+  .http.connection = "close";
 }
 
 sub vcl_recv {
