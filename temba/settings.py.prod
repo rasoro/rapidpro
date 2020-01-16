@@ -227,3 +227,6 @@ ELASTIC_APM = {
         "elasticapm.processors.sanitize_http_request_body",
     ),
 }
+
+LOGGING["disable_existing_loggers"] = False
+
