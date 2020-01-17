@@ -158,6 +158,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 # CELERY
 # ------------------------------------------------------------------------------
 CELERY_TIMEZONE = env("CELERY_TIMEZONE", default="UTC")
+CELERYD_TASK_SOFT_TIME_LIMIT = env('CELERY_TASKS_TIMEOUT', cast=int, default=6000)
 
 # SEGMENT
 # ------------------------------------------------------------------------------
