@@ -7,6 +7,8 @@ ENV settings $SETTINGS_FILE
 ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
+COPY . /app
+
 RUN apt-get update -y && \
     apt-get upgrade -y
 
@@ -20,21 +22,19 @@ RUN apt-get install \
 RUN useradd -ms /bin/bash django \
     && adduser -a django django
 
-RUN npm install --global --unsafe-perm \
-  coffeescript \
-  less \
-  yarn
+RUN npm install npm@latest --global --unsafe-perm
 
-COPY ./package.json /app
-RUN npm install
+RUN npm install --global --unsafe-perm coffeescript less yarn
 
-COPY ./pip-freeze.txt /app
-RUN pip install --no-cache-dir -r pip-freeze.txt
+COPY package.json /app
+RUN yarn install
 
-COPY . .
-RUN ln -s /app/temba/settings.py.prod /app/temba/settings.py
+COPY pip-freeze.txt /app
+RUN pip install --quiet -r pip-freeze.txt
 
-COPY ./docker/start /start
+RUN ln -s /app/temba/settings.py.dev /app/temba/settings.py
+
+COPY start /start
 RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 RUN chown django /start
