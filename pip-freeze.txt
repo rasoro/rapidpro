@@ -27,6 +27,7 @@ dj-database-url==0.5.0
 django-appconf==1.0.2     # via django-compressor
 django-compressor==2.2
 django-countries==5.3.3
+django-debug-toolbar==2.1
 django-environ==0.4.5
 django-hamlpy==1.2
 django-mptt==0.8.7
