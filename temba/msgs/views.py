@@ -121,6 +121,7 @@ class InboxView(OrgPermsMixin, SmartListView):
     actions = ()
     allow_export = False
     show_channel_logs = False
+    select_related = ("contact", "contact_urn")
 
     def derive_label(self):
         return self.system_label
