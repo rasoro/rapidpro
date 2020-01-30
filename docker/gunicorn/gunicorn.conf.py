@@ -15,4 +15,4 @@ timeout = 300
 chdir = '/app'
 capture_output = True
 graceful_timeout = 150
-statsd-host = 'statsd-exporter-svc.monitoring.svc.cluster.local:9125'
+statsd_host = 'statsd-exporter-svc.monitoring.svc.cluster.local:9125'
