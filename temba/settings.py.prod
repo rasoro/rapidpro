@@ -96,6 +96,7 @@ MIDDLEWARE = (
     "elasticapm.contrib.django.middleware.Catch404Middleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -179,7 +180,7 @@ ELASTICSEARCH_URL = env("ELASTICSEARCH_URL")
 
 # APPS
 # ------------------------------------------------------------------------------
-INSTALLED_APPS += ("gunicorn", "storages", "elasticapm.contrib.django")
+INSTALLED_APPS += ("gunicorn", "storages", "elasticapm.contrib.django", "corsheaders",)
 
 # SENTRY
 # ------------------------------------------------------------------------------
@@ -227,3 +228,8 @@ ELASTIC_APM = {
         "elasticapm.processors.sanitize_http_request_body",
     ),
 }
+
+# CORS
+# ------------------------------------------------------------------------------
+
+CORS_ORIGIN_ALLOW_ALL = True
