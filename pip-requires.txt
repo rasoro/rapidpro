@@ -1,5 +1,6 @@
 ########################## django ##########################
 django
+django-cors-headers
 django-compressor
 django-countries
 django-hamlpy
