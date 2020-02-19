@@ -24,27 +24,24 @@ services:
       - COMPRESS_ENABLED=${COMPRESS_ENABLED:-false}
       - COMPRESS_OFFLINE=${COMPRESS_OFFLINE:-false}
       - BRANDING_ENABLED=${BRANDING_ENABLED:-false}
+    entrypoint: python manage.py runserver 0.0.0.0:8000
     ports:
       - 8000:8000
-  entrypoint: python manage.py runserver 0.0.0.0:8000
+    depends_on:
+      - database
+      - redis
+    links:
+      - database
+      - redis
   redis:
-    image: redis
+    image: redis:5.0
     ports:
       - 6379:6379
   database:
-    image: mdillon/postgis
+    image: mdillon/postgis:10
     ports:
       - 5432:5432
     environment:
-      - POSTGRES_USER=${POSTGRES_USER:-rapidpro}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rapidpro}
-      - POSTGRES_DB=${POSTGRES_DB:-rapidpro}
-  varnish:
-    image: ilhasoft/varnish:6.2
-    build:
-      context: .
-      dockerfile: ./Dockerfile.varnish
-      args:
-        BACKEND_ADDRESS: rapidpro:8000
-    ports:
-      - 8080:80
+      - POSTGRES_USER=${POSTGRES_USER:-temba}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-temba}
+      - POSTGRES_DB=${POSTGRES_DB:-temba}

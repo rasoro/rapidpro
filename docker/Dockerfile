@@ -31,7 +31,7 @@ COPY ./pip-freeze.txt /app
 RUN pip install --no-cache-dir -r pip-freeze.txt
 RUN pip install gevent
 
-COPY . .
+COPY --chown=django:django . .
 RUN ln -s /app/temba/settings.py.prod /app/temba/settings.py
 
 COPY ./docker/start /start
@@ -39,7 +39,7 @@ RUN sed -i 's/\r$//g' /start
 RUN chmod +x /start
 RUN chown django /start
 
-RUN chown -R django /app
+# RUN chown -R django /app
 USER django
 
 EXPOSE 8000
