@@ -5,7 +5,7 @@ services:
     image: ${DOCKER_IMAGE_NAME:-ilhasoft/rapidpro}:${DOCKER_IMAGE_TAG:-latest}
     build:
       context: ..
-      dockerfile: ./docker/Dockerfile
+      dockerfile: ./docker/Dockerfile.dev
     environment:
       - DEBUG=${DEBUG:-true}
       - SECRET_KEY=${SECRET_KEY:-SECRET_KEY}
@@ -13,7 +13,7 @@ services:
       - EMAIL_HOST_USER=${EMAIL_HOST_USER:-admin@localhost.com}
       - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD:-password}
       - REDIS_HOST=${REDIS_HOST:-redis}
-      - DATABASE_URL=${DATABASE_URL:-postgis://rapidpro:rapidpro@database:5432/rapidpro}
+      - DATABASE_URL=${DATABASE_URL:-postgis://temba:temba@postgres:5432/temba}
       - DATABASE_USE_SSL=${DATABASE_USE_SSL:-false} 
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-123456}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-123456}
@@ -24,24 +24,34 @@ services:
       - COMPRESS_ENABLED=${COMPRESS_ENABLED:-false}
       - COMPRESS_OFFLINE=${COMPRESS_OFFLINE:-false}
       - BRANDING_ENABLED=${BRANDING_ENABLED:-false}
-    entrypoint: python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:8000
     ports:
       - 8000:8000
+    networks:
+      - localhost
     depends_on:
-      - database
+      - postgres
       - redis
     links:
-      - database
+      - postgres
       - redis
   redis:
     image: redis:5.0
     ports:
       - 6379:6379
-  database:
+    networks:
+      - localhost
+  postgres:
     image: mdillon/postgis:10
     ports:
       - 5432:5432
+    networks:
+      - localhost
     environment:
       - POSTGRES_USER=${POSTGRES_USER:-temba}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-temba}
       - POSTGRES_DB=${POSTGRES_DB:-temba}
+
+networks:
+  localhost:
+    driver: bridge
