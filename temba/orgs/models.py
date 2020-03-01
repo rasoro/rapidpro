@@ -235,6 +235,10 @@ class Org(SmartModel):
         default=False, help_text=_("Whether this organization anonymizes the phone numbers of contacts within it")
     )
 
+    two_factor_authentication = models.BooleanField(
+        default=False, help_text=_("Allows you to enable two-factor login for users in the organization")
+    )
+
     primary_language = models.ForeignKey(
         "orgs.Language",
         null=True,
@@ -2353,6 +2357,10 @@ class UserSettings(models.Model):
         null=True,
         blank=True,
         help_text=_("Phone number for testing and recording voice flows"),
+    )
+
+    two_factor_authentication = models.BooleanField(
+        default=False, help_text=_("Enables two-factor login for the user")
     )
 
     def get_tel_formatted(self):
