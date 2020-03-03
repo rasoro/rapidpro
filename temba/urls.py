@@ -7,6 +7,7 @@ from django.contrib.auth.models import AnonymousUser, User
 from django.views.i18n import JavaScriptCatalog
 
 from celery.signals import worker_process_init
+from two_factor.urls import urlpatterns as tf_urls
 
 from temba.channels.views import register, sync
 from temba.utils.analytics import init_analytics
@@ -35,17 +36,19 @@ urlpatterns = [
     url(r"^", include("temba.request_logs.urls")),
     url(r"^", include("temba.schedules.urls")),
     url(r"^", include("temba.triggers.urls")),
+    url(r"^", include(tf_urls)),
     url(r"^relayers/relayer/sync/(\d+)/$", sync, {}, "sync"),
     url(r"^relayers/relayer/register/$", register, {}, "register"),
+    url(r"^users/login/", include("temba.authentication.urls")),
     url(r"^users/", include("smartmin.users.urls")),
     url(r"^imports/", include("smartmin.csv_imports.urls")),
     url(r"^assets/", include("temba.assets.urls")),
+
     url(r"^jsi18n/$", JavaScriptCatalog.as_view(), js_info_dict, name="django.views.i18n.javascript_catalog"),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
 
 # import any additional urls
 for app in settings.APP_URLS:  # pragma: needs cover

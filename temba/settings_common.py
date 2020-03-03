@@ -190,6 +190,8 @@ MIDDLEWARE = (
     "temba.middleware.OrgTimezoneMiddleware",
     "temba.middleware.ActivateLanguageMiddleware",
     "temba.middleware.OrgHeaderMiddleware",
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django_otp.middleware.OTPMiddleware',
 )
 
 # security middleware configuration
@@ -204,6 +206,7 @@ APP_URLS = []
 SITEMAP = ("public.public_index", "public.public_blog", "public.video_list", "api")
 
 INSTALLED_APPS = (
+    "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -228,12 +231,18 @@ INSTALLED_APPS = (
     "smartmin",
     "smartmin.csv_imports",
     "smartmin.users",
+    # two factor auth
+    "django_otp",
+    "django_otp.plugins.otp_static",
+    "django_otp.plugins.otp_totp",
+    "two_factor",
     # django-timezone-field
     "timezone_field",
     # temba apps
     "temba.apks",
     "temba.archives",
     "temba.assets",
+    "temba.authentication",
     "temba.auth_tweaks",
     "temba.api",
     "temba.request_logs",
@@ -1129,3 +1138,7 @@ ELASTICSEARCH_URL = os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")
 # Maximum active objects are org can have
 MAX_ACTIVE_CONTACTFIELDS_PER_ORG = 255
 MAX_ACTIVE_GLOBALS_PER_ORG = 255
+
+# Django two factor authentication
+
+TWO_FACTOR_AUTHENTICATION = os.environ.get("TWO_FACTOR_AUTHENTICATION", True)

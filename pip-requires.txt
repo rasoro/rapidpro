@@ -9,6 +9,8 @@ django-storages
 django-timezone-field
 djangorestframework
 dj-database-url
+django-otp
+django-two-factor-auth
 smartmin
 
 ########################## services ##########################
