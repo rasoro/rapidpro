@@ -190,8 +190,8 @@ MIDDLEWARE = (
     "temba.middleware.OrgTimezoneMiddleware",
     "temba.middleware.ActivateLanguageMiddleware",
     "temba.middleware.OrgHeaderMiddleware",
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django_otp.middleware.OTPMiddleware',
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",
 )
 
 # security middleware configuration
