@@ -3149,24 +3149,42 @@ class OrgCRUDLTest(TembaTest):
 
         User.objects.create_superuser("superuser", "superuser@group.com", "superuser")
 
-        response = self.client.post(login_url, {"auth-username": "superuser", "auth-password": "superuser", "login-current_step": "auth"})
+        response = self.client.post(
+            login_url, {"auth-username": "superuser", "auth-password": "superuser", "login-current_step": "auth"}
+        )
         self.assertEqual(response.status_code, 302)
 
-        response = self.client.post(login_url, {"auth-username": "superuser", "auth-password": "superuser", "login-current_step": "auth"}, follow=True)
+        response = self.client.post(
+            login_url,
+            {"auth-username": "superuser", "auth-password": "superuser", "login-current_step": "auth"},
+            follow=True,
+        )
         self.assertEqual(response.request["PATH_INFO"], reverse("orgs.org_manage"))
 
-        response = self.client.post(login_url, {"auth-username": "SUPeruser", "auth-password": "superuser", "login-current_step": "auth"})
+        response = self.client.post(
+            login_url, {"auth-username": "SUPeruser", "auth-password": "superuser", "login-current_step": "auth"}
+        )
         self.assertEqual(response.status_code, 302)
 
-        response = self.client.post(login_url, {"auth-username": "SUPeruser", "auth-password": "superuser", "login-current_step": "auth"}, follow=True)
+        response = self.client.post(
+            login_url,
+            {"auth-username": "SUPeruser", "auth-password": "superuser", "login-current_step": "auth"},
+            follow=True,
+        )
         self.assertEqual(response.request["PATH_INFO"], reverse("orgs.org_manage"))
 
         User.objects.create_superuser("withCAPS", "with_caps@group.com", "thePASSWORD")
 
-        response = self.client.post(login_url, {"auth-username": "withcaps", "auth-password": "thePASSWORD", "login-current_step": "auth"})
+        response = self.client.post(
+            login_url, {"auth-username": "withcaps", "auth-password": "thePASSWORD", "login-current_step": "auth"}
+        )
         self.assertEqual(response.status_code, 302)
 
-        response = self.client.post(login_url, {"auth-username": "withcaps", "auth-password": "thePASSWORD", "login-current_step": "auth"}, follow=True)
+        response = self.client.post(
+            login_url,
+            {"auth-username": "withcaps", "auth-password": "thePASSWORD", "login-current_step": "auth"},
+            follow=True,
+        )
         self.assertEqual(response.request["PATH_INFO"], reverse("orgs.org_manage"))
 
         # passwords stay case sensitive
