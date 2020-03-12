@@ -32,9 +32,10 @@
 
       {# hidden submit button to enable [enter] key #}
     <div style="margin-left: -9999px"><input type="submit" value=""/></div>
-
-    <input type="submit" class="btn btn-primary" value="Login">
-    <span style="margin-left:170px;"><a href="/users/user/forget/">Forgot Password?</a></span>
+      {% if wizard.steps.current == 'auth' %}
+        <input type="submit" class="btn btn-primary" value="Login">
+        <span style="margin-left:170px;"><a href="/users/user/forget/">Forgot Password?</a></span>
+      {% endif %}
 
     {% if other_devices %}
       <p>{% trans "Or, alternatively, use one of your backup phones:" %}</p>

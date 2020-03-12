@@ -49,16 +49,20 @@
       %form#login-form.form-horizontal{method:"post", action:"{% url 'users.user_login' %}?next={% url 'orgs.org_join' secret %}"}
         %fieldset
           .control-group
+            .input.controls
+              %input{id:"id_login-current_step", type:"hidden", value:"auth", name:"login-current_step"}
+
+          .control-group
             %label.control-label{for:"username"}
               -trans "Email Address"
             .input.controls
-              %input{id:"id_username", type:"text", name:"username", maxlength:"30"}
+              %input{id:"id_auth-username", type:"text", name:"auth-username"}
 
           .control-group
             %label.control-label{for:"password"}
               -trans "Password"
             .input.controls
-              %input{type:"password", name:"password", id:"id_password"}
+              %input{type:"password", name:"auth-password", id:"id_auth-password"}
 
         -csrf_token
         .form-actions
