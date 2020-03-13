@@ -40,7 +40,7 @@ urlpatterns = [
     url(r"^", include(tf_urls)),
     url(r"^relayers/relayer/sync/(\d+)/$", sync, {}, "sync"),
     url(r"^relayers/relayer/register/$", register, {}, "register"),
-    url(r"^users/login/", include("temba.authentication.urls")),
+    url(r"^users/", include("temba.authentication.urls")),
     url(r"^users/", include("smartmin.users.urls")),
     url(r"^imports/", include("smartmin.csv_imports.urls")),
     url(r"^assets/", include("temba.assets.urls")),
