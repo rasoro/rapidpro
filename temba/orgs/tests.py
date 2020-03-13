@@ -1237,7 +1237,12 @@ class OrgTest(TembaTest):
         admin_create_login_url = reverse("orgs.org_create_login", args=[surveyor_invite.secret])
         self.client.logout()
 
-        post_data = {"first_name": "Surveyor", "last_name": "User", "email": "surveyor@gmail.com", "password": "password"}
+        post_data = {
+            "first_name": "Surveyor",
+            "last_name": "User",
+            "email": "surveyor@gmail.com",
+            "password": "password",
+        }
         response = self.client.post(admin_create_login_url, post_data, follow=True)
         self.assertEqual(200, response.status_code)
         # as a surveyor we should have been rerouted
@@ -1251,7 +1256,9 @@ class OrgTest(TembaTest):
         # if we login, we should be rerouted too
         self.client.logout()
         response = self.client.post(
-            "/users/login/", {"auth-username": "surveyor@gmail.com", "auth-password": "password", "login-current_step": "auth"}, follow=True
+            "/users/login/",
+            {"auth-username": "surveyor@gmail.com", "auth-password": "password", "login-current_step": "auth"},
+            follow=True,
         )
         self.assertEqual(200, response.status_code)
         self.assertEqual(reverse("orgs.org_surveyor"), response._request.path)
