@@ -60,7 +60,7 @@ class Login(IdempotentSessionWizardView, SmartminLogin):
         )
 
         if not is_safe_url(url=redirect_to, allowed_hosts=[self.request.get_host()]):
-            redirect_to = resolve_url(settings.LOGIN_REDIRECT_URL)
+            redirect_to = "/org/choose"
 
         device = getattr(self.get_user(), "otp_device", None)
         if device:
