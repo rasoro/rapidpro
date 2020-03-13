@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "two_factor/_base.html" %}
 
 {% load i18n smartmin two_factor %}
 
@@ -7,7 +7,7 @@
 {% block content %}
 <div class="row">
   <div class="span7 offset2">
-    <div class="page-header"><h2>Sign in</h2></div>
+    <div class="page-header"><h2>{% trans "Sign in" %}</h2></div>
 
   {% if wizard.steps.current == 'token' %}
     {% if device.method == 'call' %}
