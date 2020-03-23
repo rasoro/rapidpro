@@ -13,7 +13,7 @@
 
         <p>{% blocktrans trimmed %}Congratulations, you've successfully enabled two-factor authentication.{% endblocktrans %}</p>
 
-        <p><a href="/org/choose/" class="btn btn-block btn-default">{% trans "Back to org" %}</a></p>
+        <p><a href='{% url "orgs.org_choose" %}' class="btn btn-block btn-default">{% trans "Back to org" %}</a></p>
     </div>
 </div>
 {% endblock %}

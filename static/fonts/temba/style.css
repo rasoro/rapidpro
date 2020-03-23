@@ -1,10 +1,10 @@
 @font-face {
   font-family: 'temba';
-  src:  url('fonts/temba.eot?dgjjow');
-  src:  url('fonts/temba.eot?dgjjow#iefix') format('embedded-opentype'),
-    url('fonts/temba.ttf?dgjjow') format('truetype'),
-    url('fonts/temba.woff?dgjjow') format('woff'),
-    url('fonts/temba.svg?dgjjow#temba') format('svg');
+  src:  url('fonts/temba.eot?7c285c');
+  src:  url('fonts/temba.eot?7c285c#iefix') format('embedded-opentype'),
+    url('fonts/temba.ttf?7c285c') format('truetype'),
+    url('fonts/temba.woff?7c285c') format('woff'),
+    url('fonts/temba.svg?7c285c#temba') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -25,6 +25,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.icon-two-factor:before {
+  content: "\e914";
+  color: #8f8f8f;
+}
 .icon-global:before {
   content: "\ea2f";
 }
@@ -831,4 +835,7 @@
 }
 .icon-mtarget:before {
   content: "\e912";
+}
+.icon-lock:before {
+  content: "\e98f";
 }

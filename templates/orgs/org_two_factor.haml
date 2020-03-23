@@ -1,0 +1,169 @@
+- extends 'smartmin/form.html'
+- load smartmin temba compress
+- load i18n
+
+-block page-title
+  -trans "Two Factor Authentication"
+  \- {{user_org.name|capfirst}}
+
+-block extra-less
+  -compress css inline
+    {% lessblock %}
+      :plain
+
+        #id-channel {
+          a {
+            text-decoration:none;
+            &:hover {
+              text-decoration:none;
+            }
+          }
+        }
+
+        tr.invites-title th {
+          border: none
+        }
+
+        tr.invite td {
+          color: #ddd;
+
+          &.invite-remove {
+            color: #999999;
+          }
+        }
+
+        .glyph.level-checkbox:before {
+          content: "\e004";
+        }
+
+        td.check.checked .glyph.level-checkbox:before {
+          content: "\e05a";
+        }
+
+        .glyph.level-checkbox.checked:before {
+          content: "\e05a";
+        }
+
+        .glyph.level-checkbox {
+          font-family: 'temba';
+          speak: none;
+          font-style: normal;
+          font-weight: normal;
+          line-height: 1;
+          -webkit-font-smoothing: antialiased;
+          margin-top: 6px;
+          margin-right: 5px;
+          margin-top:2px;
+        }
+
+        .formax-form .table th, .table td {
+          border: 0px;
+        }
+
+        td.permission, th.permission {
+          text-align:center;
+        }
+
+        th.permission {
+          width:80px;
+        }
+
+        td.form {
+          border-top: 1px solid #eee;
+        }
+
+        #plan-form ul.errorlist li {
+          color: #fff;
+        }
+    {% endlessblock %}
+
+-block extra-style
+  {{ block.super }}
+  :css
+    th, td {
+      width: inherit;
+      color: #999999;
+    }
+
+- block form-span
+  span8
+
+- block fields
+
+  -if parent
+    %h4
+      <a href="{% url 'orgs.org_sub_orgs'%}">{%blocktrans%}Organizations{%endblocktrans%}</a> &raquo; {{org.name}}
+
+  %table.table.table-condensed{style:"margin-bottom:0px;"}
+    %thead
+      %tr
+        %th
+          -trans "Accounts"
+        %th.permission
+          -trans "Two Factor Authentication"
+    %tbody
+      - for user in org_users
+        %tr
+          %td
+            {{user.email}}
+            - if user.user.first_name or user.user.last_name
+              ({{user.user.first_name}} {{ user.user.last_name}})
+          - with group_fields|get:user as row_fields
+            - for check_name in row_fields
+              %td.check.permission
+                .hidden-input.hide
+                  {{form|field:check_name}}
+                .glyph.level-checkbox
+
+
+
+- block summary
+  -trans "Two Factor Authentication"
+
+
+- block extra-script
+  {{block.super}}
+  :javascript
+    $(function() {
+      // initialize the glyph checkboxes
+      var boxes = $("td.check");
+      boxes.each(function() {
+        var list_input = $(this).children().children("input[type='checkbox']");
+        if (list_input[0].checked) {
+          $(this).addClass("checked");
+        } else {
+          $(this).removeClass("checked");
+        }
+      });
+    });
+
+    $(function() {
+      // update the glyph checkbox on click
+
+      $("td.check .glyph").on('click', function(){
+        var cell = $(this).parent("td.check");
+        var ipt = cell.find("input[type='checkbox']");
+
+        if (!cell.hasClass("checked")) {
+          allCells = cell.parent().children('td.check');
+          allHiddenInputs = allCells.find("input[type='checkbox']");
+
+          // Uncheck everything First
+          allCells.removeClass('checked');
+          allHiddenInputs.prop('checked', false);
+
+          // Check the clicked cell
+          cell.addClass('checked');
+          ipt.prop('checked', true);
+
+        } else {
+          cell.removeClass('checked');
+          ipt.prop('checked', false);
+        }
+
+        console.log(ipt.prop('checked'))
+
+      });
+    });
+
+    

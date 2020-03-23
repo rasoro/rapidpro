@@ -27,6 +27,11 @@
   %br
 
 -block summary
+  -if True
+    %p.pull-right
+      %a{href:"{% url 'authentication.backup' %}", class:"btn btn-secondary"}
+        Backup Tokens
+
   -blocktrans with email=user.username
     Your email address is <span class='attn'>{{email}}</span>.
 
