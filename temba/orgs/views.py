@@ -23,6 +23,7 @@ from smartmin.views import (
     SmartUpdateView,
 )
 from twilio.rest import Client
+from two_factor.utils import default_device
 
 from django import forms
 from django.conf import settings
@@ -464,6 +465,11 @@ class UserCRUDL(SmartCRUDL):
                     return True
 
             return False  # pragma: needs cover
+
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            context["default_device"] = default_device(self.request.user)
+            return context
 
 
 class InferOrgMixin(object):
@@ -2315,7 +2321,7 @@ class OrgCRUDL(SmartCRUDL):
             if self.has_org_perm("orgs.org_manage_accounts") and org.is_multi_user_tier():
                 formax.add_section("accounts", reverse("orgs.org_accounts"), icon="icon-users", action="redirect")
 
-            if self.has_org_perm("orgs.org_manage_accounts"):
+            if self.has_org_perm("orgs.org_two_factor"):
                 formax.add_section("two_factor", reverse("orgs.org_two_factor"), icon="icon-two-factor", action="link")
 
             if self.has_org_perm("orgs.org_edit"):

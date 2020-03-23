@@ -399,6 +399,7 @@ PERMISSIONS = {
         "trial",
         "twilio_account",
         "twilio_connect",
+        "two_factor",
         "token",
     ),
     "orgs.usersettings": ("phone",),
@@ -602,6 +603,7 @@ GROUP_PERMISSIONS = {
         "orgs.org_twilio_account",
         "orgs.org_twilio_connect",
         "orgs.org_token",
+        "orgs.org_two_factor",
         "orgs.topup_list",
         "orgs.topup_read",
         "orgs.usersettings_phone",
@@ -826,7 +828,7 @@ GROUP_PERMISSIONS = {
 # -----------------------------------------------------------------------------------
 LOGIN_URL = "/users/login/"
 LOGOUT_URL = "/users/logout/"
-LOGIN_REDIRECT_URL = "/org/choose/"
+LOGIN_REDIRECT_URL = "/users/two_factor/profile/"
 LOGOUT_REDIRECT_URL = "/"
 
 AUTHENTICATION_BACKENDS = ("smartmin.backends.CaseInsensitiveBackend",)
@@ -847,7 +849,7 @@ _default_database_config = {
     "NAME": "temba",
     "USER": "temba",
     "PASSWORD": "temba",
-    "HOST": "localhost",
+    "HOST": "postgres",
     "PORT": "5432",
     "ATOMIC_REQUESTS": True,
     "CONN_MAX_AGE": 60,
@@ -904,7 +906,7 @@ CELERY_TASK_MAP = {"send_msg_task": "temba.channels.tasks.send_msg_task"}
 # -----------------------------------------------------------------------------------
 # Async tasks with celery
 # -----------------------------------------------------------------------------------
-REDIS_HOST = "localhost"
+REDIS_HOST = "redis"
 REDIS_PORT = 6379
 
 # we use a redis db of 10 for testing so that we maintain caches for dev

@@ -27,7 +27,7 @@
   %br
 
 -block summary
-  -if True
+  -if default_device
     %p.pull-right
       %a{href:"{% url 'authentication.backup' %}", class:"btn btn-secondary"}
         Backup Tokens
