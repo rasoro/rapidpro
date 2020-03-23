@@ -540,6 +540,7 @@ class OrgCRUDL(SmartCRUDL):
         "clear_cache",
         "twilio_connect",
         "twilio_account",
+        "two_factor",
         "nexmo_account",
         "nexmo_connect",
         "sub_orgs",
@@ -1233,6 +1234,72 @@ class OrgCRUDL(SmartCRUDL):
         submit_button_name = _("Save Changes")
         title = "User Accounts"
         fields = ("surveyor_password",)
+
+    class TwoFactor(InferOrgMixin, OrgPermsMixin, SmartUpdateView):
+        class AccountsForm(forms.ModelForm):
+            def add_user_fields(self, users):
+                fields_by_user = {}
+
+                for user in users:
+                    fields = []
+                    field_mapping = []
+
+                    check_field = forms.BooleanField(required=False)
+                    field_name = "two_factor_authentication_%d" % user.pk
+
+                    field_mapping.append((field_name, check_field))
+                    fields.append(field_name)
+
+                self.fields = OrderedDict(list(self.fields.items()) + field_mapping)
+                fields_by_user[user] = fields
+                return fields_by_user
+
+            class Meta:
+                model = UserSettings
+                fields = ("user", "two_factor_authentication")
+
+        form_class = AccountsForm
+        success_url = "@orgs.org_two_factor"
+        success_message = ""
+        submit_button_name = _("Save Changes")
+        title = "Two Factor Authentication"
+
+        def get_form(self):
+            form = super().get_form()
+
+            org = self.get_object()
+            self.org_users = []
+            for user in org.get_org_users():
+                self.org_users.append(user.get_settings())
+            self.fields_by_users = form.add_user_fields(self.org_users)
+
+            return form
+
+        def post_save(self, obj):
+            obj = super().post_save(obj)
+
+            for field in self.form.cleaned_data:
+                if field.startswith("two_factor_authentication_") and self.form.cleaned_data[field]:
+                    user = UserSettings.objects.get(pk=field.split("_")[1])
+                    if user.two_factor_authentication:
+                        user.two_factor_authentication = False
+                    user.two_factor_authentcation = True
+                    user.save()
+            return obj
+
+        def get_context_data(self, **kwargs):
+            context = super().get_context_data(**kwargs)
+            org = self.get_object()
+            context["org"] = org
+            context["org_users"] = self.org_users
+            context["group_fields"] = self.fields_by_users
+            return context
+
+        def get_success_url(self):
+            still_in_org = self.request.user in self.get_object().get_org_users()
+
+            # if current user no longer belongs to this org, redirect to org chooser
+            return reverse("orgs.org_two_factor") if still_in_org else reverse("orgs.org_choose")
 
     class ManageAccounts(InferOrgMixin, OrgPermsMixin, SmartUpdateView):
         class AccountsForm(forms.ModelForm):
@@ -2247,6 +2314,9 @@ class OrgCRUDL(SmartCRUDL):
             # only pro orgs get multiple users
             if self.has_org_perm("orgs.org_manage_accounts") and org.is_multi_user_tier():
                 formax.add_section("accounts", reverse("orgs.org_accounts"), icon="icon-users", action="redirect")
+
+            if self.has_org_perm("orgs.org_manage_accounts"):
+                formax.add_section("two_factor", reverse("orgs.org_two_factor"), icon="icon-two-factor", action="link")
 
             if self.has_org_perm("orgs.org_edit"):
                 formax.add_section("org", reverse("orgs.org_edit"), icon="icon-office")
