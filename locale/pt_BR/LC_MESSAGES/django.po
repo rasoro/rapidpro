@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TextIt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-03-13 06:51+0000\n"
+"POT-Creation-Date: 2020-03-23 20:07+0000\n"
 "PO-Revision-Date: 2014-04-14 20:37+0000\n"
 "Last-Translator: produtos <produtos.ti@takenet.com.br>\n"
 "Language-Team: Portuguese (Brazil) (http://www.transifex.com/projects/p/textit/language/pt_BR/)\n"
@@ -9690,6 +9690,9 @@ msgid ""
 "        "
 msgstr ""
 
+msgid "Two Factor Authentication"
+msgstr ""
+
 #, fuzzy
 msgid "This organization has been suspended"
 msgstr "A organização utilizando esse transmissor"
@@ -11194,12 +11197,6 @@ msgstr[1] ""
 #| msgid "Zenvia Short Code"
 msgid "Show Codes"
 msgstr "Número curto da Take.net"
-
-msgid "Disable Two-Factor Authentication"
-msgstr ""
-
-msgid "However we strongly discourage you to do so, you can also disable two-factor authentication for your account."
-msgstr ""
 
 msgid "Two-factor authentication is not enabled for your account. Enable two-factor authentication for enhanced account security."
 msgstr ""
