@@ -1,8 +1,8 @@
-from two_factor.views import BackupTokensView, DisableView, ProfileView, QRGeneratorView, SetupCompleteView, SetupView
+from two_factor.views import DisableView, ProfileView, QRGeneratorView, SetupCompleteView, SetupView
 
 from django.conf.urls import url
 
-from .views import Login
+from .views import BackupTokensView, Login
 
 urlpatterns = [
     url(r"^login/$", Login.as_view(), name="authentication.login"),

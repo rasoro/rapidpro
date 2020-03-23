@@ -1,6 +1,7 @@
 import warnings
 
-from django_otp.plugins.otp_static.models import StaticDevice
+from django_otp.decorators import otp_required
+from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
 from smartmin.users.views import Login as SmartminLogin
 from two_factor import signals
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
@@ -10,10 +11,12 @@ from two_factor.views.utils import IdempotentSessionWizardView, class_view_decor
 from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME, login
 from django.contrib.auth.forms import AuthenticationForm
+from django.forms import Form
 from django.shortcuts import redirect, resolve_url
 from django.utils.http import is_safe_url
 from django.views.decorators.cache import never_cache
 from django.views.decorators.debug import sensitive_post_parameters
+from django.views.generic import FormView
 
 
 @class_view_decorator(sensitive_post_parameters())
@@ -60,7 +63,7 @@ class Login(IdempotentSessionWizardView, SmartminLogin):
         )
 
         if not is_safe_url(url=redirect_to, allowed_hosts=[self.request.get_host()]):
-            redirect_to = "/org/choose"
+            redirect_to = resolve_url(settings.LOGIN_REDIRECT_URL)
 
         device = getattr(self.get_user(), "otp_device", None)
         if device:
@@ -143,3 +146,39 @@ class Login(IdempotentSessionWizardView, SmartminLogin):
             )
             context["cancel_url"] = resolve_url(settings.LOGOUT_URL)
         return context
+
+
+@class_view_decorator(never_cache)
+@class_view_decorator(otp_required)
+class BackupTokensView(FormView):
+    """
+    View for listing and generating backup tokens.
+    A user can generate a number of static backup tokens. When the user loses
+    its phone, these backup tokens can be used for verification. These backup
+    tokens should be stored in a safe location; either in a safe or underneath
+    a pillow ;-).
+    """
+
+    form_class = Form
+    success_url = "authentication.backup"
+    template_name = "two_factor/core/backup_tokens.html"
+    number_of_tokens = 10
+
+    def get_device(self):
+        return self.request.user.staticdevice_set.get_or_create(name="backup")[0]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["device"] = self.get_device()
+        return context
+
+    def form_valid(self, form):
+        """
+        Delete existing backup codes and generate new ones.
+        """
+        device = self.get_device()
+        device.token_set.all().delete()
+        for n in range(self.number_of_tokens):
+            device.token_set.create(token=StaticToken.random_token())
+
+        return redirect(self.success_url)
