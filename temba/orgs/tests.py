@@ -3191,7 +3191,7 @@ class OrgCRUDLTest(TembaTest):
             {"auth-username": "withcaps", "auth-password": "thePASSWORD", "login-current_step": "auth"},
             follow=True,
         )
-        self.assertEqual(response.request["PATH_INFO"], reverse("orgs.org_manage"))
+        self.assertEqual(response.request["PATH_INFO"], reverse("authentication.profile"))
 
         # passwords stay case sensitive
         # response = self.client.post(login_url, {"auth-username": "withcaps", "auth-password": "thePASSWORD", "login-current_step": "auth"}, follow=True)
