@@ -1261,7 +1261,7 @@ class OrgTest(TembaTest):
             follow=True,
         )
         self.assertEqual(200, response.status_code)
-        self.assertEqual(reverse("orgs.org_surveyor"), response._request.path)
+        self.assertEqual(reverse("authentication.profile"), response._request.path)
 
     def test_surveyor(self):
         self.client.logout()
@@ -3009,7 +3009,7 @@ class OrgCRUDLTest(TembaTest):
 
         # if we hit /login we'll be taken back to the channel page
         response = self.client.get(reverse("users.user_check_login"))
-        self.assertRedirect(response, reverse("orgs.org_choose"))
+        self.assertRedirect(response, reverse("authentication.profile"))
 
         # but if we log out, same thing takes us to the login page
         self.client.logout()
@@ -3165,7 +3165,7 @@ class OrgCRUDLTest(TembaTest):
             {"auth-username": "superuser", "auth-password": "superuser", "login-current_step": "auth"},
             follow=True,
         )
-        self.assertEqual(response.request["PATH_INFO"], reverse("orgs.org_manage"))
+        self.assertEqual(response.request["PATH_INFO"], reverse("authentication.profile"))
 
         response = self.client.post(
             login_url, {"auth-username": "SUPeruser", "auth-password": "superuser", "login-current_step": "auth"}
