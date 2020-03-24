@@ -18,7 +18,7 @@ from django.contrib.auth.models import Group, User
 from django.contrib.postgres.fields import ArrayField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Max, Q, Sum
+from django.db.models import Count, Max, Q, Sum
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.template import Context, Engine, TemplateDoesNotExist
@@ -252,16 +252,12 @@ class Channel(TembaModel):
     # keys for various config options stored in the channel config dict
     CONFIG_BASE_URL = "base_url"
     CONFIG_SEND_URL = "send_url"
-    CONFIG_SEND_METHOD = "method"
-    CONFIG_SEND_BODY = "body"
-    CONFIG_MT_RESPONSE_CHECK = "mt_response_check"
-    CONFIG_DEFAULT_SEND_BODY = "id={{id}}&text={{text}}&to={{to}}&to_no_plus={{to_no_plus}}&from={{from}}&from_no_plus={{from_no_plus}}&channel={{channel}}"
+
     CONFIG_USERNAME = "username"
     CONFIG_PASSWORD = "password"
     CONFIG_KEY = "key"
     CONFIG_API_ID = "api_id"
     CONFIG_API_KEY = "api_key"
-    CONFIG_CONTENT_TYPE = "content_type"
     CONFIG_VERIFY_SSL = "verify_ssl"
     CONFIG_USE_NATIONAL = "use_national"
     CONFIG_ENCODING = "encoding"
@@ -274,7 +270,6 @@ class Channel(TembaModel):
     CONFIG_CHANNEL_ID = "channel_id"
     CONFIG_CHANNEL_MID = "channel_mid"
     CONFIG_FCM_ID = "FCM_ID"
-    CONFIG_MAX_LENGTH = "max_length"
     CONFIG_MACROKIOSK_SENDER_ID = "macrokiosk_sender_id"
     CONFIG_MACROKIOSK_SERVICE_ID = "macrokiosk_service_id"
     CONFIG_RP_HOSTNAME_OVERRIDE = "rp_hostname_override"
@@ -1570,8 +1565,19 @@ class SyncEvent(SmartModel):
     @classmethod
     def trim(cls):
         week_ago = timezone.now() - timedelta(days=7)
-        for event in cls.objects.filter(created_on__lte=week_ago):
-            event.release()
+
+        channels_with_sync_events = (
+            SyncEvent.objects.filter(created_on__lte=week_ago)
+            .values("channel")
+            .annotate(Count("id"))
+            .filter(id__count__gt=1)
+        )
+        for channel_sync_events in channels_with_sync_events:
+            sync_events = SyncEvent.objects.filter(
+                created_on__lte=week_ago, channel_id=channel_sync_events["channel"]
+            ).order_by("-created_on")[1:]
+            for event in sync_events:
+                event.release()
 
 
 @receiver(pre_save, sender=SyncEvent)

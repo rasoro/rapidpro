@@ -77,6 +77,11 @@ class AndroidTypeTest(TembaTest):
             ),
         )
 
+        # view claim page
+        self.login(self.admin)
+        response = self.client.get(reverse("channels.types.android.claim"))
+        self.assertContains(response, "https://app.rapidpro.io/android/")
+
         # try to claim as non-admin
         self.login(self.user)
         response = self.client.post(
@@ -325,7 +330,6 @@ class AndroidTypeTest(TembaTest):
         )
 
         # create channel in another org
-        self.setUpSecondaryOrg()
         Channel.create(self.org2, self.admin2, "RW", "A", "", "+250788382382")
 
         # can claim it with this number, and because it's a fully qualified RW number, doesn't matter that channel is US

@@ -1,3 +1,128 @@
+v5.5.5
+----------
+ * newest smartmin with BoM fix
+
+v5.5.4
+----------
+ * Show better summary of schedules on trigger list page
+ * Fix display of trigger on contact group delete modal
+
+v5.5.3
+----------
+ * Update to floweditor 1.8.9
+ * Move EX constants to channel type package
+ * Remove unused deps and address npm security warnings
+ * Add 18 hours as flow expiration option
+ * FlowCRUDL.Revisions should return validation errors from engine as detail field
+ * Allow setting authentication header on External channels
+ * Add normalize contact tels task
+ * Drop full resolution geometry, only keep simplified
+ * Add attachments columns to flow results messages sheet
+
+v5.5.0
+----------
+ * Increase the WA channels tps to 45 by default
+
+v5.4.13
+----------
+ * Fix URL related test errors
+
+v5.4.12
+----------
+ * Don't allow localhost for URL fields
+
+v5.4.11
+----------
+ * Make sure external channel URLs are external
+
+v5.4.10
+----------
+ * Complete FR translations
+ * Update to floweditor 1.8.8
+
+v5.4.9
+----------
+ * Fix submitting API explorer requests where there is no editor for query part
+ * Lockdown redirects on exports
+ * Add more detailed fresh chat instructions
+
+v5.4.8
+----------
+ * Find and fix more cases of not filtering by org
+
+v5.4.7
+----------
+ * Fix org filtering on updates to globals
+ * Fix campaign event update view not filtering by event org
+ * Fix error in API contact references when passed a JSON number
+ * Replace Whatsapp by WhatsApp
+
+v5.4.6
+----------
+ * Merge pull request #2718 from nyaruka/fe187
+
+v5.4.4
+----------
+ * fix various filtering issues
+
+v5.4.3
+----------
+ * Update sample flow test
+
+v5.4.2
+----------
+ * remove use of webhook where not appropriate
+
+v5.4.1
+----------
+ * Update sample flows to use @webhook instead of @legacy_extra
+
+v5.4.0
+----------
+ * Add API endpoint to update Globals
+ * Keep latest sync event for Android channels when trimming
+
+v5.3.64
+----------
+ * Add support for Twilio Whatsapp channel type
+
+v5.3.63
+----------
+ * Add pre_deploy command to check imports/exports
+ * Fix link to android APK downloads on claim page
+
+v5.3.62
+----------
+ * Temporarily disable resume imports task
+
+v5.3.61
+----------
+ * Fix text of save as group dialog
+ * Add support to restart export tasks that might have been stopped by deploy
+
+v5.3.60
+----------
+ * Update to latest mailroom
+ * Add urns to runs API endpoint
+
+v5.3.59
+----------
+ * Update to latest mailroom which returns allow_as_group from query parsing
+ * Don't create missing contact fields on flow save
+
+v5.3.57
+----------
+ * Update flow editor 1.7.16
+ * Fix translations on external channel claim page
+ * Add tabs to toggle between full flow event history and summary of messages
+ * Increase the max height on the flow results export modal dialog
+
+v5.3.56
+----------
+ * Add params to flow starts API
+ * Change name of org_id param in calls to flow/inspect
+ * Add quick replies variable to external channel claim page
+
 v5.3.55
 ----------
  * Allow editing of allow_international on channel update forms

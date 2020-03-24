@@ -30,7 +30,7 @@ from temba.channels.models import Channel, ChannelConnection
 from temba.classifiers.models import Classifier
 from temba.contacts.models import URN, Contact, ContactField, ContactGroup
 from temba.globals.models import Global
-from temba.msgs.models import Label, Msg
+from temba.msgs.models import Attachment, Label, Msg
 from temba.orgs.models import Org
 from temba.templates.models import Template
 from temba.utils import analytics, chunk_list, json, on_transaction_commit
@@ -139,12 +139,14 @@ class Flow(TembaModel):
     METADATA_DEPENDENCIES = "dependencies"
     METADATA_WAITING_EXIT_UUIDS = "waiting_exit_uuids"
     METADATA_PARENT_REFS = "parent_refs"
+    METADATA_ISSUES = "issues"
 
     # items in the response from mailroom flow inspection
     INSPECT_RESULTS = "results"
     INSPECT_DEPENDENCIES = "dependencies"
     INSPECT_WAITING_EXITS = "waiting_exits"
     INSPECT_PARENT_REFS = "parent_refs"
+    INSPECT_ISSUES = "issues"
 
     # items in the flow definition JSON
     DEFINITION_UUID = "uuid"
@@ -681,7 +683,7 @@ class Flow(TembaModel):
 
         # save a new revision but we can't validate it just yet because we're in a transaction and mailroom
         # won't see any new database objects
-        self.save_revision(user, cloned_definition, validate=False)
+        self.save_revision(user, cloned_definition)
 
     def import_legacy_definition(self, flow_json, uuid_map):
         """
@@ -1094,6 +1096,16 @@ class Flow(TembaModel):
         return metadata
 
     @classmethod
+    def get_metadata(cls, flow_info):
+        return {
+            Flow.METADATA_RESULTS: flow_info[Flow.INSPECT_RESULTS],
+            Flow.METADATA_DEPENDENCIES: flow_info[Flow.INSPECT_DEPENDENCIES],
+            Flow.METADATA_WAITING_EXIT_UUIDS: flow_info[Flow.INSPECT_WAITING_EXITS],
+            Flow.METADATA_PARENT_REFS: flow_info[Flow.INSPECT_PARENT_REFS],
+            Flow.METADATA_ISSUES: flow_info[Flow.INSPECT_ISSUES],
+        }
+
+    @classmethod
     def detect_invalid_cycles(cls, json_dict):
         """
         Checks for invalid cycles in our flow
@@ -1184,7 +1196,7 @@ class Flow(TembaModel):
             if self.is_legacy():
                 self.update(flow_def, user=get_flow_user(self.org))
             else:
-                self.save_revision(get_flow_user(self.org), flow_def, validate=False)
+                self.save_revision(get_flow_user(self.org), flow_def)
 
             self.refresh_from_db()
 
@@ -1210,7 +1222,7 @@ class Flow(TembaModel):
         """
         return self.revisions.order_by("revision").last()
 
-    def save_revision(self, user, definition, validate=True):
+    def save_revision(self, user, definition):
         """
         Saves a new revision for this flow, validation will be done on the definition first
         """
@@ -1242,13 +1254,7 @@ class Flow(TembaModel):
         with transaction.atomic():
             # update our flow fields
             self.base_language = definition.get(Flow.DEFINITION_LANGUAGE, None)
-
-            self.metadata = {
-                Flow.METADATA_RESULTS: flow_info[Flow.INSPECT_RESULTS],
-                Flow.METADATA_DEPENDENCIES: flow_info[Flow.INSPECT_DEPENDENCIES],
-                Flow.METADATA_WAITING_EXIT_UUIDS: flow_info[Flow.INSPECT_WAITING_EXITS],
-                Flow.METADATA_PARENT_REFS: flow_info[Flow.INSPECT_PARENT_REFS],
-            }
+            self.metadata = Flow.get_metadata(flow_info)
             self.saved_by = user
             self.saved_on = timezone.now()
             self.version_number = Flow.CURRENT_SPEC_VERSION
@@ -1609,19 +1615,6 @@ class Flow(TembaModel):
             identifier = dep.get("uuid", dep.get("key"))
             identifiers[dep["type"]].append(identifier)
 
-        # fields won't have been included in old imports so may need to be lazily created here
-        if identifiers["field"]:
-            active_org_fields = set(
-                ContactField.user_fields.active_for_org(org=self.org).values_list("key", flat=True)
-            )
-
-            fields_to_create = set(identifiers["field"]).difference(active_org_fields)
-
-            # create any field that doesn't already exist
-            for field in fields_to_create:
-                if ContactField.is_valid_key(field):
-                    ContactField.get_or_create(self.org, self.modified_by, field)
-
         # globals aren't included in exports so they're created here too if they don't exist, with blank values
         if identifiers["global"]:
             org_globals = set(self.org.globals.filter(is_active=True).values_list("key", flat=True))
@@ -1945,6 +1938,13 @@ class FlowRun(RequireUpdateFieldsMixin, models.Model):
             # and any recent runs
             for recent in FlowPathRecentRun.objects.filter(run=self):
                 recent.release()
+
+            if (
+                delete_reason == FlowRun.DELETE_FOR_USER
+                and self.session is not None
+                and self.session.status == FlowSession.STATUS_WAITING
+            ):
+                mailroom.queue_interrupt(self.org, session=self.session)
 
             self.delete()
 
@@ -2800,7 +2800,7 @@ class ExportFlowResultsTask(BaseExportTask):
         sheet = book.add_sheet(name, index)
         book.num_msgs_sheets += 1
 
-        headers = ["Contact UUID", "URN", "Name", "Date", "Direction", "Message", "Channel"]
+        headers = ["Contact UUID", "URN", "Name", "Date", "Direction", "Message", "Attachments", "Channel"]
 
         self.append_row(sheet, headers)
         return sheet
@@ -2879,6 +2879,9 @@ class ExportFlowResultsTask(BaseExportTask):
                 )
 
                 temp_runs_exported = total_runs_exported
+
+                self.modified_on = timezone.now()
+                self.save(update_fields=["modified_on"])
 
         temp = NamedTemporaryFile(delete=True)
         book.finalize(to_file=temp)
@@ -3044,6 +3047,7 @@ class ExportFlowResultsTask(BaseExportTask):
             msg_text = msg.get("text", "")
             msg_created_on = iso8601.parse_date(event["created_on"])
             msg_channel = msg.get("channel")
+            msg_attachments = [attachment.url for attachment in Attachment.parse_all(msg.get("attachments", []))]
 
             if "urn" in msg:
                 msg_urn = URN.format(msg["urn"], formatted=False)
@@ -3062,6 +3066,7 @@ class ExportFlowResultsTask(BaseExportTask):
                     msg_created_on,
                     msg_direction,
                     msg_text,
+                    ", ".join(msg_attachments),
                     msg_channel["name"] if msg_channel else "",
                 ],
             )

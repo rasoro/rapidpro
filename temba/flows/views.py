@@ -74,6 +74,7 @@ EXPIRES_CHOICES = (
     (60 * 3, _("After 3 hours")),
     (60 * 6, _("After 6 hours")),
     (60 * 12, _("After 12 hours")),
+    (60 * 18, _("After 18 hours")),
     (60 * 24, _("After 1 day")),
     (60 * 24 * 2, _("After 2 days")),
     (60 * 24 * 3, _("After 3 days")),
@@ -300,7 +301,15 @@ class FlowCRUDL(SmartCRUDL):
             # we are looking for a specific revision, fetch it and migrate it forward
             if revision_id:
                 revision = FlowRevision.objects.get(flow=flow, pk=revision_id)
-                return JsonResponse(revision.get_definition_json(to_version=flow_version))
+                definition = revision.get_definition_json(to_version=flow_version)
+
+                # TODO: this is only needed to support the legacy editor
+                if Version(flow_version) < Version(Flow.INITIAL_GOFLOW_VERSION):
+                    return JsonResponse(definition)
+
+                # get our metadata
+                flow_info = mailroom.get_client().flow_inspect(flow.org_id, definition)
+                return JsonResponse(dict(definition=definition, metadata=Flow.get_metadata(flow_info)))
 
             # get a list of all revisions, these should be reasonably pruned already
             revisions = []
@@ -360,16 +369,19 @@ class FlowCRUDL(SmartCRUDL):
                         "status": "success",
                         "saved_on": json.encode_datetime(flow.saved_on, micros=True),
                         "revision": revision.as_json(),
+                        "metadata": flow.metadata,
                     }
                 )
 
-            except FlowValidationException:  # pragma: no cover
+            except FlowValidationException as e:
                 error = _("Your flow failed validation. Please refresh your browser.")
+                detail = str(e)
             except FlowVersionConflictException:
                 error = _(
                     "Your flow has been upgraded to the latest version. "
                     "In order to continue editing, please refresh your browser."
                 )
+                detail = None
             except FlowUserConflictException as e:
                 error = (
                     _(
@@ -378,13 +390,15 @@ class FlowCRUDL(SmartCRUDL):
                     )
                     % e.other_user
                 )
+                detail = None
             except Exception as e:  # pragma: no cover
                 import traceback
 
                 traceback.print_stack(e)
                 error = _("Your flow could not be saved. Please refresh your browser.")
+                detail = None
 
-            return JsonResponse({"status": "failure", "description": error}, status=400)
+            return JsonResponse({"status": "failure", "description": error, "detail": detail}, status=400)
 
     class OrgQuerysetMixin(object):
         def derive_queryset(self, *args, **kwargs):
@@ -738,7 +752,7 @@ class FlowCRUDL(SmartCRUDL):
 
             return obj
 
-    class UploadActionRecording(OrgPermsMixin, SmartUpdateView):
+    class UploadActionRecording(OrgObjPermsMixin, SmartUpdateView):
         def post(self, request, *args, **kwargs):  # pragma: needs cover
             path = self.save_recording_upload(
                 self.request.FILES["file"], self.request.POST.get("actionset"), self.request.POST.get("action")
@@ -751,7 +765,7 @@ class FlowCRUDL(SmartCRUDL):
                 "recordings/%d/%d/steps/%s.wav" % (flow.org.pk, flow.id, action_uuid), file
             )
 
-    class UploadMediaAction(OrgPermsMixin, SmartUpdateView):
+    class UploadMediaAction(OrgObjPermsMixin, SmartUpdateView):
         slug_url_kwarg = "uuid"
 
         def post(self, request, *args, **kwargs):
@@ -866,7 +880,7 @@ class FlowCRUDL(SmartCRUDL):
 
             return queryset
 
-    class Campaign(BaseList):
+    class Campaign(BaseList, OrgObjPermsMixin):
         actions = ["label"]
         campaign = None
 
@@ -877,12 +891,17 @@ class FlowCRUDL(SmartCRUDL):
         def derive_title(self, *args, **kwargs):
             return self.get_campaign().name
 
+        def get_object_org(self):
+            from temba.campaigns.models import Campaign
+
+            return Campaign.objects.get(pk=self.kwargs["campaign_id"]).org
+
         def get_campaign(self):
             if not self.campaign:
                 from temba.campaigns.models import Campaign
 
                 campaign_id = self.kwargs["campaign_id"]
-                self.campaign = Campaign.objects.filter(id=campaign_id).first()
+                self.campaign = Campaign.objects.filter(id=campaign_id, org=self.request.user.get_org()).first()
             return self.campaign
 
         def get_queryset(self, **kwargs):
@@ -892,7 +911,7 @@ class FlowCRUDL(SmartCRUDL):
                 campaign=self.get_campaign(), flow__is_archived=False, flow__is_system=False
             ).values("flow__id")
 
-            flows = Flow.objects.filter(id__in=flow_ids).order_by("-modified_on")
+            flows = Flow.objects.filter(id__in=flow_ids, org=self.request.user.get_org()).order_by("-modified_on")
             return flows
 
         def get_context_data(self, *args, **kwargs):
@@ -900,7 +919,7 @@ class FlowCRUDL(SmartCRUDL):
             context["current_campaign"] = self.get_campaign()
             return context
 
-    class Filter(BaseList):
+    class Filter(BaseList, OrgObjPermsMixin):
         add_button = True
         actions = ["unlabel", "label"]
 
@@ -927,8 +946,11 @@ class FlowCRUDL(SmartCRUDL):
         def derive_title(self, *args, **kwargs):
             return self.derive_label().name
 
+        def get_object_org(self):
+            return FlowLabel.objects.get(pk=self.kwargs["label_id"]).org
+
         def derive_label(self):
-            return FlowLabel.objects.get(pk=self.kwargs["label_id"])
+            return FlowLabel.objects.get(pk=self.kwargs["label_id"], org=self.request.user.get_org())
 
         def get_label_filter(self):
             label = FlowLabel.objects.get(pk=self.kwargs["label_id"])
