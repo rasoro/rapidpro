@@ -3193,11 +3193,6 @@ class OrgCRUDLTest(TembaTest):
         )
         self.assertEqual(response.request["PATH_INFO"], reverse("authentication.profile"))
 
-        # passwords stay case sensitive
-        # response = self.client.post(login_url, {"auth-username": "withcaps", "auth-password": "thePASSWORD", "login-current_step": "auth"}, follow=True)
-        # self.assertIn("form", response.context)
-        # self.assertTrue(response.context["form"].errors)
-
     def test_org_service(self):
         # create a customer service user
         self.csrep = self.create_user("csrep")
