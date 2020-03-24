@@ -849,7 +849,7 @@ _default_database_config = {
     "NAME": "temba",
     "USER": "temba",
     "PASSWORD": "temba",
-    "HOST": "postgres",
+    "HOST": "localhost",
     "PORT": "5432",
     "ATOMIC_REQUESTS": True,
     "CONN_MAX_AGE": 60,
@@ -906,7 +906,7 @@ CELERY_TASK_MAP = {"send_msg_task": "temba.channels.tasks.send_msg_task"}
 # -----------------------------------------------------------------------------------
 # Async tasks with celery
 # -----------------------------------------------------------------------------------
-REDIS_HOST = "redis"
+REDIS_HOST = "localhost"
 REDIS_PORT = 6379
 
 # we use a redis db of 10 for testing so that we maintain caches for dev
@@ -1140,7 +1140,3 @@ ELASTICSEARCH_URL = os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")
 # Maximum active objects are org can have
 MAX_ACTIVE_CONTACTFIELDS_PER_ORG = 255
 MAX_ACTIVE_GLOBALS_PER_ORG = 255
-
-# Django two factor authentication
-
-TWO_FACTOR_AUTHENTICATION = os.environ.get("TWO_FACTOR_AUTHENTICATION", True)
