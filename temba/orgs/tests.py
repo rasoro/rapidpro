@@ -3177,7 +3177,7 @@ class OrgCRUDLTest(TembaTest):
             {"auth-username": "SUPeruser", "auth-password": "superuser", "login-current_step": "auth"},
             follow=True,
         )
-        self.assertEqual(response.request["PATH_INFO"], reverse("orgs.org_manage"))
+        self.assertEqual(response.request["PATH_INFO"], reverse("authentication.profile"))
 
         User.objects.create_superuser("withCAPS", "with_caps@group.com", "thePASSWORD")
 
