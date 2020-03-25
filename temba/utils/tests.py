@@ -1127,7 +1127,7 @@ class MiddlewareTest(TembaTest):
 
         UserSettings.objects.filter(user=self.admin).update(language="pt-br")
 
-        self.assertContains(self.client.get(reverse("contacts.contact_list")), "Importer des contacts")
+        self.assertContains(self.client.get(reverse("contacts.contact_list")), "Importar contatos")
 
 
 class MakeTestDBTest(SmartminTestMixin, TransactionTestCase):
