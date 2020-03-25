@@ -6063,6 +6063,14 @@ msgstr ""
 msgid "No related contact groups."
 msgstr ""
 
+#, python-format
+msgid "You have reached the limit of %(limit)s fields per account. Please remove fields that you are no longer using."
+msgstr ""
+
+#, python-format
+msgid "You are approaching the limit of %(limit)s fields per account. You should remove fields that you are no longer using."
+msgstr ""
+
 msgid "Create Field"
 msgstr ""
 
