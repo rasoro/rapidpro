@@ -22,11 +22,6 @@ class UserMixin(object):
         self._passwords[user] = password
         return user
 
-    def create_superuser(self, username="bouke@example.com", password="secret", **kwargs):
-        user = self.User.objects.create_superuser(username=username, email=username, password=password, **kwargs)
-        self._passwords[user] = password
-        return user
-
     def login_user(self, user=None):
         if not user:
             user = list(self._passwords.keys())[0]

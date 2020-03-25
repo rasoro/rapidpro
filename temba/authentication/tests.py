@@ -28,6 +28,10 @@ class LoginTest(UserMixin, TestCase):
         self.assertContains(response, "Please enter a correct")
         self.assertContains(response, "and password.")
 
+    def test_step_invalid(self):
+        response = self._post({"auth-username": "unknown", "auth-password": "secret", "login-current_step": "test"})
+        self.assertTrue(response, {})
+
     @mock.patch("two_factor.views.core.signals.user_verified.send")
     def test_valid_login(self, mock_signal):
         self.create_user()

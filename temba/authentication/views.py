@@ -5,7 +5,7 @@ from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
 from smartmin.users.views import Login as SmartminLogin
 from two_factor import signals
 from two_factor.forms import AuthenticationTokenForm, BackupTokenForm
-from two_factor.utils import backup_phones, default_device
+from two_factor.utils import default_device
 from two_factor.views.utils import IdempotentSessionWizardView, class_view_decorator
 
 from django.conf import settings
@@ -85,17 +85,8 @@ class Login(IdempotentSessionWizardView, SmartminLogin):
         Returns the OTP device selected by the user, or his default device.
         """
         if not self.device_cache:
-            challenge_device_id = self.request.POST.get("challenge_device", None)
-            if challenge_device_id:
-                for device in backup_phones(self.get_user()):
-                    if device.persistent_id == challenge_device_id:
-                        self.device_cache = device
-                        break
             if step == "backup":
-                try:
-                    self.device_cache = self.get_user().staticdevice_set.get(name="backup")
-                except StaticDevice.DoesNotExist:
-                    pass
+                self.device_cache = self.get_user().staticdevice_set.get(name="backup")
             if not self.device_cache:
                 self.device_cache = default_device(self.get_user())
         return self.device_cache
@@ -128,9 +119,6 @@ class Login(IdempotentSessionWizardView, SmartminLogin):
 
         if self.steps.current == "token":
             context["device"] = self.get_device()
-            context["other_devices"] = [
-                phone for phone in backup_phones(self.get_user()) if phone != self.get_device()
-            ]
             try:
                 context["backup_tokens"] = self.get_user().staticdevice_set.get(name="backup").token_set.count()
             except StaticDevice.DoesNotExist:
