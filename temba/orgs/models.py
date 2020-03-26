@@ -20,7 +20,6 @@ from requests import Session
 from smartmin.models import SmartModel
 from timezone_field import TimeZoneField
 from twilio.rest import Client as TwilioClient
-from two_factor.utils import default_device
 
 from django.conf import settings
 from django.contrib.auth.models import Group, User
@@ -2164,21 +2163,6 @@ def get_settings(user):
     return settings
 
 
-def is_two_factor_authentication(user):
-    if not user:
-        return None
-
-    settings = UserSettings.objects.filter(user=user).first()
-    device = default_device(user)
-
-    if not settings:
-        settings = UserSettings.objects.create(user=user)
-
-    if settings.two_factor_authentication and device:
-        return True
-    return False
-
-
 def set_org(obj, org):
     obj._org = org
 
@@ -2225,7 +2209,6 @@ User.get_user_orgs = get_user_orgs
 User.get_org_group = get_org_group
 User.get_owned_orgs = get_owned_orgs
 User.has_org_perm = _user_has_org_perm
-# User.is_two_factor_authentication = is_two_factor_authentication
 
 USER_GROUPS = (("A", _("Administrator")), ("E", _("Editor")), ("V", _("Viewer")), ("S", _("Surveyor")))
 

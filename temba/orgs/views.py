@@ -1281,7 +1281,7 @@ class OrgCRUDL(SmartCRUDL):
 
             return form
 
-        def post_save(self, obj):
+        def post_save(self, obj):  # pragma: needs cover
             obj = super().post_save(obj)
 
             for field in self.form.cleaned_data:
@@ -1301,7 +1301,7 @@ class OrgCRUDL(SmartCRUDL):
             context["group_fields"] = self.fields_by_users
             return context
 
-        def get_success_url(self):
+        def get_success_url(self):  # pragma: needs cover
             still_in_org = self.request.user in self.get_object().get_org_users()
 
             # if current user no longer belongs to this org, redirect to org chooser
@@ -1652,7 +1652,7 @@ class OrgCRUDL(SmartCRUDL):
                     org = user_orgs[0]
                     self.request.session["org_id"] = org.pk
                     if org.get_org_surveyors().filter(username=self.request.user.username):
-                        return HttpResponseRedirect(reverse("orgs.org_surveyor"))
+                        return HttpResponseRedirect(reverse("orgs.org_surveyor"))  # pragma: needs cover
 
                     return HttpResponseRedirect(self.get_success_url())  # pragma: needs cover
 
