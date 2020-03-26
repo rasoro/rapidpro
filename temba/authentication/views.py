@@ -1,5 +1,3 @@
-import warnings
-
 from django_otp.decorators import otp_required
 from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
 from smartmin.users.views import Login as SmartminLogin
@@ -41,17 +39,6 @@ class Login(IdempotentSessionWizardView, SmartminLogin):
         self.user_cache = None
         self.device_cache = None
 
-    def post(self, *args, **kwargs):
-        """
-        The user can select a particular device to challenge, being the backup
-        devices added to the account.
-        """
-        # Generating a challenge doesn't require to validate the form.
-        if "challenge_device" in self.request.POST:
-            return self.render_goto_step("token")
-
-        return super().post(*args, **kwargs)
-
     def done(self, form_list, **kwargs):
         """
         Login the user and redirect to the desired page.
@@ -78,7 +65,7 @@ class Login(IdempotentSessionWizardView, SmartminLogin):
             return {"request": self.request}
         if step in ("token", "backup"):
             return {"user": self.get_user(), "initial_device": self.get_device(step)}
-        return {}
+        return super().get_form_kwargs(step=None)
 
     def get_device(self, step=None):
         """
@@ -126,13 +113,6 @@ class Login(IdempotentSessionWizardView, SmartminLogin):
 
         if getattr(settings, "LOGOUT_REDIRECT_URL", None):
             context["cancel_url"] = resolve_url(settings.LOGOUT_REDIRECT_URL)
-        elif getattr(settings, "LOGOUT_URL", None):
-            warnings.warn(
-                "LOGOUT_URL has been replaced by LOGOUT_REDIRECT_URL, please "
-                "review the URL and update your settings.",
-                DeprecationWarning,
-            )
-            context["cancel_url"] = resolve_url(settings.LOGOUT_URL)
         return context
 
 
