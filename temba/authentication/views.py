@@ -65,7 +65,7 @@ class Login(IdempotentSessionWizardView, SmartminLogin):
             return {"request": self.request}
         if step in ("token", "backup"):
             return {"user": self.get_user(), "initial_device": self.get_device(step)}
-        return super().get_form_kwargs(step=None)
+        return {} # pragma: needs cover
 
     def get_device(self, step=None):
         """
