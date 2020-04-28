@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TextIt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-27 21:09+0000\n"
+"POT-Creation-Date: 2020-04-28 19:02+0000\n"
 "PO-Revision-Date: 2014-09-24 19:56+0000\n"
 "Last-Translator: TextIt <info@textit.in>\n"
 "Language-Team: Spanish (http://www.transifex.com/projects/p/textit/language/es/)\n"
@@ -5534,6 +5534,9 @@ msgstr "Número de teléfono inválido, inténtelo nuevamente."
 msgid "Activate"
 msgstr "Activar"
 
+msgid "Two Factor Authentication"
+msgstr ""
+
 msgid "Select your Organization"
 msgstr "Elija su Organización"
 
@@ -5968,6 +5971,14 @@ msgstr "Crear activadores"
 
 msgid "Create Schedule"
 msgstr "Crear cronograma"
+
+#, fuzzy
+#| msgid "Account Key"
+msgid "Backup Token"
+msgstr "Clave de la cuenta"
+
+msgid "Enter one of the tokens generated when activating the two-factor login"
+msgstr ""
 
 msgid "Processing"
 msgstr ""
@@ -10921,9 +10932,6 @@ msgstr ""
 msgid "Disable Two Factor"
 msgstr ""
 
-msgid "Two Factor Authentication"
-msgstr ""
-
 #, fuzzy
 msgid "This organization has been suspended"
 msgstr "La Organización del usuario."
@@ -12494,6 +12502,11 @@ msgstr "Elija cuándo le gustaría que empiece el flujo."
 #, fuzzy
 msgid "Facebook Channel"
 msgstr "Borrar teléfono"
+
+#, fuzzy
+#| msgid "Account Key"
+msgid "Backup Tokens"
+msgstr "Clave de la cuenta"
 
 #, fuzzy
 #| msgid "Enter Claim Code"

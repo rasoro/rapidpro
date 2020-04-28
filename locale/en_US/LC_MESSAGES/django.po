@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-27 21:09+0000\n"
+"POT-Creation-Date: 2020-04-28 19:02+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3983,6 +3983,9 @@ msgstr ""
 msgid "Activate"
 msgstr ""
 
+msgid "Two Factor Authentication"
+msgstr ""
+
 msgid "Select your Organization"
 msgstr ""
 
@@ -4359,6 +4362,12 @@ msgid "Create Referral Trigger"
 msgstr ""
 
 msgid "Create Schedule"
+msgstr ""
+
+msgid "Backup Token"
+msgstr ""
+
+msgid "Enter one of the tokens generated when activating the two-factor login"
 msgstr ""
 
 msgid "Processing"
@@ -7791,9 +7800,6 @@ msgstr ""
 msgid "Disable Two Factor"
 msgstr ""
 
-msgid "Two Factor Authentication"
-msgstr ""
-
 msgid "This organization has been suspended"
 msgstr ""
 
@@ -8955,6 +8961,9 @@ msgid "Choose when you would like the flow to start."
 msgstr ""
 
 msgid "Facebook Channel"
+msgstr ""
+
+msgid "Backup Tokens"
 msgstr ""
 
 msgid "Enter a query"
