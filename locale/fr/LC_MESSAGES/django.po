@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-27 21:09+0000\n"
+"POT-Creation-Date: 2020-04-28 21:35+0000\n"
 "PO-Revision-Date: 2019-05-13 20:14+0000\n"
 "Last-Translator: Nyaruka <info@textit.in>, 2020\n"
 "Language-Team: French (https://www.transifex.com/rapidpro/teams/226/fr/)\n"
@@ -4321,6 +4321,11 @@ msgstr "Numéro de téléphone incorrect, essayez à nouveau."
 msgid "Activate"
 msgstr "activer"
 
+#, fuzzy
+#| msgid "Authentication Token"
+msgid "Two Factor Authentication"
+msgstr "Jeton d'authentification"
+
 msgid "Select your Organization"
 msgstr "Choisissez votre Organisation"
 
@@ -4563,6 +4568,9 @@ msgstr "Français"
 msgid "Spanish"
 msgstr "Espanol"
 
+msgid "Russian"
+msgstr ""
+
 msgid "Visually build nationally scalable mobile applications from anywhere in the world."
 msgstr "Créez visuellement des applications mobiles évolutives à l'échelle nationale, partout dans le monde."
 
@@ -4656,6 +4664,9 @@ msgstr "Groupe à rejoindre"
 msgid "The group the contact will join when they send the above keyword"
 msgstr "Le groupe que le contact va rejoindre s'ils envoient le mot clé ci-dessous"
 
+#, fuzzy
+#| msgid "Response"
+#| msgid_plural "Responses"
 msgid "Response"
 msgid_plural "Responses"
 msgstr[0] "Réponses"
@@ -8910,8 +8921,10 @@ msgstr ""
 msgid "Endpoint"
 msgstr ""
 
+#, fuzzy
+#| msgid "Enable Voice"
 msgid "Disable Prometheus"
-msgstr ""
+msgstr "Activer la voix"
 
 #, fuzzy
 #| msgid "Enable Voice"
@@ -9135,11 +9148,6 @@ msgstr ""
 
 msgid "Disable Two Factor"
 msgstr ""
-
-#, fuzzy
-#| msgid "Authentication Token"
-msgid "Two Factor Authentication"
-msgstr "Jeton d'authentification"
 
 msgid "This organization has been suspended"
 msgstr "Cette organisation a été suspendue"

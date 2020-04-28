@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TextIt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-04-27 21:09+0000\n"
+"POT-Creation-Date: 2020-04-28 21:35+0000\n"
 "PO-Revision-Date: 2014-09-24 19:56+0000\n"
 "Last-Translator: TextIt <info@textit.in>\n"
 "Language-Team: Spanish (http://www.transifex.com/projects/p/textit/language/es/)\n"
@@ -5534,6 +5534,9 @@ msgstr "Número de teléfono inválido, inténtelo nuevamente."
 msgid "Activate"
 msgstr "Activar"
 
+msgid "Two Factor Authentication"
+msgstr ""
+
 msgid "Select your Organization"
 msgstr "Elija su Organización"
 
@@ -5800,6 +5803,9 @@ msgid "French"
 msgstr "Francés"
 
 msgid "Spanish"
+msgstr ""
+
+msgid "Russian"
 msgstr ""
 
 #, fuzzy
@@ -6380,8 +6386,10 @@ msgstr "Buscar"
 msgid "Supported"
 msgstr "Empezar flujo"
 
+#, fuzzy
+#| msgid "Start Flow"
 msgid "Unsupported"
-msgstr ""
+msgstr "Empezar flujo"
 
 #, fuzzy
 msgid "IP Addresses"
@@ -7225,16 +7233,20 @@ msgstr "El mensaje de texto real que se envió"
 msgid "the phone number or address you have configured for this service"
 msgstr "El número de teléfono o código abreviado al que se está conectando"
 
+#, fuzzy
+#| msgid "The phone number or short code you are connecting"
 msgid "the phone number or address you have configured for this service, with leading +'s removed"
-msgstr ""
+msgstr "El número de teléfono o código abreviado al que se está conectando"
 
 #, fuzzy
 #| msgid "The phone number for this call"
 msgid "the phone number or URN this message is addressed to"
 msgstr "El número de teléfono para esta llamada"
 
+#, fuzzy
+#| msgid "The phone number for this call"
 msgid "the phone number or URN this message is addressed to, with leading +'s removed"
-msgstr ""
+msgstr "El número de teléfono para esta llamada"
 
 #, fuzzy
 #| msgid "The type of this message"
@@ -7464,13 +7476,24 @@ msgstr ""
 msgid "Verify Token"
 msgstr ""
 
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        You can connect your <a href=\"http://infobip.com\">Infobip</a> number by entering your number, username and password\n"
+#| "        here.\n"
+#| "\n"
+#| "      "
 msgid ""
 "\n"
 "        You can to connect using a <a href=\"https://firebase.google.com/docs/cloud-messaging/\" target=\"_blank\">\n"
 "        Firebase Cloud Messaging App</a> to your %(name)s account to automate sending notifications.\n"
 "      "
 msgstr ""
+"\n"
+"        Puede conectar su número <a href=\"http://infobip.com\">Infobip</a> si ingresa su número, usuario y contraseña\n"
+"        aquí.\n"
+"\n"
+"      "
 
 msgid ""
 "\n"
@@ -7560,13 +7583,24 @@ msgstr ""
 "\n"
 "      "
 
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        You can connect your <a href=\"http://infobip.com\">Infobip</a> number by entering your number, username and password\n"
+#| "        here.\n"
+#| "\n"
+#| "      "
 msgid ""
 "\n"
 "        You can connect a <a href=\"https://jiochat.com\" target=\"_blank\">JioChat Channel</a> to your %(name)s account\n"
 "        to automate sending and receiving JioChat messages.\n"
 "      "
 msgstr ""
+"\n"
+"        Puede conectar su número <a href=\"http://infobip.com\">Infobip</a> si ingresa su número, usuario y contraseña\n"
+"        aquí.\n"
+"\n"
+"      "
 
 msgid ""
 "\n"
@@ -7592,13 +7626,24 @@ msgstr ""
 msgid "Make sure to change the forced-smsc and default-smsc values to the appropriate values for your configuration."
 msgstr "Asegúrese de cambiar los valores de forced-smsc y default-smsc a los valores apropiados para su configuración."
 
-#, python-format
+#, fuzzy, python-format
+#| msgid ""
+#| "\n"
+#| "        You can connect your <a href=\"http://infobip.com\">Infobip</a> number by entering your number, username and password\n"
+#| "        here.\n"
+#| "\n"
+#| "      "
 msgid ""
 "\n"
 "        You can connect a <a href=\"https://developers.line.me/messaging-api/overview\" target=\"_blank\">LINE Bot</a> to your %(name)s account\n"
 "        to automate sending and receiving LINE messages.\n"
 "      "
 msgstr ""
+"\n"
+"        Puede conectar su número <a href=\"http://infobip.com\">Infobip</a> si ingresa su número, usuario y contraseña\n"
+"        aquí.\n"
+"\n"
+"      "
 
 msgid ""
 "\n"
@@ -7626,12 +7671,17 @@ msgstr ""
 "\n"
 "         "
 
+#, fuzzy
 msgid ""
 "\n"
 "            Activate the permission to login via web application in the \"Settings > Account > Allow login\"\n"
 "\n"
 "          "
 msgstr ""
+"\n"
+"                En la página de la aplicación TextIt presione el botón \"Install\".\n"
+"\n"
+"         "
 
 #, fuzzy
 msgid ""
@@ -7871,6 +7921,13 @@ msgstr ""
 "\n"
 "      "
 
+#, fuzzy
+#| msgid ""
+#| "\n"
+#| "        You can connect your <a href=\"http://infobip.com\">Infobip</a> number by entering your number, username and password\n"
+#| "        here.\n"
+#| "\n"
+#| "      "
 msgid ""
 "\n"
 "        You will need to <a href=\"https://core.telegram.org/bots#create-a-new-bot\">create a new Telegram bot</a> and\n"
@@ -7878,6 +7935,11 @@ msgid ""
 "\n"
 "      "
 msgstr ""
+"\n"
+"        Puede conectar su número <a href=\"http://infobip.com\">Infobip</a> si ingresa su número, usuario y contraseña\n"
+"        aquí.\n"
+"\n"
+"      "
 
 msgid ""
 "\n"
@@ -8146,8 +8208,10 @@ msgstr "Evento del transmisor"
 msgid "Classifier Log"
 msgstr "Evento del transmisor"
 
+#, fuzzy
+#| msgid "The file name for our export"
 msgid "Intents are synced automatically every 5 minutes"
-msgstr ""
+msgstr "El nombre del archivo para nuestra exportación"
 
 #, fuzzy
 #| msgid "Activate"
@@ -8831,11 +8895,11 @@ msgstr "Tipo de SMS"
 msgid "Featured"
 msgstr ""
 
-#, python-format
+#, fuzzy, python-format
 msgid "%(counter)s Use"
 msgid_plural "%(counter)s Uses"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Debe elegir un país para su organización."
+msgstr[1] "Debe elegir un país para su organización."
 
 #, fuzzy
 #| msgid "No fields."
@@ -9571,8 +9635,10 @@ msgstr "Crear Flujos"
 msgid "Globals"
 msgstr "Manejar campos"
 
+#, fuzzy
+#| msgid "Manage Fields"
 msgid "No globals"
-msgstr ""
+msgstr "Manejar campos"
 
 #, fuzzy
 #| msgid "Update Label"
@@ -10703,8 +10769,10 @@ msgstr ""
 msgid "Endpoint"
 msgstr ""
 
+#, fuzzy
+#| msgid "Enable Voice"
 msgid "Disable Prometheus"
-msgstr ""
+msgstr "Permitir voz"
 
 #, fuzzy
 #| msgid "Enable Voice"
@@ -10919,9 +10987,6 @@ msgid "Generate Backup Tokens"
 msgstr ""
 
 msgid "Disable Two Factor"
-msgstr ""
-
-msgid "Two Factor Authentication"
 msgstr ""
 
 #, fuzzy
@@ -12407,8 +12472,9 @@ msgstr "Empezar un flujo después de recibir una llamda perdida."
 msgid "Start a flow when a conversation is started by a contact."
 msgstr "Empezar un flujo después de recibir una llamda perdida."
 
+#, fuzzy
 msgid "Social media channel"
-msgstr ""
+msgstr "Transmisor"
 
 #, fuzzy
 msgid "Start a flow when Facebook refers a contact."
