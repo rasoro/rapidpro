@@ -159,6 +159,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "django.template.context_processors.request",
                 "temba.context_processors.branding",
+                "temba.context_processors.analytics",
                 "temba.orgs.context_processors.user_group_perms_processor",
                 "temba.channels.views.channel_status_processor",
                 "temba.msgs.views.send_message_auto_complete_processor",
@@ -482,7 +483,7 @@ PERMISSIONS = {
 GROUP_PERMISSIONS = {
     "Service Users": ("flows.flow_assets", "msgs.msg_create"),  # internal Temba services have limited permissions
     "Alpha": (),
-    "Beta": (),
+    "Beta": ("orgs.org_two_factor",),
     "Dashboard": ("orgs.org_dashboard",),
     "Surveyors": (
         "contacts.contact_api",
@@ -492,10 +493,9 @@ GROUP_PERMISSIONS = {
         "locations.adminboundary_api",
         "orgs.org_api",
         "orgs.org_surveyor",
-        "orgs.org_two_factor",
         "msgs.msg_api",
     ),
-    "Granters": ("orgs.org_grant", "orgs.org_two_factor"),
+    "Granters": ("orgs.org_grant",),
     "Customer Support": (
         "auth.user_list",
         "auth.user_update",
@@ -523,7 +523,6 @@ GROUP_PERMISSIONS = {
         "orgs.topup_create",
         "orgs.topup_manage",
         "orgs.topup_update",
-        "orgs.org_two_factor",
         "policies.policy_create",
         "policies.policy_update",
         "policies.policy_admin",
@@ -610,7 +609,6 @@ GROUP_PERMISSIONS = {
         "orgs.topup_read",
         "orgs.usersettings_phone",
         "orgs.usersettings_update",
-        "orgs.org_two_factor",
         "channels.channel_api",
         "channels.channel_bulk_sender_options",
         "channels.channel_claim",
@@ -716,7 +714,6 @@ GROUP_PERMISSIONS = {
         "orgs.topup_read",
         "orgs.usersettings_phone",
         "orgs.usersettings_update",
-        "orgs.org_two_factor",
         "channels.channel_api",
         "channels.channel_bulk_sender_options",
         "channels.channel_claim",
@@ -787,7 +784,6 @@ GROUP_PERMISSIONS = {
         "orgs.org_profile",
         "orgs.topup_list",
         "orgs.topup_read",
-        "orgs.org_two_factor",
         "channels.channel_list",
         "channels.channel_read",
         "channels.channelevent_calls",
@@ -1089,10 +1085,17 @@ SESSION_CACHE_ALIAS = "default"
 TWITTER_API_KEY = os.environ.get("TWITTER_API_KEY", "MISSING_TWITTER_API_KEY")
 TWITTER_API_SECRET = os.environ.get("TWITTER_API_SECRET", "MISSING_TWITTER_API_SECRET")
 
+# Segment.io key for analytics
 SEGMENT_IO_KEY = os.environ.get("SEGMENT_IO_KEY", "")
 
+# Intercom token and app_id for support
+INTERCOM_APP_ID = os.environ.get("INTERCOM_APP_ID" "")
 INTERCOM_TOKEN = os.environ.get("INTERCOM_TOKEN", "")
 
+# Google analytics tracking ID
+GOOGLE_TRACKING_ID = os.environ.get("GOOGLE_TRACKING_ID", "")
+
+# Librato for gauge support
 LIBRATO_USER = os.environ.get("LIBRATO_USER", "")
 LIBRATO_TOKEN = os.environ.get("LIBRATO_TOKEN", "")
 
