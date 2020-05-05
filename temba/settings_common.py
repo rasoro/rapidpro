@@ -128,6 +128,7 @@ STATICFILES_DIRS = (
     os.path.join(PROJECT_DIR, "../static"),
     os.path.join(PROJECT_DIR, "../media"),
     os.path.join(PROJECT_DIR, "../node_modules/@nyaruka/flow-editor/build"),
+    os.path.join(PROJECT_DIR, "../node_modules"),
     os.path.join(PROJECT_DIR, "../node_modules/react/umd"),
     os.path.join(PROJECT_DIR, "../node_modules/react-dom/umd"),
 )
@@ -144,7 +145,10 @@ MEDIA_URL = "/media/"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [os.path.join(PROJECT_DIR, "../templates")],
+        "DIRS": [
+            os.path.join(PROJECT_DIR, "../templates"),
+            os.path.join(PROJECT_DIR, "../node_modules/@nyaruka/temba-components/build/templates"),
+        ],
         "OPTIONS": {
             "context_processors": [
                 "django.contrib.auth.context_processors.auth",
@@ -257,6 +261,7 @@ INSTALLED_APPS = (
     "temba.values",
     "temba.airtime",
     "temba.sql",
+    "temba.two_factor",
 )
 
 # the last installed app that uses smartmin permissions
@@ -381,6 +386,7 @@ PERMISSIONS = {
         "nexmo_connect",
         "plivo_connect",
         "profile",
+        "prometheus",
         "resthooks",
         "service",
         "signup",
@@ -390,6 +396,7 @@ PERMISSIONS = {
         "trial",
         "twilio_account",
         "twilio_connect",
+        "two_factor",
         "token",
     ),
     "orgs.usersettings": ("phone",),
@@ -423,6 +430,9 @@ PERMISSIONS = {
         "editor",
         "editor_next",
         "export",
+        "export_translation",
+        "download_translation",
+        "import_translation",
         "export_results",
         "filter",
         "json",
@@ -483,9 +493,10 @@ GROUP_PERMISSIONS = {
         "locations.adminboundary_api",
         "orgs.org_api",
         "orgs.org_surveyor",
+        "orgs.org_two_factor",
         "msgs.msg_api",
     ),
-    "Granters": ("orgs.org_grant",),
+    "Granters": ("orgs.org_grant", "orgs.org_two_factor"),
     "Customer Support": (
         "auth.user_list",
         "auth.user_update",
@@ -513,6 +524,7 @@ GROUP_PERMISSIONS = {
         "orgs.topup_create",
         "orgs.topup_manage",
         "orgs.topup_update",
+        "orgs.org_two_factor",
         "policies.policy_create",
         "policies.policy_update",
         "policies.policy_admin",
@@ -588,6 +600,7 @@ GROUP_PERMISSIONS = {
         "orgs.org_nexmo_connect",
         "orgs.org_plivo_connect",
         "orgs.org_profile",
+        "orgs.org_prometheus",
         "orgs.org_resthooks",
         "orgs.org_sub_orgs",
         "orgs.org_transfer_credits",
@@ -598,6 +611,7 @@ GROUP_PERMISSIONS = {
         "orgs.topup_read",
         "orgs.usersettings_phone",
         "orgs.usersettings_update",
+        "orgs.org_two_factor",
         "channels.channel_api",
         "channels.channel_bulk_sender_options",
         "channels.channel_claim",
@@ -617,7 +631,7 @@ GROUP_PERMISSIONS = {
         "channels.channellog_read",
         "channels.channellog_connection",
         "flows.flow.*",
-        "flows.flowstart_api",
+        "flows.flowstart.*",
         "flows.flowlabel.*",
         "flows.ruleset.*",
         "flows.flowrun_delete",
@@ -703,6 +717,7 @@ GROUP_PERMISSIONS = {
         "orgs.topup_read",
         "orgs.usersettings_phone",
         "orgs.usersettings_update",
+        "orgs.org_two_factor",
         "channels.channel_api",
         "channels.channel_bulk_sender_options",
         "channels.channel_claim",
@@ -718,6 +733,7 @@ GROUP_PERMISSIONS = {
         "channels.channelevent.*",
         "flows.flow.*",
         "flows.flowstart_api",
+        "flows.flowstart_list",
         "flows.flowlabel.*",
         "flows.ruleset.*",
         "schedules.schedule.*",
@@ -772,6 +788,7 @@ GROUP_PERMISSIONS = {
         "orgs.org_profile",
         "orgs.topup_list",
         "orgs.topup_read",
+        "orgs.org_two_factor",
         "channels.channel_list",
         "channels.channel_read",
         "channels.channelevent_calls",
@@ -794,6 +811,7 @@ GROUP_PERMISSIONS = {
         "flows.flow_revisions",
         "flows.flow_run_table",
         "flows.flow_simulate",
+        "flows.flowstart_list",
         "msgs.broadcast_schedule_list",
         "msgs.broadcast_schedule_read",
         "msgs.label_api",
@@ -811,6 +829,7 @@ GROUP_PERMISSIONS = {
         "triggers.trigger_archived",
         "triggers.trigger_list",
     ),
+    "Prometheus": (),
 }
 
 # -----------------------------------------------------------------------------------
@@ -876,9 +895,8 @@ CELERYBEAT_SCHEDULE = {
     "trim-webhook-event": {"task": "trim_webhook_event_task", "schedule": crontab(hour=3, minute=0)},
     "trim-event-fires": {"task": "trim_event_fires_task", "schedule": timedelta(seconds=900)},
     "trim-flow-revisions": {"task": "trim_flow_revisions", "schedule": crontab(hour=0, minute=0)},
-    "trim-flow-sessions": {"task": "trim_flow_sessions", "schedule": crontab(hour=0, minute=0)},
-    "squash-flowruncounts": {"task": "squash_flowruncounts", "schedule": timedelta(seconds=60)},
-    "squash-flowpathcounts": {"task": "squash_flowpathcounts", "schedule": timedelta(seconds=60)},
+    "trim-flow-sessions-and-starts": {"task": "trim_flow_sessions_and_starts", "schedule": crontab(hour=0, minute=0)},
+    "squash-flowcounts": {"task": "squash_flowcounts", "schedule": timedelta(seconds=60)},
     "squash-channelcounts": {"task": "squash_channelcounts", "schedule": timedelta(seconds=60)},
     "squash-msgcounts": {"task": "squash_msgcounts", "schedule": timedelta(seconds=60)},
     "squash-topupcredits": {"task": "squash_topupcredits", "schedule": timedelta(seconds=60)},
@@ -1043,6 +1061,7 @@ CHANNEL_TYPES = [
     "temba.channels.types.smscentral.SMSCentralType",
     "temba.channels.types.start.StartType",
     "temba.channels.types.telegram.TelegramType",
+    "temba.channels.types.telesom.TelesomType",
     "temba.channels.types.thinq.ThinQType",
     "temba.channels.types.twiml_api.TwimlAPIType",
     "temba.channels.types.twitter.TwitterType",
