@@ -1713,6 +1713,27 @@ class MsgTest(TembaTest):
         self.assertEqual(302, response.status_code)
         self.assertEqual("/msg/inbox/", response.url)
 
+    def test_next_attempt(self):
+        channel = Channel.create(self.org, self.user, None, "A")  # Android
+        msg = self.create_outgoing_msg(self.joe, "errored", status="E", channel=channel)
+        self.assertFalse(msg.next_attempt)
+
+        msg.next_attempt = timezone.now()
+        msg.save()
+        self.assertTrue(msg.next_attempt)
+
+        channels = [
+            "FB",   # Facebook
+            "FCM",  # Firebase
+            "TG",   # Telegram
+            "TWT",  # Twitter
+            "WA",   # Whatsapp
+        ]
+        for chan in channels:
+            channel = Channel.create(self.org, self.user, None, chan)
+            msg = self.create_outgoing_msg(self.joe, "errored", status="E", channel=channel)
+            self.assertTrue(msg.next_attempt)
+
 
 class MsgCRUDLTest(TembaTest):
     def setUp(self):

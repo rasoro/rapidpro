@@ -6,6 +6,7 @@ from datetime import date, datetime, timedelta
 import iso8601
 import pytz
 import regex
+from django.dispatch import receiver
 from xlsxlite.writer import XLSXBook
 
 from django.conf import settings
@@ -591,7 +592,9 @@ class Msg(models.Model):
     )
 
     next_attempt = models.DateTimeField(
-        auto_now_add=True,
+        null=True,
+        blank=True,
+        default=timezone.now,
         verbose_name=_("Next Attempt"),
         help_text=_("When we should next attempt to deliver this message"),
     )
@@ -630,6 +633,16 @@ class Msg(models.Model):
     delete_reason = models.CharField(
         null=True, max_length=1, choices=DELETE_CHOICES, help_text=_("Why the message is being deleted")
     )
+
+    class Meta:
+        indexes = [
+            # Used to solve performance problem with errored messages. Issue #1196.
+            models.Index(
+                name="msgs_msg_errored_retry",
+                fields=("next_attempt", "created_on"),
+                condition=Q(direction=OUTGOING, status=ERRORED, next_attempt__isnull=False)
+            ),
+        ]
 
     @classmethod
     def send_messages(cls, all_msgs):
@@ -1764,3 +1777,14 @@ class MessageExportAssetStore(BaseExportAssetStore):
     directory = "message_exports"
     permission = "msgs.msg_export"
     extensions = ("xlsx",)
+
+
+@receiver(models.signals.pre_save, sender=Msg)
+def pre_save_msg(instance, **kwargs):
+    """
+    Clean the field "next_attempt" when create channel type is Android.
+    Issue #1196
+    """
+    from temba.channels.types.android import AndroidType
+    if not instance.pk and instance.channel and instance.channel.channel_type == AndroidType.code:
+        instance.next_attempt = None
