@@ -6,7 +6,6 @@ from datetime import date, datetime, timedelta
 import iso8601
 import pytz
 import regex
-from django.dispatch import receiver
 from xlsxlite.writer import XLSXBook
 
 from django.conf import settings
@@ -16,6 +15,7 @@ from django.core.files.temp import NamedTemporaryFile
 from django.db import models, transaction
 from django.db.models import Prefetch, Q, Sum
 from django.db.models.functions import Upper
+from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -636,12 +636,12 @@ class Msg(models.Model):
 
     class Meta:
         indexes = [
-            # Used to solve performance problem with errored messages. Issue #1196.
+            # Used to solve performance problem with errored messages.
             models.Index(
                 name="msgs_msg_errored_retry",
                 fields=("next_attempt", "created_on"),
-                condition=Q(direction=OUTGOING, status=ERRORED, next_attempt__isnull=False)
-            ),
+                condition=Q(direction=OUTGOING, status=ERRORED, next_attempt__isnull=False),
+            )
         ]
 
     @classmethod
@@ -1783,8 +1783,8 @@ class MessageExportAssetStore(BaseExportAssetStore):
 def pre_save_msg(instance, **kwargs):
     """
     Clean the field "next_attempt" when create channel type is Android.
-    Issue #1196
     """
     from temba.channels.types.android import AndroidType
+
     if not instance.pk and instance.channel and instance.channel.channel_type == AndroidType.code:
         instance.next_attempt = None

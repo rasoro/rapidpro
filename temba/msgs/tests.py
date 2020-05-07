@@ -1722,13 +1722,7 @@ class MsgTest(TembaTest):
         msg.save()
         self.assertTrue(msg.next_attempt)
 
-        channels = [
-            "FB",   # Facebook
-            "FCM",  # Firebase
-            "TG",   # Telegram
-            "TWT",  # Twitter
-            "WA",   # Whatsapp
-        ]
+        channels = ["FB", "FCM", "TG", "TWT", "WA"]
         for chan in channels:
             channel = Channel.create(self.org, self.user, None, chan)
             msg = self.create_outgoing_msg(self.joe, "errored", status="E", channel=channel)
