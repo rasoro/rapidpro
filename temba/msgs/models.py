@@ -639,7 +639,7 @@ class Msg(models.Model):
             # Used to solve performance problem with errored messages.
             models.Index(
                 name="msgs_msg_errored_retry",
-                fields=("next_attempt", "created_on"),
+                fields=("created_on", "next_attempt"),
                 condition=Q(direction=OUTGOING, status=ERRORED, next_attempt__isnull=False),
             )
         ]

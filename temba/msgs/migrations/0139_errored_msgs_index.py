@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
             model_name="msg",
             index=models.Index(
                 condition=models.Q(("direction", "O"), ("next_attempt__isnull", False), ("status", "E")),
-                fields=["next_attempt", "created_on"],
+                fields=["created_on", "next_attempt"],
                 name="msgs_msg_errored_retry",
             ),
         ),
