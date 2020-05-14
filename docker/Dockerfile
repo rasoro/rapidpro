@@ -3,7 +3,13 @@ FROM python:3.6-alpine
 ARG COMPRESS_ENABLED
 ARG BRANDING_ENABLED
 
+ENV NPM_CONFIG_PREFIX /opt/npm-globals
+ENV PATH              "${NPM_CONFIG_PREFIX}/bin:${PATH}"
 ENV PYTHONUNBUFFERED 1
+
+RUN mkdir /$PROJECT \
+ && mkdir $NPM_CONFIG_PREFIX
+
 WORKDIR /app
 
 RUN apk update \
@@ -19,13 +25,7 @@ RUN apk add --no-cache -X http://dl-cdn.alpinelinux.org/alpine/v3.11/community/ 
 RUN addgroup -S django \
   && adduser -S -G django django
 
-RUN npm install --global --unsafe-perm \
-  coffeescript \
-  less \
-  yarn
-
-COPY ./package.json /app
-RUN npm install
+RUN chown -R django:django $NPM_CONFIG_PREFIX
 
 COPY ./pip-freeze.txt /app
 RUN pip install --no-cache-dir -r pip-freeze.txt
@@ -40,6 +40,15 @@ RUN chown django /start
 
 RUN chown -R django /app
 USER django
+
+RUN npm install --global \
+  coffeescript \
+  less \
+  yarn
+
+COPY ./package.json /app
+
+RUN npm install
 
 EXPOSE 8000
 ENTRYPOINT ["/start"]
