@@ -43,7 +43,7 @@ USER django
 
 RUN npm install --global \
   coffeescript \
-  less \
+  less@2.7.1 \
   yarn
 
 COPY ./package.json /app
