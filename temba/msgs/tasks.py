@@ -142,7 +142,6 @@ def retry_errored_messages():
 
     errored_msgs = (
         Msg.objects.filter(direction=OUTGOING, status=ERRORED, next_attempt__lte=timezone.now())
-        .exclude(topup=None)
         .exclude(channel__channel_type=AndroidType.code)
         .order_by("created_on")
         .prefetch_related("channel")[:5000]

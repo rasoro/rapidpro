@@ -593,8 +593,6 @@ class Msg(models.Model):
 
     next_attempt = models.DateTimeField(
         null=True,
-        blank=True,
-        default=timezone.now,
         verbose_name=_("Next Attempt"),
         help_text=_("When we should next attempt to deliver this message"),
     )
@@ -640,7 +638,7 @@ class Msg(models.Model):
             models.Index(
                 name="msgs_msg_errored_retry",
                 fields=("created_on", "next_attempt"),
-                condition=Q(direction=OUTGOING, status=ERRORED, next_attempt__isnull=False),
+                condition=Q(direction=OUTGOING, status=ERRORED, next_attempt__isnull=False) & ~Q(msg_type=IVR),
             )
         ]
 
@@ -1777,14 +1775,3 @@ class MessageExportAssetStore(BaseExportAssetStore):
     directory = "message_exports"
     permission = "msgs.msg_export"
     extensions = ("xlsx",)
-
-
-@receiver(models.signals.pre_save, sender=Msg)
-def pre_save_msg(instance, **kwargs):
-    """
-    Clean the field "next_attempt" when create channel type is Android.
-    """
-    from temba.channels.types.android import AndroidType
-
-    if not instance.pk and instance.channel and instance.channel.channel_type == AndroidType.code:
-        instance.next_attempt = None
