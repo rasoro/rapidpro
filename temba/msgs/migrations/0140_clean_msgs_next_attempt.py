@@ -5,7 +5,7 @@ from django.db import migrations, models, transaction
 BATCH_SIZE = 5000
 
 
-def _update_msg_next_attempt(msgs, using, func, log_msg):
+def _update_msg_next_attempt(msgs, using, func, log_msg):  # pragma: no cover
     total = 0
     batch = msgs[:BATCH_SIZE]
     while batch:
@@ -19,7 +19,7 @@ def _update_msg_next_attempt(msgs, using, func, log_msg):
         print(log_msg % count)
 
 
-def msg_next_attempt_clean(apps, schema_editor):
+def msg_next_attempt_clean(apps, schema_editor):  # pragma: no cover
     from temba.channels.types.android import AndroidType
     from temba.msgs.models import ERRORED
 
@@ -38,7 +38,7 @@ def msg_next_attempt_clean(apps, schema_editor):
     _update_msg_next_attempt(msgs, db, lambda msg: None, " > Updated %d msgs.Msg with NULL next_attempt")
 
 
-def reverse_msg_next_attempt(apps, schema_editor):
+def reverse_msg_next_attempt(apps, schema_editor):  # pragma: no cover
     Msg = apps.get_model("msgs", "Msg")
     db = schema_editor.connection.alias
     msgs = Msg.objects.using(db).filter(next_attempt__isnull=True).only("id", "created_on").order_by("id")
