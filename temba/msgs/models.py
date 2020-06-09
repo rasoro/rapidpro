@@ -15,7 +15,6 @@ from django.core.files.temp import NamedTemporaryFile
 from django.db import models, transaction
 from django.db.models import Prefetch, Q, Sum
 from django.db.models.functions import Upper
-from django.dispatch import receiver
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
 
@@ -592,9 +591,7 @@ class Msg(models.Model):
     )
 
     next_attempt = models.DateTimeField(
-        null=True,
-        verbose_name=_("Next Attempt"),
-        help_text=_("When we should next attempt to deliver this message"),
+        null=True, verbose_name=_("Next Attempt"), help_text=_("When we should next attempt to deliver this message")
     )
 
     external_id = models.CharField(

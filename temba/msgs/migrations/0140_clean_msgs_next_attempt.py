@@ -15,7 +15,7 @@ def _update_msg_next_attempt(msgs, using, func, log_msg):
                 msg.next_attempt = func(msg)
                 msg.save(update_fields=["next_attempt"], using=using)
         total += count
-        batch = msgs[total:total + BATCH_SIZE]
+        batch = msgs[total : total + BATCH_SIZE]
         print(log_msg % count)
 
 
@@ -26,9 +26,14 @@ def msg_next_attempt_clean(apps, schema_editor):
     Msg = apps.get_model("msgs", "Msg")
     db = schema_editor.connection.alias
 
-    msgs = Msg.objects.using(db).filter(
-        ~models.Q(status=ERRORED) | models.Q(channel__channel_type=AndroidType.code), next_attempt__isnull=False
-    ).only("id", "next_attempt").order_by("id")
+    msgs = (
+        Msg.objects.using(db)
+        .filter(
+            ~models.Q(status=ERRORED) | models.Q(channel__channel_type=AndroidType.code), next_attempt__isnull=False
+        )
+        .only("id", "next_attempt")
+        .order_by("id")
+    )
 
     _update_msg_next_attempt(msgs, db, lambda msg: None, " > Updated %d msgs.Msg with NULL next_attempt")
 
@@ -44,6 +49,4 @@ class Migration(migrations.Migration):
 
     dependencies = [("msgs", "0139_msgs_next_attempt_null")]
 
-    operations = [
-        migrations.RunPython(msg_next_attempt_clean, reverse_msg_next_attempt),
-    ]
+    operations = [migrations.RunPython(msg_next_attempt_clean, reverse_msg_next_attempt)]
