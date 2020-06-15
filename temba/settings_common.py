@@ -1117,6 +1117,7 @@ CHANNEL_TYPES = [
     "temba.channels.types.hormuud.HormuudType",
     "temba.channels.types.hub9.Hub9Type",
     "temba.channels.types.i2sms.I2SMSType",
+    "temba.channels.types.imimobile.ImiMobileType",
     "temba.channels.types.infobip.InfobipType",
     "temba.channels.types.jasmin.JasminType",
     "temba.channels.types.jiochat.JioChatType",
