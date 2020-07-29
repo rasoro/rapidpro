@@ -28,7 +28,7 @@ from temba.mailroom import FlowValidationException, MailroomException
 from temba.msgs.models import Label
 from temba.orgs.models import Language
 from temba.templates.models import Template, TemplateTranslation
-from temba.tests import AnonymousOrg, CRUDLTestMixin, MockResponse, TembaTest, matchers
+from temba.tests import AnonymousOrg, CRUDLTestMixin, MockResponse, TembaTest, matchers, mock_mailroom
 from temba.tests.engine import MockSessionWriter
 from temba.tests.s3 import MockS3Client
 from temba.tickets.models import Ticketer
@@ -283,7 +283,7 @@ class FlowTest(TembaTest):
 
         # create a translation, but not approved
         TemplateTranslation.get_or_create(
-            self.channel, "affirmation", "eng", "good boy", 0, TemplateTranslation.STATUS_REJECTED, "id1"
+            self.channel, "affirmation", "eng", "US", "good boy", 0, TemplateTranslation.STATUS_REJECTED, "id1"
         )
 
         response = self.client.get(reverse("flows.flow_broadcast", args=[flow.id]))
@@ -308,8 +308,7 @@ class FlowTest(TembaTest):
         self.assertIsNotNone(campaign_event)
 
         # do not archive if the campaign is active
-        changed = Flow.apply_action_archive(self.admin, Flow.objects.filter(pk=flow.pk))
-        self.assertFalse(changed)
+        Flow.apply_action_archive(self.admin, Flow.objects.filter(pk=flow.pk))
 
         flow.refresh_from_db()
         self.assertFalse(flow.is_archived)
@@ -318,9 +317,7 @@ class FlowTest(TembaTest):
         campaign.save()
 
         # can archive if the campaign is archived
-        changed = Flow.apply_action_archive(self.admin, Flow.objects.filter(pk=flow.pk))
-        self.assertTrue(changed)
-        self.assertEqual(changed, [flow.pk])
+        Flow.apply_action_archive(self.admin, Flow.objects.filter(pk=flow.pk))
 
         flow.refresh_from_db()
         self.assertTrue(flow.is_archived)
@@ -335,9 +332,7 @@ class FlowTest(TembaTest):
         campaign_event.save()
 
         # can archive if the campaign is not archived with no active event
-        changed = Flow.apply_action_archive(self.admin, Flow.objects.filter(pk=flow.pk))
-        self.assertTrue(changed)
-        self.assertEqual(changed, [flow.pk])
+        Flow.apply_action_archive(self.admin, Flow.objects.filter(pk=flow.pk))
 
         flow.refresh_from_db()
         self.assertTrue(flow.is_archived)
@@ -1866,22 +1861,25 @@ class FlowTest(TembaTest):
         # can not label
         post_data = dict()
         post_data["action"] = "label"
-        post_data["objects"] = flow.pk
-        post_data["label"] = flow_label.pk
+        post_data["objects"] = flow.id
+        post_data["label"] = flow_label.id
         post_data["add"] = True
 
         response = self.client.post(flow_list_url, post_data, follow=True)
-        self.assertEqual(1, response.context["object_list"].count())
-        self.assertFalse(response.context["object_list"][0].labels.all())
+        self.assertEqual(403, response.status_code)
+
+        flow.refresh_from_db()
+        self.assertEqual(0, flow.labels.count())
 
         # can not archive
         post_data = dict()
         post_data["action"] = "archive"
         post_data["objects"] = flow.pk
         response = self.client.post(flow_list_url, post_data, follow=True)
-        self.assertEqual(1, response.context["object_list"].count())
-        self.assertEqual(response.context["object_list"][0].pk, flow.pk)
-        self.assertFalse(response.context["object_list"][0].is_archived)
+        self.assertEqual(403, response.status_code)
+
+        flow.refresh_from_db()
+        self.assertFalse(flow.is_archived)
 
         # inactive list shouldn't have any flows
         response = self.client.get(flow_archived_url)
@@ -1905,14 +1903,15 @@ class FlowTest(TembaTest):
         response = self.client.get(flow_list_url)
         self.assertEqual(0, len(response.context["object_list"]))
 
-        # can not restore
+        # cannot restore
         post_data = dict()
-        post_data["action"] = "archive"
-        post_data["objects"] = flow.pk
+        post_data["action"] = "restore"
+        post_data["objects"] = flow.id
         response = self.client.post(flow_archived_url, post_data, follow=True)
-        self.assertEqual(1, response.context["object_list"].count())
-        self.assertEqual(response.context["object_list"][0].pk, flow.pk)
-        self.assertTrue(response.context["object_list"][0].is_archived)
+        self.assertEqual(403, response.status_code)
+
+        flow.refresh_from_db()
+        self.assertTrue(flow.is_archived)
 
         response = self.client.get(flow_archived_url)
         self.assertEqual(1, len(response.context["object_list"]))
@@ -2807,13 +2806,13 @@ class FlowCRUDLTest(TembaTest, CRUDLTestMixin):
         self.assertEqual(response.request["PATH_INFO"], reverse("flows.flow_editor_next", args=[language_flow.uuid]))
         self.assertEqual(language_flow.base_language, language.iso_code)
 
-    def test_lists(self):
+    def test_list_views(self):
         flow1 = self.get_flow("color_v13")
         flow2 = self.get_flow("no_ruleset_flow")
 
         # archive second flow
         flow2.is_archived = True
-        flow2.save()
+        flow2.save(update_fields=("is_archived",))
 
         flow3 = Flow.create(self.org, self.admin, "Flow 3", base_language="base")
 
@@ -2827,15 +2826,18 @@ class FlowCRUDLTest(TembaTest, CRUDLTestMixin):
         self.assertEqual(1, response.context["folders"][1]["count"])
 
         # archive it
-        post_data = dict(action="archive", objects=flow1.id)
-        self.client.post(reverse("flows.flow_list"), post_data)
+        response = self.client.post(reverse("flows.flow_list"), {"action": "archive", "objects": flow1.id})
+        self.assertEqual(200, response.status_code)
+
+        # flow should no longer appear in list
         response = self.client.get(reverse("flows.flow_list"))
         self.assertNotContains(response, flow1.name)
         self.assertContains(response, flow3.name)
         self.assertEqual(1, response.context["folders"][0]["count"])
         self.assertEqual(2, response.context["folders"][1]["count"])
 
-        response = self.client.get(reverse("flows.flow_archived"), post_data)
+        # but does appear in archived list
+        response = self.client.get(reverse("flows.flow_archived"))
         self.assertContains(response, flow1.name)
 
         # flow2 should appear before flow since it was created later
@@ -2843,15 +2845,39 @@ class FlowCRUDLTest(TembaTest, CRUDLTestMixin):
         self.assertTrue(flow1, response.context["object_list"][1])
 
         # unarchive it
-        post_data = dict(action="restore", objects=flow1.id)
-        self.client.post(reverse("flows.flow_archived"), post_data)
-        response = self.client.get(reverse("flows.flow_archived"), post_data)
+        response = self.client.post(reverse("flows.flow_archived"), {"action": "restore", "objects": flow1.id})
+        self.assertEqual(200, response.status_code)
+
+        # flow should no longer appear in archived list
+        response = self.client.get(reverse("flows.flow_archived"))
         self.assertNotContains(response, flow1.name)
-        response = self.client.get(reverse("flows.flow_list"), post_data)
+
+        # but does appear in normal list
+        response = self.client.get(reverse("flows.flow_list"))
         self.assertContains(response, flow1.name)
         self.assertContains(response, flow3.name)
         self.assertEqual(2, response.context["folders"][0]["count"])
         self.assertEqual(1, response.context["folders"][1]["count"])
+
+        # can label flows
+        label1 = FlowLabel.create(self.org, "Important")
+        response = self.client.post(
+            reverse("flows.flow_list"), {"action": "label", "objects": flow1.id, "label": label1.id}
+        )
+
+        self.assertEqual(200, response.status_code)
+        self.assertEqual({label1}, set(flow1.labels.all()))
+        self.assertEqual({flow1}, set(label1.flows.all()))
+
+        # and unlabel
+        response = self.client.post(
+            reverse("flows.flow_list"), {"action": "label", "objects": flow1.id, "label": label1.id, "add": False}
+        )
+
+        self.assertEqual(200, response.status_code)
+
+        flow1.refresh_from_db()
+        self.assertEqual(set(), set(flow1.labels.all()))
 
         # voice flows should be included in the count
         Flow.objects.filter(id=flow1.id).update(flow_type=Flow.TYPE_VOICE)
@@ -3824,6 +3850,27 @@ class FlowCRUDLTest(TembaTest, CRUDLTestMixin):
             {"description": "Your flow contains an invalid loop. Please refresh your browser.", "status": "failure"},
         )
 
+    def test_change_language(self):
+        self.org.set_languages(self.admin, ["eng", "spa", "ara"], "eng")
+
+        flow = self.get_flow("favorites_v13")
+
+        change_url = reverse("flows.flow_change_language", args=[flow.id])
+
+        self.assertUpdateSubmit(
+            change_url, {"language": ""}, form_errors={"language": "This field is required."}, object_unchanged=flow
+        )
+
+        self.assertUpdateSubmit(
+            change_url, {"language": "fra"}, form_errors={"language": "Not a valid language."}, object_unchanged=flow
+        )
+
+        self.assertUpdateSubmit(change_url, {"language": "spa"}, success_status=302)
+
+        flow_def = flow.as_json()
+        self.assertIn("eng", flow_def["localization"])
+        self.assertEqual("¿Cuál es tu color favorito?", flow_def["nodes"][0]["actions"][0]["text"])
+
     def test_export_and_download_translation(self):
         Language.create(self.org, self.admin, name="Spanish", iso_code="spa")
 
@@ -4368,7 +4415,8 @@ class ExportFlowResultsTest(TembaTest):
         filename = "%s/test_orgs/%d/results_exports/%s.xlsx" % (settings.MEDIA_ROOT, self.org.pk, task.uuid)
         return load_workbook(filename=os.path.join(settings.MEDIA_ROOT, filename))
 
-    def test_export_results(self):
+    @mock_mailroom
+    def test_export_results(self, mr_mocks):
         flow = self.get_flow("color_v13")
         flow_nodes = flow.as_json()["nodes"]
         color_prompt = flow_nodes[0]
@@ -4386,8 +4434,12 @@ class ExportFlowResultsTest(TembaTest):
             }
         )
 
-        self.contact.update_urns(self.admin, ["tel:+250788382382", "twitter:erictweets"])
+        age = self.create_field("age", "Age")
         devs = self.create_group("Devs", [self.contact])
+
+        mods = self.contact.update_fields({age: "36"})
+        mods += self.contact.update_urns(["tel:+250788382382", "twitter:erictweets"])
+        self.contact.modify(self.admin, mods)
 
         # contact name with an illegal character
         self.contact3.name = "Nor\02bert"
@@ -4802,9 +4854,6 @@ class ExportFlowResultsTest(TembaTest):
         )
 
         # test export with a contact field
-        age = ContactField.get_or_create(self.org, self.admin, "age", "Age")
-        self.contact.set_field(self.admin, "age", "36")
-
         with self.assertNumQueries(43):
             workbook = self._export(
                 flow,
@@ -4814,9 +4863,6 @@ class ExportFlowResultsTest(TembaTest):
                 extra_urns=["twitter", "line"],
                 group_memberships=[devs],
             )
-
-        # try setting the field again
-        self.contact.set_field(self.admin, "age", "36")
 
         tz = self.org.timezone
         (sheet_runs,) = workbook.worksheets

@@ -52,7 +52,7 @@ from temba.utils.fields import ContactSearchWidget, JSONField, OmniboxChoice, Se
 from temba.utils.s3 import public_file_storage
 from temba.utils.text import slugify_with
 from temba.utils.uuid import uuid4
-from temba.utils.views import BaseActionForm, NonAtomicMixin
+from temba.utils.views import BulkActionMixin, NonAtomicMixin
 
 from .models import (
     ExportFlowResultsTask,
@@ -148,59 +148,6 @@ class BaseFlowForm(forms.ModelForm):
         fields = "__all__"
 
 
-class FlowActionForm(BaseActionForm):
-    allowed_actions = (
-        ("archive", _("Archive Flows")),
-        ("label", _("Label Messages")),
-        ("restore", _("Restore Flows")),
-    )
-
-    model = Flow
-    label_model = FlowLabel
-    has_is_active = True
-
-    class Meta:
-        fields = ("action", "objects", "label", "add")
-
-
-class FlowActionMixin(SmartListView):
-    def dispatch(self, *args, **kwargs):
-        return super().dispatch(*args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        user = self.request.user
-        org = user.get_org()
-
-        form = FlowActionForm(self.request.POST, org=org, user=user)
-
-        toast = None
-        ignored = []
-        if form.is_valid():
-            changed = form.execute().get("changed")
-            for flow in form.cleaned_data["objects"]:
-                if flow.id not in changed:
-                    ignored.append(flow.name)
-
-            if form.cleaned_data["action"] == "archive" and ignored:
-                if len(ignored) > 1:
-                    toast = _(
-                        "%s are used inside a campaign. To archive them, first remove them from your campaigns."
-                        % " and ".join(ignored)
-                    )
-                else:
-                    toast = _(
-                        "%s is used inside a campaign. To archive it, first remove it from your campaigns."
-                        % ignored[0]
-                    )
-
-        response = self.get(request, *args, **kwargs)
-
-        if toast:
-            response["Temba-Toast"] = toast
-
-        return response
-
-
 class PartialTemplate(SmartTemplateView):  # pragma: no cover
     def pre_process(self, request, *args, **kwargs):
         self.template = kwargs["template"]
@@ -249,6 +196,7 @@ class FlowCRUDL(SmartCRUDL):
         "delete",
         "update",
         "simulate",
+        "change_language",
         "export_translation",
         "download_translation",
         "import_translation",
@@ -790,7 +738,7 @@ class FlowCRUDL(SmartCRUDL):
             )
             return {"type": file.content_type, "url": f"{settings.STORAGE_URL}/{url}"}
 
-    class BaseList(FlowActionMixin, OrgQuerysetMixin, OrgPermsMixin, SmartListView):
+    class BaseList(OrgQuerysetMixin, OrgPermsMixin, BulkActionMixin, SmartListView):
         title = _("Flows")
         refresh = 10000
         fields = ("name", "modified_on")
@@ -805,7 +753,6 @@ class FlowCRUDL(SmartCRUDL):
             context["labels"] = self.get_flow_labels()
             context["campaigns"] = self.get_campaigns()
             context["request_url"] = self.request.path
-            context["actions"] = self.actions
 
             # decorate flow objects with their run activity stats
             for flow in context["object_list"]:
@@ -832,6 +779,21 @@ class FlowCRUDL(SmartCRUDL):
             return (
                 events.values("campaign__name", "campaign__id").annotate(count=Count("id")).order_by("campaign__name")
             )
+
+        def apply_bulk_action(self, user, action, objects, label):
+            super().apply_bulk_action(user, action, objects, label)
+
+            if action == "archive":
+                ignored = objects.filter(is_archived=False)
+                if ignored:
+                    flow_names = ", ".join([f.name for f in ignored])
+                    raise forms.ValidationError(
+                        _("The following flows are still used by campaigns so could not be archived: %(flows)s"),
+                        params={"flows": flow_names},
+                    )
+
+        def get_bulk_action_labels(self):
+            return self.get_user().get_org().flow_labels.all()
 
         def get_flow_labels(self):
             labels = []
@@ -862,7 +824,7 @@ class FlowCRUDL(SmartCRUDL):
             ]
 
     class Archived(BaseList):
-        actions = ("restore",)
+        bulk_actions = ("restore",)
         default_order = ("-created_on",)
 
         def derive_queryset(self, *args, **kwargs):
@@ -870,7 +832,7 @@ class FlowCRUDL(SmartCRUDL):
 
     class List(BaseList):
         title = _("Flows")
-        actions = ("archive", "label")
+        bulk_actions = ("archive", "label")
 
         def derive_queryset(self, *args, **kwargs):
             queryset = super().derive_queryset(*args, **kwargs)
@@ -886,7 +848,7 @@ class FlowCRUDL(SmartCRUDL):
             return queryset
 
     class Campaign(BaseList, OrgObjPermsMixin):
-        actions = ["label"]
+        bulk_actions = ("label",)
         campaign = None
 
         @classmethod
@@ -926,7 +888,7 @@ class FlowCRUDL(SmartCRUDL):
 
     class Filter(BaseList, OrgObjPermsMixin):
         add_button = True
-        actions = ["unlabel", "label"]
+        bulk_actions = ("unlabel", "label")
 
         def get_gear_links(self):
             links = []
@@ -1292,6 +1254,37 @@ class FlowCRUDL(SmartCRUDL):
                 )
 
             return links
+
+    class ChangeLanguage(OrgObjPermsMixin, SmartUpdateView):
+        class Form(forms.Form):
+            language = forms.CharField(required=True)
+
+            def __init__(self, user, instance, *args, **kwargs):
+                self.user = user
+
+                super().__init__(*args, **kwargs)
+
+            def clean_language(self):
+                data = self.cleaned_data["language"]
+                if data and data not in self.user.get_org().get_language_codes():
+                    raise ValidationError(_("Not a valid language."))
+
+                return data
+
+        form_class = Form
+        success_url = "uuid@flows.flow_editor"
+
+        def get_form_kwargs(self):
+            kwargs = super().get_form_kwargs()
+            kwargs["user"] = self.request.user
+            return kwargs
+
+        def form_valid(self, form):
+            flow_def = mailroom.get_client().flow_change_language(self.object.as_json(), form.cleaned_data["language"])
+
+            self.object.save_revision(self.get_user(), flow_def)
+
+            return HttpResponseRedirect(self.success_url)
 
     class ExportTranslation(OrgObjPermsMixin, ModalMixin, SmartUpdateView):
         class Form(forms.Form):
@@ -2092,14 +2085,22 @@ class FlowCRUDL(SmartCRUDL):
                 if self.flow.is_starting():
                     raise ValidationError(
                         _(
-                            "This flow is already being started, please wait until that process is complete before starting more contacts."
+                            "This flow is already being started, please wait until that process is complete before "
+                            "starting more contacts."
                         )
                     )
 
-                if self.flow.org.is_suspended():
+                if self.flow.org.is_suspended:
                     raise ValidationError(
                         _(
-                            "Sorry, your account is currently suspended. To enable sending messages, please contact support."
+                            "Sorry, your account is currently suspended. "
+                            "To enable starting flows, please contact support."
+                        )
+                    )
+                if self.flow.org.is_flagged:
+                    raise ValidationError(
+                        _(
+                            "Sorry, your account is currently flagged. To enable starting flows, please contact support."
                         )
                     )
 
