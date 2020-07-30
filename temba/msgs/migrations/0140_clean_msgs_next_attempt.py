@@ -5,7 +5,7 @@ from django.db import migrations, models
 BATCH_SIZE = 5000
 
 
-def _bulk_update(apps, query, using: str, get_next_attempts, log_msg: str, fields: list = None):
+def _bulk_update(apps, query, using: str, get_next_attempts, log_msg: str, fields: list = None):  # pragma: no cover
     def process():
         nonlocal total
         counter = 0
@@ -26,7 +26,7 @@ def _bulk_update(apps, query, using: str, get_next_attempts, log_msg: str, field
         print(f"   > {log_msg % total}")
 
 
-def msg_next_attempt_clean(apps, schema_editor):  # pragma: no cover
+def msg_next_attempt_clean(apps, schema_editor=None):  # pragma: no cover
     from temba.channels.types.android import AndroidType
     from temba.msgs.models import ERRORED
 
@@ -34,19 +34,25 @@ def msg_next_attempt_clean(apps, schema_editor):  # pragma: no cover
     query = models.Q(
         ~models.Q(status=ERRORED) | models.Q(channel__channel_type=AndroidType.code), next_attempt__isnull=False
     )
-    _bulk_update(apps, query, schema_editor.connection.alias, lambda m: None, msg)
+    _bulk_update(apps, query, schema_editor and schema_editor.connection.alias, lambda m: None, msg)
 
 
-def reverse_msg_next_attempt(apps, schema_editor):  # pragma: no cover
+def reverse_msg_next_attempt(apps, schema_editor=None):  # pragma: no cover
     msg = "Updated %d msgs.Msg with NULL next_attempt"
     _bulk_update(
         apps,
         models.Q(next_attempt__isnull=True),
-        schema_editor.connection.alias,
+        schema_editor and schema_editor.connection.alias,
         lambda m: m.created_on,
         msg,
         ["created_on"],
     )
+
+
+def apply_manual():  # pragma: no cover
+    from django.apps import apps
+
+    msg_next_attempt_clean(apps)
 
 
 class Migration(migrations.Migration):
