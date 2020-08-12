@@ -1908,8 +1908,16 @@ class ChannelConnection(models.Model):
 
     class Meta:
         indexes = [
-            models.Index(name="channels_conn_ch_id_status_idx", fields=("channel", "status")),
-            models.Index(name="channels_conn_external_id_idx", fields=("channel", "connection_type", "external_id")),
+            models.Index(
+                name="channels_conn_ch_id_status_idx",
+                fields=("channel", "status"),
+                condition=Q(status__in=["W", "R", "I"]),
+            ),
+            models.Index(
+                name="channels_conn_external_id_idx",
+                fields=("channel", "external_id"),
+                condition=Q(connection_type="V"),
+            ),
         ]
 
     def __init__(self, *args, **kwargs):
