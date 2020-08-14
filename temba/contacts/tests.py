@@ -5248,13 +5248,8 @@ class ContactTest(TembaTest):
         field_language = self.org.contactfields.get(key="language")
         field_name = self.org.contactfields.get(key="name")
 
-        self.assertEqual(joe.get_field_serialized(field_created_on), joe.created_on)
         self.assertEqual(joe.get_field_display(field_created_on), self.org.format_datetime(joe.created_on))
-
-        self.assertEqual(joe.get_field_serialized(field_language), joe.language)
         self.assertEqual(joe.get_field_display(field_language), "eng")
-
-        self.assertEqual(joe.get_field_serialized(field_name), joe.name)
         self.assertEqual(joe.get_field_display(field_name), "Joe Blow")
 
         # create a system field that is not supported
@@ -5262,7 +5257,7 @@ class ContactTest(TembaTest):
             org_id=self.org.id, key="iban", label="IBAN", created_by_id=self.admin.id, modified_by_id=self.admin.id
         )
 
-        self.assertRaises(ValueError, joe.get_field_serialized, field_iban)
+        self.assertRaises(AssertionError, joe.get_field_serialized, field_iban)
         self.assertRaises(ValueError, joe.get_field_display, field_iban)
 
     def test_set_location_fields(self):
@@ -7291,3 +7286,28 @@ class PopulateLastSeenOn2Test(MigrationTest):
         self.assertEqual(datetime(2020, 8, 2, 13, 0, 0, 0, pytz.UTC), self.contact2.last_seen_on)
         self.assertEqual(None, self.contact3.last_seen_on)
         self.assertEqual(datetime(2020, 8, 4, 13, 0, 0, 0, pytz.UTC), self.contact4.last_seen_on)
+
+
+class LastSeenOnSystemFieldTest(MigrationTest):
+    app = "contacts"
+    migrate_from = "0111_populate_last_seen_on_2"
+    migrate_to = "0112_last_seen_on_sys_field"
+
+    def setUpBeforeMigration(self, apps):
+        # org 2 already has the field
+        self.org2.contactfields.create(
+            field_type="S",
+            key="last_seen_on",
+            label="Last Seen On",
+            value_type="D",
+            show_in_table=False,
+            created_by=self.org2.created_by,
+            modified_by=self.org2.modified_by,
+        )
+
+    def test_migration(self):
+        self.org.refresh_from_db()
+        self.org2.refresh_from_db()
+
+        self.assertEqual(1, self.org.contactfields.filter(field_type="S", key="last_seen_on").count())
+        self.assertEqual(1, self.org2.contactfields.filter(field_type="S", key="last_seen_on").count())
