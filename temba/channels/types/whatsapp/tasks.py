@@ -102,8 +102,8 @@ def refresh_whatsapp_tokens():
 
                 channel.config["auth_token"] = resp.json()["users"][0]["token"]
                 channel.save(update_fields=["config"])
-            except RequestException:
-                pass
+            except Exception as e:
+                logger.error(f"Error refreshing whatsapp token: {str(e)}", exc_info=True)
 
 
 VARIABLE_RE = re.compile(r"{{(\d+)}}")
