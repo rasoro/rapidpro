@@ -203,6 +203,7 @@ MIDDLEWARE = (
     "temba.middleware.OrgTimezoneMiddleware",
     "temba.middleware.ActivateLanguageMiddleware",
     "temba.middleware.OrgHeaderMiddleware",
+    "mozilla_django_oidc.middleware.SessionRefresh",
 )
 
 # security middleware configuration
@@ -218,6 +219,7 @@ SITEMAP = ("public.public_index", "public.public_blog", "public.video_list", "ap
 
 INSTALLED_APPS = (
     "django.contrib.auth",
+    "mozilla_django_oidc",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.sites",
@@ -291,6 +293,16 @@ LOGGING = {
         "django.security.DisallowedHost": {"handlers": ["null"], "propagate": False},
         "django.db.backends": {"level": "ERROR", "handlers": ["console"], "propagate": False},
     },
+}
+LOGGING["loggers"]["mozilla_django_oidc"] = {
+    "level": "DEBUG",
+    "handlers": ["console"],
+    "propagate": False,
+}
+LOGGING["loggers"]["connect_django_oidc"] = {
+    "level": "DEBUG",
+    "handlers": ["console"],
+    "propagate": False,
 }
 
 # the name of our topup plan
@@ -881,7 +893,8 @@ LOGOUT_URL = "/users/logout/"
 LOGIN_REDIRECT_URL = "/org/choose/"
 LOGOUT_REDIRECT_URL = "/"
 
-AUTHENTICATION_BACKENDS = ("smartmin.backends.CaseInsensitiveBackend",)
+# AUTHENTICATION_BACKENDS = ("smartmin.backends.CaseInsensitiveBackend",)
+AUTHENTICATION_BACKENDS = ('temba.oidc_authentication.ConnectOIDCAuthenticationBackend',)
 
 ANONYMOUS_USER_NAME = "AnonymousUser"
 
@@ -896,9 +909,9 @@ TEST_EXCLUDE = ("smartmin",)
 # -----------------------------------------------------------------------------------
 _default_database_config = {
     "ENGINE": "django.contrib.gis.db.backends.postgis",
-    "NAME": "temba",
-    "USER": "temba",
-    "PASSWORD": "temba",
+    "NAME": "rapidpro",
+    "USER": "postgres",
+    "PASSWORD": "99443543",
     "HOST": "localhost",
     "PORT": "5432",
     "ATOMIC_REQUESTS": True,
@@ -996,6 +1009,7 @@ CACHES = {
 REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        'mozilla_django_oidc.contrib.drf.OIDCAuthentication',
         "temba.api.support.APISessionAuthentication",
         "temba.api.support.APITokenAuthentication",
         "temba.api.support.APIBasicAuthentication",
@@ -1017,6 +1031,21 @@ REST_FRAMEWORK = {
     "STRICT_JSON": False,
 }
 REST_HANDLE_EXCEPTIONS = not TESTING
+
+# mozilla-django-oidc
+OIDC_RP_CLIENT_ID = "rapidpro"
+OIDC_RP_CLIENT_SECRET = 'f7bcee56-9588-45a5-9fcd-b12457055cfb'
+OIDC_OP_AUTHORIZATION_ENDPOINT = 'http://localhost:8080/auth/realms/example/protocol/openid-connect/auth'
+OIDC_OP_TOKEN_ENDPOINT = 'http://localhost:8080/auth/realms/example/protocol/openid-connect/token'
+OIDC_OP_USER_ENDPOINT = 'http://localhost:8080/auth/realms/example/protocol/openid-connect/userinfo'
+OIDC_OP_JWKS_ENDPOINT = 'http://localhost:8080/auth/realms/example/protocol/openid-connect/certs'
+OIDC_RP_SIGN_ALGO = "RS256"
+OIDC_OP_LOGOUT_ENDPOINT = 'http://localhost:8080/auth/realms/example/protocol/openid-connect/logout'
+
+# OIDC_AUTHENTICATE_CLASS = 'bothub.authentication.views.ConnectOIDCAuthenticationRequestView'
+# OIDC_CALLBACK_CLASS = 'bothub.authentication.views.ConnectOIDCAuthenticationCallbackView'
+OIDC_DRF_AUTH_BACKEND = 'temba.oidc_authentication.ConnectOIDCAuthenticationBackend'
+# LOGIN_REDIRECT_URL = '/v2/account/get-token/'
 
 # -----------------------------------------------------------------------------------
 # Django Compressor configuration
