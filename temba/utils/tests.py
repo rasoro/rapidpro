@@ -471,9 +471,9 @@ class TemplateTagTest(TembaTest):
             org=self.org, keyword="trigger", flow=flow, created_by=self.admin, modified_by=self.admin
         )
 
-        self.assertEqual("icon-instant", icon(campaign))
+        self.assertEqual("icon-campaign", icon(campaign))
         self.assertEqual("icon-feed", icon(trigger))
-        self.assertEqual("icon-tree", icon(flow))
+        self.assertEqual("icon-flow", icon(flow))
         self.assertEqual("", icon(None))
 
     def test_format_datetime(self):
@@ -1152,11 +1152,11 @@ class MakeTestDBTest(SmartminTestMixin, TransactionTestCase):
         assertOrgCounts(ContactGroup.user_groups.all(), [10, 10, 10])
         assertOrgCounts(Contact.objects.all(), [15, 12, 3])
 
-        org_1_all_contacts = ContactGroup.system_groups.get(org=org1, name="All Contacts")
+        org_1_active_contacts = ContactGroup.system_groups.get(org=org1, name="Active")
 
-        self.assertEqual(org_1_all_contacts.contacts.count(), 15)
+        self.assertEqual(org_1_active_contacts.contacts.count(), 15)
         self.assertEqual(
-            list(ContactGroupCount.objects.filter(group=org_1_all_contacts).values_list("count")), [(15,)]
+            list(ContactGroupCount.objects.filter(group=org_1_active_contacts).values_list("count")), [(15,)]
         )
 
         # same seed should generate objects with same UUIDs
@@ -1672,14 +1672,19 @@ class AnalyticsTest(TestCase):
         )
 
 
-class IDSliceQuerySetTest(TestCase):
-    def test_query_set(self):
-        users = IDSliceQuerySet(User, [1], 0, 1)
-        self.assertEqual(1, users[0].id)
-        self.assertEqual(1, users[0:1][0].id)
+class IDSliceQuerySetTest(TembaTest):
+    def test_slicing(self):
+        empty = IDSliceQuerySet(User, [], 0, 0)
+        self.assertEqual(0, len(empty))
+
+        users = IDSliceQuerySet(User, [self.user.id, self.editor.id, self.admin.id], 0, 3)
+        self.assertEqual(self.user.id, users[0].id)
+        self.assertEqual(self.editor.id, users[0:3][1].id)
+        self.assertEqual(0, users.offset)
+        self.assertEqual(3, users.total)
 
         with self.assertRaises(IndexError):
-            users[2]
+            users[4]
 
         with self.assertRaises(IndexError):
             users[-1]
@@ -1690,9 +1695,9 @@ class IDSliceQuerySetTest(TestCase):
         with self.assertRaises(TypeError):
             users["foo"]
 
-        users = IDSliceQuerySet(User, [1], 10, 100)
-        self.assertEqual(1, users[10].id)
-        self.assertEqual(1, users[10:11][0].id)
+        users = IDSliceQuerySet(User, [self.user.id, self.editor.id, self.admin.id], 10, 100)
+        self.assertEqual(self.user.id, users[10].id)
+        self.assertEqual(self.user.id, users[10:11][0].id)
 
         with self.assertRaises(IndexError):
             users[0]
@@ -1700,8 +1705,34 @@ class IDSliceQuerySetTest(TestCase):
         with self.assertRaises(IndexError):
             users[11:15]
 
-        users = IDSliceQuerySet(User, [], 0, 0)
-        self.assertEqual(0, len(users))
+    def test_filter(self):
+        users = IDSliceQuerySet(User, [self.user.id, self.editor.id, self.admin.id], 10, 100)
+
+        filtered = users.filter(pk=self.user.id)
+        self.assertEqual(User, filtered.model)
+        self.assertEqual([self.user.id], filtered.ids)
+        self.assertEqual(0, filtered.offset)
+        self.assertEqual(1, filtered.total)
+
+        filtered = users.filter(pk__in=[self.user.id, self.admin.id])
+        self.assertEqual(User, filtered.model)
+        self.assertEqual([self.user.id, self.admin.id], filtered.ids)
+        self.assertEqual(0, filtered.offset)
+        self.assertEqual(2, filtered.total)
+
+        # pks can be strings
+        filtered = users.filter(pk=str(self.user.id))
+        self.assertEqual([self.user.id], filtered.ids)
+
+        # only filtering by pk is supported
+        with self.assertRaises(ValueError):
+            users.filter(name="Bob")
+
+    def test_none(self):
+        users = IDSliceQuerySet(User, [self.user.id, self.editor.id], 0, 2)
+        empty = users.none()
+        self.assertEqual([], empty.ids)
+        self.assertEqual(0, empty.total)
 
 
 class RedactTest(TestCase):
