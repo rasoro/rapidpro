@@ -128,7 +128,7 @@ class ContactGroupForm(forms.ModelForm):
 
         try:
             parsed = parse_query(self.org.id, self.cleaned_data["query"])
-            if not parsed.allow_as_group:
+            if not parsed.metadata.allow_as_group:
                 raise forms.ValidationError(_('You cannot create a dynamic group based on "id" or "group".'))
 
             if (
@@ -264,7 +264,7 @@ class ContactListView(OrgPermsMixin, BulkActionMixin, SmartListView):
             try:
                 results = search_contacts(org.id, str(group.uuid), search_query, sort_on, offset)
                 self.parsed_query = results.query if len(results.query) > 0 else None
-                self.save_dynamic_search = results.allow_as_group
+                self.save_dynamic_search = results.metadata.allow_as_group
 
                 return IDSliceQuerySet(Contact, results.contact_ids, offset, results.total)
             except SearchException as e:
@@ -1078,7 +1078,7 @@ class ContactCRUDL(SmartCRUDL):
         def get_gear_links(self):
             links = []
 
-            if self.has_org_perm("msgs.broadcast_send") and not self.object.is_blocked and not self.object.is_stopped:
+            if self.has_org_perm("msgs.broadcast_send") and self.object.status == Contact.STATUS_ACTIVE:
                 links.append(
                     dict(
                         id="send-message",
@@ -1096,7 +1096,7 @@ class ContactCRUDL(SmartCRUDL):
                     dict(title=_("Custom Fields"), style="btn-primary", js_class="update-contact-fields", href="#")
                 )
 
-                if self.has_org_perm("contacts.contact_block") and not self.object.is_blocked:
+                if self.has_org_perm("contacts.contact_block") and self.object.status != Contact.STATUS_BLOCKED:
                     links.append(
                         dict(
                             title=_("Block"),
@@ -1106,7 +1106,7 @@ class ContactCRUDL(SmartCRUDL):
                         )
                     )
 
-                if self.has_org_perm("contacts.contact_unblock") and self.object.is_blocked:
+                if self.has_org_perm("contacts.contact_unblock") and self.object.status == Contact.STATUS_BLOCKED:
                     links.append(
                         dict(
                             title=_("Unblock"),
@@ -1116,7 +1116,7 @@ class ContactCRUDL(SmartCRUDL):
                         )
                     )
 
-                if self.has_org_perm("contacts.contact_unstop") and self.object.is_stopped:
+                if self.has_org_perm("contacts.contact_unstop") and self.object.status == Contact.STATUS_STOPPED:
                     links.append(
                         dict(
                             title=_("Unstop"),
@@ -1216,7 +1216,7 @@ class ContactCRUDL(SmartCRUDL):
                 summary = {
                     "total": results.total,
                     "query": results.query,
-                    "fields": results.fields,
+                    "fields": results.metadata.fields,
                     "sample": IDSliceQuerySet(Contact, results.contact_ids, 0, results.total)[0:samples],
                 }
             except SearchException as e:
@@ -1243,9 +1243,10 @@ class ContactCRUDL(SmartCRUDL):
             summary["sample"] = json_contacts
 
             # add in our field defs
+            field_keys = [f["key"] for f in summary["fields"]]
             summary["fields"] = {
                 str(f.uuid): {"label": f.label}
-                for f in ContactField.user_fields.filter(org=org, key__in=summary["fields"], is_active=True)
+                for f in ContactField.user_fields.filter(org=org, key__in=field_keys, is_active=True)
             }
             return JsonResponse(summary)
 
@@ -1356,19 +1357,6 @@ class ContactCRUDL(SmartCRUDL):
 
     class Create(ModalMixin, OrgPermsMixin, SmartCreateView):
         form_class = ContactForm
-        exclude = (
-            "is_active",
-            "uuid",
-            "language",
-            "org",
-            "fields",
-            "is_blocked",
-            "is_stopped",
-            "created_by",
-            "modified_by",
-            "is_test",
-            "channel",
-        )
         success_message = ""
         submit_button_name = _("Create")
 
@@ -1408,7 +1396,7 @@ class ContactCRUDL(SmartCRUDL):
             if not obj.org.primary_language:
                 exclude.append("language")
 
-            if obj.is_blocked:
+            if obj.status != Contact.STATUS_ACTIVE:
                 exclude.append("groups")
 
             return exclude
