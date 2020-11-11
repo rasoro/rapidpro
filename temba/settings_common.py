@@ -206,6 +206,8 @@ MIDDLEWARE = (
     "mozilla_django_oidc.middleware.SessionRefresh",
 )
 
+ALLOWED_HOSTS = ["*"]
+
 # security middleware configuration
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
@@ -1032,15 +1034,18 @@ REST_FRAMEWORK = {
 }
 REST_HANDLE_EXCEPTIONS = not TESTING
 
+
+X_FRAME_OPTIONS = 'ALLOW-FROM http://localhost:9000/'
+
 # mozilla-django-oidc
 OIDC_RP_CLIENT_ID = "rapidpro"
-OIDC_RP_CLIENT_SECRET = 'f7bcee56-9588-45a5-9fcd-b12457055cfb'
-OIDC_OP_AUTHORIZATION_ENDPOINT = 'http://localhost:8080/auth/realms/example/protocol/openid-connect/auth'
-OIDC_OP_TOKEN_ENDPOINT = 'http://localhost:8080/auth/realms/example/protocol/openid-connect/token'
-OIDC_OP_USER_ENDPOINT = 'http://localhost:8080/auth/realms/example/protocol/openid-connect/userinfo'
-OIDC_OP_JWKS_ENDPOINT = 'http://localhost:8080/auth/realms/example/protocol/openid-connect/certs'
+OIDC_RP_CLIENT_SECRET = '00ed8aab-17f3-4e9b-a0ca-bbe168e95eba'
+OIDC_OP_AUTHORIZATION_ENDPOINT = 'https://keycloak-staging.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/auth'
+OIDC_OP_TOKEN_ENDPOINT = 'https://keycloak-staging.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/token'
+OIDC_OP_USER_ENDPOINT = 'https://keycloak-staging.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/userinfo'
+OIDC_OP_JWKS_ENDPOINT = 'https://keycloak-staging.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/certs'
 OIDC_RP_SIGN_ALGO = "RS256"
-OIDC_OP_LOGOUT_ENDPOINT = 'http://localhost:8080/auth/realms/example/protocol/openid-connect/logout'
+OIDC_OP_LOGOUT_ENDPOINT = 'https://keycloak-staging.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/logout'
 
 # OIDC_AUTHENTICATE_CLASS = 'bothub.authentication.views.ConnectOIDCAuthenticationRequestView'
 # OIDC_CALLBACK_CLASS = 'bothub.authentication.views.ConnectOIDCAuthenticationCallbackView'
