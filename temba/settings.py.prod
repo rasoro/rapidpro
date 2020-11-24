@@ -77,6 +77,12 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["v2.messages"] = env("V2_MESSAGES", def
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["v2.broadcasts"] = env("V2_BROADCASTS", default="36000/hour")
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["v2.runs"] = env("V2_RUNS", default="3000/hour")
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["v2.api"] = env("V2_API", default="3000/hour")
+REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
+    "mozilla_django_oidc.contrib.drf.OIDCAuthentication",
+    "temba.api.support.APISessionAuthentication",
+    "temba.api.support.APITokenAuthentication",
+    "temba.api.support.APIBasicAuthentication",
+),
 
 
 # EMAIL
@@ -112,6 +118,7 @@ COMPRESS_OFFLINE_CONTEXT = dict(
 MIDDLEWARE = (
     "elasticapm.contrib.django.middleware.TracingMiddleware",
     "elasticapm.contrib.django.middleware.Catch404Middleware",
+    "mozilla_django_oidc.middleware.SessionRefresh",
 ) + MIDDLEWARE
 
 # REDIS
@@ -187,7 +194,7 @@ ELASTICSEARCH_URL = env("ELASTICSEARCH_URL")
 
 # APPS
 # ------------------------------------------------------------------------------
-INSTALLED_APPS += ("gunicorn", "storages", "elasticapm.contrib.django")
+INSTALLED_APPS += ("gunicorn", "storages", "elasticapm.contrib.django", "mozilla_django_oidc")
 
 # SENTRY
 # ------------------------------------------------------------------------------
@@ -212,6 +219,8 @@ LOGGING = {
         "elasticapm.errors": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "pycountry": {"level": "ERROR", "handlers": ["console"], "propagate": False},
         "django.security.DisallowedHost": {"handlers": ["null"], "propagate": False},
+        "mozilla_django_oidc": {"handlers": ["console"], "propagate": False, "level": "DEBUG"},
+        "connect_django_oidc": {"handlers": ["console"], "propagate": False, "level": "DEBUG"},
     },
 }
 
@@ -250,3 +259,25 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # APPLICATION LOGS
 # -----------------------------------------------------------------------------------
 FLOW_SESSION_TRIM_DAYS = env.int("FLOW_SESSION_TRIM_DAYS", default=7)
+
+X_FRAME_OPTIONS = 'ALLOW-FROM http://connect-dev.ilhasoft.dev:9000/'
+
+# -----------------------------------------------------------------------------------
+# mozilla-django-oidc ..
+# -----------------------------------------------------------------------------------
+OIDC_RP_CLIENT_ID = "rapidpro"
+OIDC_RP_CLIENT_SECRET = 'ace066df-33bb-49d8-b551-e6a47d5408d6'
+OIDC_OP_AUTHORIZATION_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/auth'
+OIDC_OP_TOKEN_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/token'
+OIDC_OP_USER_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/userinfo'
+OIDC_OP_JWKS_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/certs'
+OIDC_RP_SIGN_ALGO = "RS256"
+OIDC_OP_LOGOUT_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/logout'
+OIDC_STORE_ID_TOKEN = True
+OIDC_VERIFY_SSL = False
+# OIDC_TOKEN_USE_BASIC_AUTH = True
+
+# OIDC_AUTHENTICATE_CLASS = 'bothub.authentication.views.ConnectOIDCAuthenticationRequestView'
+# OIDC_CALLBACK_CLASS = 'bothub.authentication.views.ConnectOIDCAuthenticationCallbackView'
+OIDC_DRF_AUTH_BACKEND = 'temba.oidc_authentication.ConnectOIDCAuthenticationBackend'
+AUTHENTICATION_BACKENDS = ('temba.oidc_authentication.ConnectOIDCAuthenticationBackend',)
