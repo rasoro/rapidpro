@@ -193,6 +193,7 @@ FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 MIDDLEWARE = (
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -205,6 +206,8 @@ MIDDLEWARE = (
     "temba.middleware.OrgHeaderMiddleware",
     "mozilla_django_oidc.middleware.SessionRefresh",
 )
+
+CORS_ORIGIN_ALLOW_ALL = True
 
 ALLOWED_HOSTS = ["*"]
 
@@ -276,6 +279,7 @@ INSTALLED_APPS = (
     "temba.airtime",
     "temba.sql",
     "temba.two_factor",
+    "corsheaders",
 )
 
 # the last installed app that uses smartmin permissions
@@ -1035,17 +1039,20 @@ REST_FRAMEWORK = {
 REST_HANDLE_EXCEPTIONS = not TESTING
 
 
-X_FRAME_OPTIONS = 'ALLOW-FROM http://localhost:9000/'
+X_FRAME_OPTIONS = 'ALLOW-FROM http://connect-dev.ilhasoft.dev:9000/'
 
 # mozilla-django-oidc
 OIDC_RP_CLIENT_ID = "rapidpro"
-OIDC_RP_CLIENT_SECRET = '00ed8aab-17f3-4e9b-a0ca-bbe168e95eba'
-OIDC_OP_AUTHORIZATION_ENDPOINT = 'https://keycloak-staging.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/auth'
-OIDC_OP_TOKEN_ENDPOINT = 'https://keycloak-staging.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/token'
-OIDC_OP_USER_ENDPOINT = 'https://keycloak-staging.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/userinfo'
-OIDC_OP_JWKS_ENDPOINT = 'https://keycloak-staging.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/certs'
+OIDC_RP_CLIENT_SECRET = 'ace066df-33bb-49d8-b551-e6a47d5408d6'
+OIDC_OP_AUTHORIZATION_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/auth'
+OIDC_OP_TOKEN_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/token'
+OIDC_OP_USER_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/userinfo'
+OIDC_OP_JWKS_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/certs'
 OIDC_RP_SIGN_ALGO = "RS256"
-OIDC_OP_LOGOUT_ENDPOINT = 'https://keycloak-staging.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/logout'
+OIDC_OP_LOGOUT_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/logout'
+OIDC_STORE_ID_TOKEN = True
+OIDC_VERIFY_SSL = False
+# OIDC_TOKEN_USE_BASIC_AUTH = True
 
 # OIDC_AUTHENTICATE_CLASS = 'bothub.authentication.views.ConnectOIDCAuthenticationRequestView'
 # OIDC_CALLBACK_CLASS = 'bothub.authentication.views.ConnectOIDCAuthenticationCallbackView'
