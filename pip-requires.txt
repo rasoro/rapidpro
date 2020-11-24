@@ -63,6 +63,7 @@ sentry-sdk
 django-environ
 whitenoise
 elastic-apm
+mozilla-django-oidc
 
 ########################## testing ##########################
 black
