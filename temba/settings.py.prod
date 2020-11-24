@@ -77,11 +77,13 @@ REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["v2.messages"] = env("V2_MESSAGES", def
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["v2.broadcasts"] = env("V2_BROADCASTS", default="36000/hour")
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["v2.runs"] = env("V2_RUNS", default="3000/hour")
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["v2.api"] = env("V2_API", default="3000/hour")
-REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"] = (
-    "mozilla_django_oidc.contrib.drf.OIDCAuthentication",
-    "temba.api.support.APISessionAuthentication",
-    "temba.api.support.APITokenAuthentication",
-    "temba.api.support.APIBasicAuthentication",
+REST_FRAMEWORK["REST_FRAMEWORK"] = tuple(
+    (
+        "mozilla_django_oidc.contrib.drf.OIDCAuthentication",
+        "temba.api.support.APISessionAuthentication",
+        "temba.api.support.APITokenAuthentication",
+        "temba.api.support.APIBasicAuthentication",
+    )
 ),
 
 
@@ -118,8 +120,9 @@ COMPRESS_OFFLINE_CONTEXT = dict(
 MIDDLEWARE = (
     "elasticapm.contrib.django.middleware.TracingMiddleware",
     "elasticapm.contrib.django.middleware.Catch404Middleware",
-    "mozilla_django_oidc.middleware.SessionRefresh",
 ) + MIDDLEWARE
+
+MIDDLEWARE = MIDDLEWARE + ("mozilla_django_oidc.middleware.SessionRefresh",)
 
 # REDIS
 # ------------------------------------------------------------------------------
@@ -265,19 +268,33 @@ X_FRAME_OPTIONS = 'ALLOW-FROM http://connect-dev.ilhasoft.dev:9000/'
 # -----------------------------------------------------------------------------------
 # mozilla-django-oidc ..
 # -----------------------------------------------------------------------------------
-OIDC_RP_CLIENT_ID = "rapidpro"
-OIDC_RP_CLIENT_SECRET = 'ace066df-33bb-49d8-b551-e6a47d5408d6'
-OIDC_OP_AUTHORIZATION_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/auth'
-OIDC_OP_TOKEN_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/token'
-OIDC_OP_USER_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/userinfo'
-OIDC_OP_JWKS_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/certs'
-OIDC_RP_SIGN_ALGO = "RS256"
-OIDC_OP_LOGOUT_ENDPOINT = 'http://yohan.ilhasoft.dev/auth/realms/ilhasoft/protocol/openid-connect/logout'
-OIDC_STORE_ID_TOKEN = True
-OIDC_VERIFY_SSL = False
-# OIDC_TOKEN_USE_BASIC_AUTH = True
+OIDC_SERVER_URL = env("OIDC_SERVER_URL", default="http://yohan.ilhasoft.dev")
+OIDC_REALM = env("OIDC_REALM")
+OIDC_RP_CLIENT_ID = env("OIDC_RP_CLIENT_ID")
+OIDC_RP_CLIENT_SECRET = env("OIDC_RP_CLIENT_SECRET")
+OIDC_OP_AUTHORIZATION_ENDPOINT = env(
+    "OIDC_OP_AUTHORIZATION_ENDPOINT",
+    default='{}/auth/realms/{}/protocol/openid-connect/auth'
+).format(OIDC_SERVER_URL, OIDC_REALM)
+OIDC_OP_TOKEN_ENDPOINT = env(
+    "OIDC_OP_TOKEN_ENDPOINT",
+    default='{}/auth/realms/{}/protocol/openid-connect/token'
+).format(OIDC_SERVER_URL, OIDC_REALM)
+OIDC_OP_USER_ENDPOINT = env(
+    "OIDC_OP_USER_ENDPOINT",
+    default='{}/auth/realms/{}/protocol/openid-connect/userinfo'
+).format(OIDC_SERVER_URL, OIDC_REALM)
+OIDC_OP_JWKS_ENDPOINT = env(
+    "OIDC_OP_JWKS_ENDPOINT",
+    default='{}/auth/realms/{}/protocol/openid-connect/certs'
+).format(OIDC_SERVER_URL, OIDC_REALM)
+OIDC_OP_LOGOUT_ENDPOINT = env(
+    "OIDC_OP_LOGOUT_ENDPOINT",
+    default='{}/auth/realms/{}/protocol/openid-connect/logout'
+).format(OIDC_SERVER_URL, OIDC_REALM)
+OIDC_RP_SIGN_ALGO = env("OIDC_RP_SIGN_ALGO", default="RS256")
+OIDC_STORE_ID_TOKEN = env.bool("OIDC_STORE_ID_TOKEN", default=True)
+OIDC_VERIFY_SSL = env.bool("OIDC_VERIFY_SSL", default=False)
 
-# OIDC_AUTHENTICATE_CLASS = 'bothub.authentication.views.ConnectOIDCAuthenticationRequestView'
-# OIDC_CALLBACK_CLASS = 'bothub.authentication.views.ConnectOIDCAuthenticationCallbackView'
 OIDC_DRF_AUTH_BACKEND = 'temba.oidc_authentication.ConnectOIDCAuthenticationBackend'
 AUTHENTICATION_BACKENDS = ('temba.oidc_authentication.ConnectOIDCAuthenticationBackend',)
