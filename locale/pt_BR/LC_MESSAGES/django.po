@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TextIt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-16 21:04+0000\n"
+"POT-Creation-Date: 2020-12-02 18:16+0000\n"
 "PO-Revision-Date: 2014-04-14 20:37+0000\n"
 "Last-Translator: produtos <produtos.ti@takenet.com.br>\n"
 "Language-Team: Portuguese (Brazil) (http://www.transifex.com/projects/p/textit/language/pt_BR/)\n"
@@ -990,6 +990,10 @@ msgstr ""
 "\n"
 "Esse terminal deve ser chamado pelo Hub9 quando uma mensagem foi para o destinatário final. (relatórios de entrega) Você pode definir a URL de entrega de retorno de chamada na sua conta Infobip entrando em contato com o seu agente de vendas."
 
+#, fuzzy
+msgid "Message Templates"
+msgstr "Mensagem"
+
 #, python-format
 msgid "Activate your own enterprise WhatsApp account in %(link)s to communicate with your contacts. "
 msgstr ""
@@ -1018,10 +1022,6 @@ msgstr "Por favor, insira pelo menos 8 caracteres"
 #| msgid "Synced on"
 msgid "Sync logs"
 msgstr "Sincronizado em"
-
-#, fuzzy
-msgid "Message Templates"
-msgstr "Mensagem"
 
 #, fuzzy, python-format
 msgid "If you are based in Uganda or DRC you can purchase a short code from %(link)s and connect it in a few simple steps."
@@ -6383,7 +6383,7 @@ msgstr "Textit usa o seu telefone Android para enviar e receber mensagens."
 
 #, fuzzy
 #| msgid "Has Template Error"
-msgid "360dialog Templates Events"
+msgid "360dialog Template Events"
 msgstr "Possui erro no modelo"
 
 msgid "No syncs yet. Check back later."

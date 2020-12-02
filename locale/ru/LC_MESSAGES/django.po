@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-16 21:04+0000\n"
+"POT-Creation-Date: 2020-12-02 18:16+0000\n"
 "PO-Revision-Date: 2019-05-13 20:14+0000\n"
 "Last-Translator: Hudson Brendon <hudson.brendon@ilhasoft.com.br>, 2020\n"
 "Language-Team: Russian (https://www.transifex.com/rapidpro/teams/226/ru/)\n"
@@ -884,6 +884,9 @@ msgstr ""
 "                Эта конечная точка должна вызываться Dart Media при доставке сообщения конечному получателю. (Отчеты о доставке)\n"
 "                Вы можете настроить адрес URL обратного вызова по доставке в своей учетной записи Dart Media, связавшись с Вашим торговым агентом."
 
+msgid "Message Templates"
+msgstr "Шаблоны сообщения"
+
 #, fuzzy, python-format
 #| msgid "If you have an enterprise WhatsApp account, you can connect it to communicate with your contacts"
 msgid "Activate your own enterprise WhatsApp account in %(link)s to communicate with your contacts. "
@@ -912,9 +915,6 @@ msgstr "Пожалуйста, введите действительный ном
 #| msgid "Sync Logs"
 msgid "Sync logs"
 msgstr "Журналы синхронизации"
-
-msgid "Message Templates"
-msgstr "Шаблоны сообщения"
 
 #, fuzzy, python-format
 #| msgid "If you are based in Jamaica, you can purchase a short code from <a href=\"http://www.messangi.com/\">Messangi</a> and connect it in a few simple steps."
@@ -5735,7 +5735,7 @@ msgstr ""
 
 #, fuzzy
 #| msgid "WhatsApp Templates Events"
-msgid "360dialog Templates Events"
+msgid "360dialog Template Events"
 msgstr "События Шаблонов WhatsApp "
 
 msgid "No syncs yet. Check back later."

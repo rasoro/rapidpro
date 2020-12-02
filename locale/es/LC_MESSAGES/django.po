@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: TextIt\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-16 21:04+0000\n"
+"POT-Creation-Date: 2020-12-02 18:16+0000\n"
 "PO-Revision-Date: 2014-09-24 19:56+0000\n"
 "Last-Translator: TextIt <info@textit.in>\n"
 "Language-Team: Spanish (http://www.transifex.com/projects/p/textit/language/es/)\n"
@@ -1075,6 +1075,10 @@ msgstr ""
 "\n"
 "      "
 
+#, fuzzy
+msgid "Message Templates"
+msgstr "Mensaje"
+
 #, python-format
 msgid "Activate your own enterprise WhatsApp account in %(link)s to communicate with your contacts. "
 msgstr ""
@@ -1103,10 +1107,6 @@ msgstr "Por favor, ingrese 8 caracteres como mínimo"
 #| msgid "Synced on"
 msgid "Sync logs"
 msgstr "Sincronizado el"
-
-#, fuzzy
-msgid "Message Templates"
-msgstr "Mensaje"
 
 #, fuzzy, python-format
 msgid "If you are based in Uganda or DRC you can purchase a short code from %(link)s and connect it in a few simple steps."
@@ -6882,7 +6882,7 @@ msgstr "TextIt usa su teléfono Android para enviar y recibir mensajes."
 
 #, fuzzy
 #| msgid "Has Template Error"
-msgid "360dialog Templates Events"
+msgid "360dialog Template Events"
 msgstr "Tiene un error en la plantilla"
 
 msgid "No syncs yet. Check back later."

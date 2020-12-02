@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-11-16 21:04+0000\n"
+"POT-Creation-Date: 2020-12-02 18:16+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -694,6 +694,9 @@ msgstr ""
 msgid "This endpoint should be called by Dart Media when a message has been to the final recipient. (delivery reports) You can set the delivery callback URL on your Dart Media account by contacting your sales agent."
 msgstr ""
 
+msgid "Message Templates"
+msgstr ""
+
 #, python-format
 msgid "Activate your own enterprise WhatsApp account in %(link)s to communicate with your contacts. "
 msgstr ""
@@ -715,9 +718,6 @@ msgid "Please enter a valid phone number"
 msgstr ""
 
 msgid "Sync logs"
-msgstr ""
-
-msgid "Message Templates"
 msgstr ""
 
 #, python-format
@@ -4695,7 +4695,7 @@ msgstr ""
 msgid "Your 360Dialog WhatsApp channel is now connected, you should be able to send and receive messages as normal."
 msgstr ""
 
-msgid "360dialog Templates Events"
+msgid "360dialog Template Events"
 msgstr ""
 
 msgid "No syncs yet. Check back later."
