@@ -1,7 +1,7 @@
 import logging
-import pycountry
 import re
 
+import pycountry
 import requests
 from django_redis import get_redis_connection
 from requests import RequestException
