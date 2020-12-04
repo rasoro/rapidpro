@@ -1,4 +1,5 @@
 import logging
+import pycountry
 import re
 
 import requests
@@ -13,11 +14,12 @@ from temba.channels.models import Channel
 from temba.request_logs.models import HTTPLog
 from temba.templates.models import TemplateTranslation
 
-from .type import LANGUAGE_MAPPING, STATUS_MAPPING
+from .type import STATUS_MAPPING
 
 logger = logging.getLogger(__name__)
 
 VARIABLE_RE = re.compile(r"{{(\d+)}}")
+LANGUAGE_RE = re.compile(r"(\w{2})_?(\w{2})?")
 
 
 def _calculate_variable_count(content):
@@ -95,10 +97,13 @@ def refresh_360_templates():
                     content = "\n\n".join(content_parts)
                     variable_count = _calculate_variable_count(content)
 
-                    language, country = LANGUAGE_MAPPING.get(template["language"], (None, None))
+                    language, country = LANGUAGE_RE.match(template["language"]).groups()
                     if language is None:
                         status = TemplateTranslation.STATUS_UNSUPPORTED_LANGUAGE
                         language = template["language"]
+                    else:
+                        if len(language) == 2:  # some languages has alpha_3 only, ex: Filipino
+                            language = pycountry.languages.get(alpha_2=language).alpha_3
 
                     # dialog360 API does not returns template ids
                     external_id = f"{template['language']}/{template['name']}"
