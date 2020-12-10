@@ -1,10 +1,14 @@
 from unittest.mock import patch
+from requests import RequestException
 
 from django.forms import ValidationError
 from django.urls import reverse
+from django_redis import get_redis_connection
 
 from temba.templates.models import Template, TemplateTranslation
 from temba.tests import MockResponse, TembaTest
+
+from temba.request_logs.models import HTTPLog
 
 from ...models import Channel
 from .tasks import refresh_360_templates
@@ -79,17 +83,32 @@ class Dialog360TypeTest(TembaTest):
         # test refresh_templates (same as channels.types.whatsapp.tests.WhatsAppTypeTest)
         with patch("requests.get") as mock_get:
             mock_get.side_effect = [
+                RequestException("Network is unreachable", response=MockResponse(100, "")),
+                Exception("Blah"),
+                MockResponse(400, '{ "meta": { "success": false } }'),
                 MockResponse(
                     200,
                     """
                     {
-                        "count": 10,
+                        "count": 11,
                         "filters": {},
                         "limit": 1000,
                         "offset": 0,
                         "sort": ["id"],
-                        "total": 10,
+                        "total": 11,
                         "waba_templates": [
+                            {
+                                "name": "hello",
+                                "components": [
+                                {
+                                    "type": "BODY",
+                                    "text": "nuqneH"
+                                }
+                                ],
+                                "language": "tlh",
+                                "status": "submitted",
+                                "category": "ISSUE_RESOLUTION"
+                            },
                             {
                                 "name": "hello",
                                 "components": [
@@ -232,9 +251,43 @@ class Dialog360TypeTest(TembaTest):
                         ]
                     }
                     """,
-                )
+                ),
             ]
+
+            # RequestException: check HTTPLog
             refresh_360_templates()
+            self.assertEqual(1, HTTPLog.objects.filter(log_type=HTTPLog.WHATSAPP_TEMPLATES_SYNCED).count())
+
+            # Exception: check logger
+            with self.assertLogs("temba.channels.types.dialog360.tasks") as logger:
+                refresh_360_templates()
+                self.assertEqual(len(logger.output), 1)
+                self.assertTrue("Error refresh dialog360 whatsapp templates" in logger.output[0])
+
+            # should skip if misconfigured
+            refresh_360_templates()
+            self.assertEqual(0, Template.objects.filter(org=self.org).count())
+            self.assertEqual(0, TemplateTranslation.objects.filter(channel=channel).count())
+
+            # should skip if locked
+            r = get_redis_connection()
+            with r.lock("refresh_360_templates", timeout=1800):
+                refresh_360_templates()
+                self.assertEqual(0, Template.objects.filter(org=self.org).count())
+                self.assertEqual(0, TemplateTranslation.objects.filter(channel=channel).count())
+
+            # should skip channel without api_key
+            api_key = channel.config.pop(Channel.CONFIG_AUTH_TOKEN)
+            channel.save()
+            refresh_360_templates()
+            self.assertEqual(0, Template.objects.filter(org=self.org).count())
+            self.assertEqual(0, TemplateTranslation.objects.filter(channel=channel).count())
+            channel.config[Channel.CONFIG_AUTH_TOKEN] = api_key
+            channel.save()
+
+            # now it should refresh
+            refresh_360_templates()
+
             mock_get.assert_called_with(
                 "https://ilhasoft.com.br/whatsapp/v1/configs/templates",
                 headers={
@@ -245,8 +298,8 @@ class Dialog360TypeTest(TembaTest):
 
             # should have 4 templates
             self.assertEqual(4, Template.objects.filter(org=self.org).count())
-            # and 6 translations
-            self.assertEqual(6, TemplateTranslation.objects.filter(channel=channel).count())
+            # and 7 translations
+            self.assertEqual(7, TemplateTranslation.objects.filter(channel=channel).count())
 
             # hit our template page
             response = self.client.get(reverse("channels.types.dialog360.templates", args=[channel.uuid]))
