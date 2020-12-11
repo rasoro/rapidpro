@@ -12,7 +12,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-12-10 16:59+0000\n"
+"POT-Creation-Date: 2020-12-09 22:20+0000\n"
 "PO-Revision-Date: 2019-05-13 20:14+0000\n"
 "Last-Translator: Jesus EKIE <jesus@fehudigital.com>, 2020\n"
 "Language-Team: French (https://www.transifex.com/rapidpro/teams/226/fr/)\n"
@@ -699,9 +699,6 @@ msgstr "URL livré"
 msgid "This endpoint should be called by Dart Media when a message has been to the final recipient. (delivery reports) You can set the delivery callback URL on your Dart Media account by contacting your sales agent."
 msgstr "Ce point de terminaison doit être appelé par Dart Media lorsqu'un message a été envoyé au destinataire final. (rapports de livraison) Vous pouvez définir l'URL de rappel de livraison sur votre compte Dart Media en contactant votre agent commercial."
 
-msgid "Message Templates"
-msgstr "Modèles de message"
-
 #, python-format
 msgid "Activate your own enterprise WhatsApp account in %(link)s to communicate with your contacts. "
 msgstr "Activez votre propre compte WhatsApp d'entreprise dans %(link)s pour communiquer avec vos contacts."
@@ -721,11 +718,6 @@ msgstr "La clé API 360 Dialog générée après l'enregistrement du compte"
 
 msgid "Please enter a valid phone number"
 msgstr "s'il vous plaît entrer un numéro de téléphone valide"
-
-#, fuzzy
-#| msgid "Sync Logs"
-msgid "Sync logs"
-msgstr "Journaux de synchronisation"
 
 #, python-format
 msgid "If you are based in Uganda or DRC you can purchase a short code from %(link)s and connect it in a few simple steps."
@@ -1668,6 +1660,9 @@ msgstr "L'ID de l'application WeChat"
 
 msgid "The WeChat App secret"
 msgstr "Le secret de l'application WeChat"
+
+msgid "Message Templates"
+msgstr "Modèles de message"
 
 msgid "If you have an enterprise WhatsApp account, you can connect it to communicate with your contacts"
 msgstr "Si vous avez un compte d'entreprise WhatsApp, vous pouvez le connecter pour communiquer avec vos contacts."
@@ -3761,6 +3756,13 @@ msgstr "Ouvert"
 msgid "Closed"
 msgstr "Fermé"
 
+msgid "Enabling this will allow you to handle tickets within this application."
+msgstr ""
+
+#, python-format
+msgid "This will enable handling tickets internally in %(brand)s."
+msgstr ""
+
 msgid "Connecting an email address will forward all new tickets and their responses to that email address. You will be able to respond to them directly and your replies will be sent to the contact."
 msgstr "La connexion d'une adresse e-mail transmet tous les nouveaux tickets et leurs réponses à cette adresse e-mail. Vous pourrez y répondre directement et vos réponses seront envoyées au contact."
 
@@ -4793,25 +4795,6 @@ msgstr "Après avoir connecté votre service, nous fournirons des URL pour les p
 msgid "Your 360Dialog WhatsApp channel is now connected, you should be able to send and receive messages as normal."
 msgstr "Votre canal 360Dialog WhatsApp est maintenant connecté, vous devriez pouvoir envoyer et recevoir des messages comme d'habitude."
 
-#, fuzzy
-#| msgid "WhatsApp Templates Events"
-msgid "360dialog Template Events"
-msgstr "Événements des modèles WhatsApp"
-
-msgid "No syncs yet. Check back later."
-msgstr "Pas encore de synchronisation. Revenez plus tard."
-
-msgid "Templates"
-msgstr "Modèles"
-
-#, fuzzy
-#| msgid "Templates are synced from your WhatsApp account every 15 minutes."
-msgid "Templates are synced from your 360dialog account every 15 minutes."
-msgstr "Les modèles sont synchronisés à partir de votre compte WhatsApp toutes les 15 minutes."
-
-msgid "No synced templates at this time."
-msgstr "Aucun modèle synchronisé pour le moment."
-
 #, python-format
 msgid "You can connect your <a href=\"http://dmarkmobile.com/\">DMark Mobile</a> number to %(name)s using the fields below. You will first need to create a DMark Mobile account and receive a username and password from them to use below."
 msgstr "Vous pouvez connecter votre numéro <a href=\"http://dmarkmobile.com/\">DMark Mobile</a> à %(name)s en utilisant les champs ci-dessous. Vous devrez d'abord créer un compte DMark Mobile et recevoir d'eux un nom d'utilisateur et un mot de passe à utiliser ci-dessous."
@@ -5241,8 +5224,17 @@ msgstr "Dans le cas d'une nouvelle installation de WhatsApp ou du remplacement d
 msgid "WhatsApp Templates Events"
 msgstr "Événements des modèles WhatsApp"
 
+msgid "No syncs yet. Check back later."
+msgstr "Pas encore de synchronisation. Revenez plus tard."
+
+msgid "Templates"
+msgstr "Modèles"
+
 msgid "Templates are synced from your WhatsApp account every 15 minutes."
 msgstr "Les modèles sont synchronisés à partir de votre compte WhatsApp toutes les 15 minutes."
+
+msgid "No synced templates at this time."
+msgstr "Aucun modèle synchronisé pour le moment."
 
 msgid "Connect a Classifier"
 msgstr "Connecter un classificateur"
@@ -7832,6 +7824,7 @@ msgstr "${count} trouvé pour ${query}"
 #~ msgid "Are you sure you want to delete"
 #~ msgstr "Etes-vous sûr que vous voulez supprimer"
 
+#, python-format
 #~ msgid "<b>%(name)s</b> cannot be deleted since it is currently in use. Usage %%summary:"
 #~ msgstr "<b>%(name)s</b> ne peut pas être supprimé car il est actuellement utilisé. Résumé de l'utilisation %%:"
 
