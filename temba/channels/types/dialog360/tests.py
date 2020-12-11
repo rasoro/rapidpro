@@ -232,7 +232,7 @@ class Dialog360TypeTest(TembaTest):
                                     "text": "This is an unknown language, it will be ignored"
                                 }
                                 ],
-                                "language": "kli",
+                                "language": "xyz",
                                 "status": "approved",
                                 "category": "ISSUE_RESOLUTION"
                             }
