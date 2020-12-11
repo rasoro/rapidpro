@@ -19,7 +19,7 @@ from .type import STATUS_MAPPING
 logger = logging.getLogger(__name__)
 
 VARIABLE_RE = re.compile(r"{{(\d+)}}")
-LANGUAGE_RE = re.compile(r"(\w{2})_?(\w{2})?")
+LANGUAGE_RE = re.compile(r"([a-zA-Z]{2,3})_?([a-zA-Z]{2})?")
 
 
 def _calculate_variable_count(content):
@@ -97,20 +97,25 @@ def refresh_360_templates():
                     content = "\n\n".join(content_parts)
                     variable_count = _calculate_variable_count(content)
 
-                    language, country = LANGUAGE_RE.match(template["language"]).groups()
-                    if language is None:
-                        status = TemplateTranslation.STATUS_UNSUPPORTED_LANGUAGE
-                        language = template["language"]
+                    template_language, country = LANGUAGE_RE.match(template["language"]).groups()
+
+                    if len(template_language) == 2:  # some languages have alpha_3 only, ex: Filipino
+                        language = pycountry.languages.get(alpha_2=template_language)
+                    elif len(template_language) == 3:
+                        language = pycountry.languages.get(alpha_3=template_language)
+
+                    if hasattr(language, "alpha_3"):
+                        language_code = language.alpha_3
                     else:
-                        if len(language) == 2:  # some languages has alpha_3 only, ex: Filipino
-                            language = pycountry.languages.get(alpha_2=language).alpha_3
+                        status = TemplateTranslation.STATUS_UNSUPPORTED_LANGUAGE
+                        language_code = template["language"]
 
                     # dialog360 API does not returns template ids
                     external_id = f"{template['language']}/{template['name']}"
                     translation = TemplateTranslation.get_or_create(
                         channel=channel,
                         name=template["name"],
-                        language=language,
+                        language=language_code,
                         country=country,
                         content=content,
                         variable_count=variable_count,
