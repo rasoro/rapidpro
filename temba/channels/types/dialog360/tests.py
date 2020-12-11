@@ -102,18 +102,6 @@ class Dialog360TypeTest(TembaTest):
                                 "components": [
                                 {
                                     "type": "BODY",
-                                    "text": "Unsupported"
-                                }
-                                ],
-                                "language": "xyz",
-                                "status": "submitted",
-                                "category": "ISSUE_RESOLUTION"
-                            },
-                            {
-                                "name": "hello",
-                                "components": [
-                                {
-                                    "type": "BODY",
                                     "text": "Hello {{1}}"
                                 }
                                 ],
