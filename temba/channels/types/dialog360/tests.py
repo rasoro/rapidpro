@@ -287,7 +287,7 @@ class Dialog360TypeTest(TembaTest):
             # should have 4 templates
             self.assertEqual(4, Template.objects.filter(org=self.org).count())
             # and 7 translations
-            self.assertEqual(7, TemplateTranslation.objects.filter(channel=channel).count())
+            self.assertEqual(6, TemplateTranslation.objects.filter(channel=channel).count())
 
             # hit our template page
             response = self.client.get(reverse("channels.types.dialog360.templates", args=[channel.uuid]))
