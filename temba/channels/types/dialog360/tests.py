@@ -252,7 +252,7 @@ class Dialog360TypeTest(TembaTest):
                 self.assertEqual(len(logger.output), 1)
                 self.assertTrue("Error refresh dialog360 whatsapp templates" in logger.output[0])
 
-            # should skip if misconfigured
+            # should skip if fail with API
             refresh_360_templates()
             self.assertEqual(0, Template.objects.filter(org=self.org).count())
             self.assertEqual(0, TemplateTranslation.objects.filter(channel=channel).count())
