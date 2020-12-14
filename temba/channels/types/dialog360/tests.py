@@ -108,7 +108,7 @@ class Dialog360TemplatesRefreshTest(TembaTest):
             "D3",
             name="360Dialog: Templates Refresh Test",
             address="1234",
-            config={Channel.CONFIG_BASE_URL: "https://ilhasoft.com.br/whatsapp",},
+            config={Channel.CONFIG_BASE_URL: "https://ilhasoft.com.br/whatsapp"},
         )
 
     def test_refresh_templates(self):
