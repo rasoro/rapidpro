@@ -297,6 +297,14 @@ class Dialog360TypeTest(TembaTest):
             self.assertContains(response, "Hello")
             self.assertContains(response, reverse("channels.types.dialog360.sync_logs", args=[channel.uuid]))
 
+            # Check if message templates link are in sync_logs view
+            response = self.client.get(reverse("channels.types.dialog360.sync_logs", args=[channel.uuid]))
+            gear_links = response.context["view"].get_gear_links()
+            self.assertEqual(gear_links[-1]["title"], "Message Templates")
+            self.assertEqual(
+                gear_links[-1]["href"], reverse("channels.types.dialog360.templates", args=[channel.uuid])
+            )
+
         # deactivate our channel
         with self.settings(IS_PROD=True):
             channel.release()
