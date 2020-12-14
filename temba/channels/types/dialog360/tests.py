@@ -15,7 +15,7 @@ from .tasks import refresh_360_templates
 from .type import Dialog360Type
 
 
-class Dialog360TypeTest(TembaTest):
+class Dialog360ClaimViewTest(TembaTest):
     def test_claim(self):
         Channel.objects.all().delete()
 
