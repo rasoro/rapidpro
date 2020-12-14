@@ -1,5 +1,7 @@
+import functools
 import itertools
 import logging
+import operator
 import os
 from collections import defaultdict
 from datetime import timedelta
@@ -43,6 +45,7 @@ from temba.utils.email import send_template_email
 from temba.utils.models import JSONAsTextField, SquashableModel
 from temba.utils.s3 import public_file_storage
 from temba.utils.text import generate_token, random_string
+from temba.utils.timezones import timezone_to_country_code
 from temba.utils.uuid import uuid4
 
 logger = logging.getLogger(__name__)
@@ -59,6 +62,47 @@ ORG_LOW_CREDIT_THRESHOLD_CACHE_KEY = "org:%d:cache:low_credits_threshold"
 
 ORG_LOCK_TTL = 60  # 1 minute
 ORG_CREDITS_CACHE_TTL = 7 * 24 * 60 * 60  # 1 week
+
+
+class OrgRole(Enum):
+    ADMINISTRATOR = ("A", _("Administrator"), "Administrators", "administrators", "org_admins")
+    EDITOR = ("E", _("Editor"), "Editors", "editors", "org_editors")
+    VIEWER = ("V", _("Viewer"), "Viewers", "viewers", "org_viewers")
+    AGENT = ("T", _("Agent"), "Agents", "agents", "org_agents")
+    SURVEYOR = ("S", _("Surveyor"), "Surveyors", "surveyors", "org_surveyors")
+
+    def __init__(self, code: str, display: str, group_name: str, m2m_name: str, rel_name: str):
+        self.code = code
+        self.display = display
+        self.group_name = group_name
+        self.m2m_name = m2m_name
+        self.rel_name = rel_name
+
+    @classmethod
+    def from_code(cls, code: str):
+        for role in cls:
+            if role.code == code:
+                return role
+        return None
+
+    @property
+    def group(self):
+        """
+        Gets the auth group which defines the permissions for this role
+        """
+        return Group.objects.get(name=self.group_name)
+
+    def get_users(self, org):
+        """
+        The users with this role in the given org
+        """
+        return getattr(org, self.m2m_name).all()
+
+    def get_orgs(self, user):
+        """
+        The orgs which the given user belongs to with this role
+        """
+        return getattr(user, self.rel_name).all()
 
 
 class OrgLock(Enum):
@@ -120,6 +164,10 @@ class Org(SmartModel):
     EARLIEST_IMPORT_VERSION = "3"
     CURRENT_EXPORT_VERSION = "13"
 
+    LIMIT_FIELDS = "limit_fields"
+    LIMIT_GLOBALS = "limit_globals"
+    LIMIT_GROUPS = "limit_groups"
+
     uuid = models.UUIDField(unique=True, default=uuid4)
 
     name = models.CharField(verbose_name=_("Name"), max_length=128)
@@ -129,6 +177,7 @@ class Org(SmartModel):
         default=settings.DEFAULT_PLAN,
         help_text=_("What plan your organization is on"),
     )
+    plan_start = models.DateTimeField(null=True)
     plan_end = models.DateTimeField(null=True)
 
     stripe_customer = models.CharField(
@@ -139,27 +188,12 @@ class Org(SmartModel):
         help_text=_("Our Stripe customer id for your organization"),
     )
 
-    administrators = models.ManyToManyField(
-        User,
-        verbose_name=_("Administrators"),
-        related_name="org_admins",
-        help_text=_("The administrators in your organization"),
-    )
-
-    viewers = models.ManyToManyField(
-        User, verbose_name=_("Viewers"), related_name="org_viewers", help_text=_("The viewers in your organization")
-    )
-
-    editors = models.ManyToManyField(
-        User, verbose_name=_("Editors"), related_name="org_editors", help_text=_("The editors in your organization")
-    )
-
-    surveyors = models.ManyToManyField(
-        User,
-        verbose_name=_("Surveyors"),
-        related_name="org_surveyors",
-        help_text=_("The users can login via Android for your organization"),
-    )
+    # user role m2ms
+    administrators = models.ManyToManyField(User, related_name=OrgRole.ADMINISTRATOR.rel_name)
+    editors = models.ManyToManyField(User, related_name=OrgRole.EDITOR.rel_name)
+    viewers = models.ManyToManyField(User, related_name=OrgRole.VIEWER.rel_name)
+    agents = models.ManyToManyField(User, related_name=OrgRole.AGENT.rel_name)
+    surveyors = models.ManyToManyField(User, related_name=OrgRole.SURVEYOR.rel_name)
 
     language = models.CharField(
         verbose_name=_("Language"),
@@ -277,6 +311,7 @@ class Org(SmartModel):
             slug = Org.get_unique_slug(name)
 
             brand = settings.BRANDING[self.brand]
+            plan = brand.get("default_plan", settings.DEFAULT_PLAN)
 
             org = Org.objects.create(
                 name=name,
@@ -286,12 +321,12 @@ class Org(SmartModel):
                 slug=slug,
                 created_by=created_by,
                 modified_by=created_by,
-                plan=brand.get("default_plan", settings.DEFAULT_PLAN),
+                plan=plan,
                 is_multi_user=self.is_multi_user,
                 is_multi_org=self.is_multi_org,
             )
 
-            org.administrators.add(created_by)
+            org.add_user(created_by, OrgRole.ADMINISTRATOR)
 
             # initialize our org, but without any credits
             org.initialize(branding=org.get_branding(), topup_size=0)
@@ -349,6 +384,17 @@ class Org(SmartModel):
             *active_topup_keys,
         )
 
+    def get_limit(self, limit_type):
+
+        if limit_type == Org.LIMIT_FIELDS:
+            return settings.MAX_ACTIVE_CONTACTFIELDS_PER_ORG
+        if limit_type == Org.LIMIT_GROUPS:
+            return settings.MAX_ACTIVE_CONTACTGROUPS_PER_ORG
+        if limit_type == Org.LIMIT_GLOBALS:
+            return settings.MAX_ACTIVE_GLOBALS_PER_ORG
+
+        raise ValueError("Invalid org limit type")
+
     def flag(self):
         self.is_flagged = True
         self.save(update_fields=("is_flagged", "modified_on"))
@@ -371,14 +417,14 @@ class Org(SmartModel):
         """
         return self.config.get(Org.CONFIG_VERIFIED, False)
 
-    def import_app(self, export_json, user, site=None, legacy=False):
+    def import_app(self, export_json, user, site=None):
         """
         Imports previously exported JSON
         """
 
         from temba.campaigns.models import Campaign
         from temba.contacts.models import ContactField, ContactGroup
-        from temba.flows.models import Flow, FlowRevision
+        from temba.flows.models import Flow
         from temba.triggers.models import Trigger
 
         # only required field is version
@@ -399,7 +445,7 @@ class Org(SmartModel):
 
         # do we need to migrate the export forward?
         if export_version < Version(Flow.CURRENT_SPEC_VERSION):
-            export_json = FlowRevision.migrate_export(self, export_json, same_site, export_version, legacy=legacy)
+            export_json = Flow.migrate_export(self, export_json, same_site, export_version)
 
         export_fields = export_json.get(Org.EXPORT_FIELDS, [])
         export_groups = export_json.get(Org.EXPORT_GROUPS, [])
@@ -424,7 +470,7 @@ class Org(SmartModel):
 
         # with all the flows and dependencies committed, we can now have mailroom do full validation
         for flow in new_flows:
-            mailroom.get_client().flow_inspect(self.id, flow.as_json())
+            mailroom.get_client().flow_inspect(self.id, flow.get_definition())
 
     @classmethod
     def export_definitions(cls, site_link, components, include_fields=True, include_groups=True):
@@ -444,7 +490,7 @@ class Org(SmartModel):
         for component in components:
             if isinstance(component, Flow):
                 component.ensure_current_version()  # only export current versions
-                exported_flows.append(component.as_json(expand_contacts=True))
+                exported_flows.append(component.get_definition())
 
                 if include_groups:
                     groups.update(component.group_dependencies.all())
@@ -481,9 +527,9 @@ class Org(SmartModel):
         """
         If an org's telephone send channel is an Android device, let them add a bulk sender
         """
-        from temba.contacts.models import TEL_SCHEME
+        from temba.contacts.models import URN
 
-        send_channel = self.get_send_channel(TEL_SCHEME)
+        send_channel = self.get_send_channel(URN.TEL_SCHEME)
         return send_channel and send_channel.is_android()
 
     def can_add_caller(self):  # pragma: needs cover
@@ -523,9 +569,8 @@ class Org(SmartModel):
         return ContactGroup.all_groups.get(org=self, group_type=ContactGroup.TYPE_ACTIVE)
 
     def get_channel_for_role(self, role, scheme=None, contact_urn=None, country_code=None):
-        from temba.contacts.models import TEL_SCHEME
         from temba.channels.models import Channel
-        from temba.contacts.models import ContactURN
+        from temba.contacts.models import URN, ContactURN
 
         if contact_urn:
             scheme = contact_urn.scheme
@@ -536,7 +581,7 @@ class Org(SmartModel):
                 if previous_sender:
                     return previous_sender
 
-            if scheme == TEL_SCHEME:
+            if scheme == URN.TEL_SCHEME:
                 path = contact_urn.path
 
                 # we don't have a channel for this contact yet, let's try to pick one from the same carrier
@@ -552,12 +597,12 @@ class Org(SmartModel):
                 channels = []
                 if country_code:
                     for c in self.channels.filter(is_active=True):
-                        if c.country == country_code and TEL_SCHEME in c.schemes:
+                        if c.country == country_code and URN.TEL_SCHEME in c.schemes:
                             channels.append(c)
 
                 # no country specific channel, try to find any channel at all
                 if not channels:
-                    channels = [c for c in self.channels.filter(is_active=True) if TEL_SCHEME in c.schemes]
+                    channels = [c for c in self.channels.filter(is_active=True) if URN.TEL_SCHEME in c.schemes]
 
                 # filter based on role and activity (we do this in python as channels can be prefetched so it is quicker in those cases)
                 senders = []
@@ -604,16 +649,16 @@ class Org(SmartModel):
         return self.get_channel_for_role(Channel.ROLE_RECEIVE, scheme=scheme)
 
     def get_call_channel(self):
-        from temba.contacts.models import TEL_SCHEME
+        from temba.contacts.models import URN
         from temba.channels.models import Channel
 
-        return self.get_channel_for_role(Channel.ROLE_CALL, scheme=TEL_SCHEME)
+        return self.get_channel_for_role(Channel.ROLE_CALL, scheme=URN.TEL_SCHEME)
 
     def get_answer_channel(self):
-        from temba.contacts.models import TEL_SCHEME
+        from temba.contacts.models import URN
         from temba.channels.models import Channel
 
-        return self.get_channel_for_role(Channel.ROLE_ANSWER, scheme=TEL_SCHEME)
+        return self.get_channel_for_role(Channel.ROLE_ANSWER, scheme=URN.TEL_SCHEME)
 
     def get_schemes(self, role):
         """
@@ -850,28 +895,45 @@ class Org(SmartModel):
             return self.config.get(Org.CONFIG_CHATBASE_API_KEY), self.config.get(Org.CONFIG_CHATBASE_VERSION)
         return None, None
 
-    def get_country_code(self):
+    @property
+    def default_country_code(self) -> str:
         """
-        Gets the 2-digit country code, e.g. RW, US
+        Gets the default country as a 2-digit country code, e.g. RW, US
         """
-        return get_cacheable_attr(self, "_country_code", lambda: self.calculate_country_code())
 
-    def calculate_country_code(self):
-        # first try the actual country field
+        return self.default_country.alpha_2 if self.default_country else ""
+
+    @cached_property
+    def default_country(self):
+        """
+        Gets the default country as a pycountry country for this org
+        """
+
+        # first try the country boundary field
         if self.country:
-            try:
-                country = pycountry.countries.get(name=self.country.name)
-                if country:
-                    return country.alpha_2
-            except KeyError:  # pragma: no cover
-                # pycountry blows up if we pass it a country name it doesn't know
-                pass
+            country = pycountry.countries.get(name=self.country.name)
+            if country:
+                return country
 
-        # if that isn't set and we only have have one country set for our channels, use that
-        countries = self.channels.filter(is_active=True).exclude(country=None).order_by("country")
-        countries = countries.distinct("country").values_list("country", flat=True)
-        if len(countries) == 1:
-            return countries[0]
+        # next up try timezone
+        code = timezone_to_country_code(self.timezone)
+        if code:
+            country = pycountry.countries.get(alpha_2=code)
+            if country:
+                return country
+
+        # if that didn't work (not all timezones have a country) look for channels with countries
+        codes = (
+            self.channels.filter(is_active=True)
+            .exclude(country=None)
+            .order_by("country")
+            .distinct("country")
+            .values_list("country", flat=True)
+        )
+        if len(codes) == 1:
+            country = pycountry.countries.get(alpha_2=codes[0])
+            if country:
+                return country
 
         return None
 
@@ -1042,50 +1104,71 @@ class Org(SmartModel):
 
         return boundary
 
-    def get_org_admins(self):
-        return self.administrators.all()
+    def get_users_with_role(self, role: OrgRole):
+        """
+        Gets the users who have the given role in this org
+        """
+        return role.get_users(self)
 
-    def get_org_editors(self):
-        return self.editors.all()
+    def get_admins(self):
+        """
+        Convenience method for getting all org administrators
+        """
+        return self.get_users_with_role(OrgRole.ADMINISTRATOR)
 
-    def get_org_viewers(self):
-        return self.viewers.all()
+    def get_users(self):
+        """
+        Gets all of the users across all roles for this org
+        """
+        user_sets = [role.get_users(self) for role in OrgRole]
+        all_users = functools.reduce(operator.or_, user_sets)
+        return all_users.distinct().order_by("email")
 
-    def get_org_surveyors(self):
-        return self.surveyors.all()
+    def has_user(self, user: User) -> bool:
+        """
+        Returns whether the given user has a role in this org (only explicit roles, so doesn't include customer support)
+        """
+        return self.get_users().filter(id=user.id).exists()
 
-    def get_org_users(self):
-        org_users = self.get_org_admins() | self.get_org_editors() | self.get_org_viewers() | self.get_org_surveyors()
-        return org_users.distinct().order_by("email")
+    def add_user(self, user: User, role: OrgRole):
+        """
+        Adds the given user to this org with the given role
+        """
+        getattr(self, role.m2m_name).add(user)
 
-    def latest_admin(self):
-        admin = self.get_org_admins().last()
+    def remove_user(self, user: User):
+        """
+        Removes the given user from this org by removing them from any roles
+        """
+        for role in OrgRole:
+            getattr(self, role.m2m_name).remove(user)
 
-        # no admins? try editors
-        if not admin:  # pragma: needs cover
-            admin = self.get_org_editors().last()
+    def get_owner(self) -> User:
+        # look thru roles in order for the first added user
+        for role in OrgRole:
+            user = self.get_users_with_role(role).order_by("id").first()
+            if user:
+                return user
 
-        # no editors? try viewers
-        if not admin:  # pragma: needs cover
-            admin = self.get_org_viewers().last()
+        # default to user that created this org
+        return self.created_by
 
-        return admin
+    def get_user_role(self, user: User):
+        if user.is_staff:
+            return OrgRole.ADMINISTRATOR
 
-    def get_user_org_group(self, user):
-        if user in self.get_org_admins():
-            user._org_group = Group.objects.get(name="Administrators")
-        elif user in self.get_org_editors():
-            user._org_group = Group.objects.get(name="Editors")
-        elif user in self.get_org_viewers():
-            user._org_group = Group.objects.get(name="Viewers")
-        elif user in self.get_org_surveyors():
-            user._org_group = Group.objects.get(name="Surveyors")
-        elif user.is_staff:
-            user._org_group = Group.objects.get(name="Administrators")
-        else:
-            user._org_group = None
+        for role in OrgRole:
+            if self.get_users_with_role(role).filter(id=user.id).exists():
+                return role
 
-        return getattr(user, "_org_group", None)
+        return None
+
+    def get_user_org_group(self, user: User):
+        role = self.get_user_role(user)
+
+        user._org_group = role.group if role else None
+
+        return user._org_group
 
     def has_twilio_number(self):  # pragma: needs cover
         return self.channels.filter(channel_type="T")
@@ -1093,9 +1176,14 @@ class Org(SmartModel):
     def has_nexmo_number(self):  # pragma: needs cover
         return self.channels.filter(channel_type="NX")
 
-    def create_welcome_topup(self, topup_size=None):
+    def init_topups(self, topup_size=None):
         if topup_size:
             return TopUp.create(self.created_by, price=0, credits=topup_size, org=self)
+
+        # set whether we use topups based on our plan
+        self.uses_topups = self.plan == settings.TOPUP_PLAN
+        self.save(update_fields=["uses_topups"])
+
         return None
 
     def create_sample_flows(self, api_url):
@@ -1106,7 +1194,7 @@ class Org(SmartModel):
         with open(filename, "r") as example_file:
             samples = example_file.read()
 
-        user = self.get_user()
+        user = self.get_admins().first()
         if user:
             # some some substitutions
             samples = samples.replace("{{EMAIL}}", user.username).replace("{{API_URL}}", api_url)
@@ -1119,9 +1207,6 @@ class Org(SmartModel):
                     exc_info=True,
                     extra=dict(definition=json.loads(samples)),
                 )
-
-    def get_user(self):
-        return self.administrators.filter(is_active=True).first()
 
     def has_low_credits(self):
         return self.get_credits_remaining() <= self.get_low_credits_threshold()
@@ -1607,7 +1692,6 @@ class Org(SmartModel):
         from temba.contacts.models import ContactGroup, ContactField
         from temba.flows.models import Flow
 
-        flow_prefetches = ("action_sets", "rule_sets")
         campaign_prefetches = (
             Prefetch(
                 "events",
@@ -1617,7 +1701,7 @@ class Org(SmartModel):
             "flow_events__flow",
         )
 
-        all_flows = self.flows.filter(is_active=True).exclude(is_system=True).prefetch_related(*flow_prefetches)
+        all_flows = self.flows.filter(is_active=True).exclude(is_system=True)
 
         if include_campaigns:
             all_campaigns = (
@@ -1709,7 +1793,8 @@ class Org(SmartModel):
 
             ContactGroup.create_system_groups(self)
             ContactField.create_system_fields(self)
-            self.create_welcome_topup(topup_size)
+
+            self.init_topups(topup_size)
             self.update_capabilities()
 
         # outside of the transaction as it's going to call out to mailroom for flow validation
@@ -1791,17 +1876,15 @@ class Org(SmartModel):
 
         # release any user that belongs only to us
         if release_users:
-            for user in self.get_org_users():
+            for user in self.get_users():
                 # check if this user is a member of any org on any brand
                 other_orgs = user.get_user_orgs().exclude(id=self.id)
                 if not other_orgs:
                     user.release(self.brand)
 
-        # clear out all of our users
-        self.administrators.clear()
-        self.editors.clear()
-        self.viewers.clear()
-        self.surveyors.clear()
+        # remove all the org users
+        for user in self.get_users():
+            self.remove_user(user)
 
         if immediately:
             self._full_release()
@@ -1845,9 +1928,6 @@ class Org(SmartModel):
 
             for rev in flow.revisions.all():
                 rev.release()
-
-            flow.rule_sets.all().delete()
-            flow.action_sets.all().delete()
 
             flow.category_counts.all().delete()
             flow.path_counts.all().delete()
@@ -1946,8 +2026,7 @@ class Org(SmartModel):
 
     @classmethod
     def create_user(cls, email, password):
-        user = User.objects.create_user(username=email, email=email, password=password)
-        return user
+        return User.objects.create_user(username=email, email=email, password=password)
 
     @classmethod
     def get_org(cls, user):
@@ -1972,7 +2051,7 @@ class Org(SmartModel):
             "timezone": str(self.timezone),
             "default_language": self.primary_language.iso_code if self.primary_language else None,
             "allowed_languages": list(self.get_language_codes()),
-            "default_country": self.get_country_code(),
+            "default_country": self.default_country_code,
             "redaction_policy": "urns" if self.is_anon else "none",
         }
 
@@ -2000,19 +2079,17 @@ def release(user, brand):
     for org in user.get_owned_orgs([brand]):
         org.release(release_users=False)
 
-    # remove us as a user on any org for our brand
+    # remove user from all roles on any org for our brand
     for org in user.get_user_orgs([brand]):
-        org.administrators.remove(user)
-        org.editors.remove(user)
-        org.viewers.remove(user)
-        org.surveyors.remove(user)
+        org.remove_user(user)
 
 
 def get_user_orgs(user, brands=None):
     if user.is_superuser:
         return Org.objects.all()
 
-    user_orgs = user.org_admins.all() | user.org_editors.all() | user.org_viewers.all() | user.org_surveyors.all()
+    org_sets = [role.get_orgs(user) for role in OrgRole]
+    user_orgs = functools.reduce(operator.or_, org_sets)
 
     if brands:
         user_orgs = user_orgs.filter(brand__in=brands)
@@ -2026,7 +2103,7 @@ def get_owned_orgs(user, brands=None):
     """
     owned_orgs = []
     for org in user.get_user_orgs(brands=brands):
-        if not org.get_org_users().exclude(id=user.id).exists():
+        if not org.get_users().exclude(id=user.id).exists():
             owned_orgs.append(org)
     return owned_orgs
 
@@ -2531,7 +2608,7 @@ class CreditAlert(SmartModel):
 
         logging.info(f"triggering {alert_type} credits alert type for {org.name}")
 
-        admin = org.get_org_admins().first()
+        admin = org.get_admins().first()
 
         if admin:
             # Otherwise, create our alert objects and trigger our event
@@ -2545,7 +2622,7 @@ class CreditAlert(SmartModel):
         send_alert_email_task(self.id)
 
     def send_email(self):
-        admin_emails = [admin.email for admin in self.org.get_org_admins().order_by("email")]
+        admin_emails = [admin.email for admin in self.org.get_admins().order_by("email")]
 
         if len(admin_emails) == 0:
             return
@@ -2569,7 +2646,7 @@ class CreditAlert(SmartModel):
         from temba.msgs.models import Msg
 
         # all active orgs in the last hour
-        active_orgs = Msg.objects.filter(created_on__gte=timezone.now() - timedelta(hours=1))
+        active_orgs = Msg.objects.filter(created_on__gte=timezone.now() - timedelta(hours=1), org__uses_topups=True)
         active_orgs = active_orgs.order_by("org").distinct("org")
 
         for msg in active_orgs:
@@ -2593,7 +2670,7 @@ class CreditAlert(SmartModel):
 
         # get the ids of the last to expire topup, with credits, for each org
         final_topups = (
-            TopUp.objects.filter(is_active=True, org__is_active=True, credits__gt=0)
+            TopUp.objects.filter(is_active=True, org__is_active=True, org__uses_topups=True, credits__gt=0)
             .order_by("org_id", "-expires_on")
             .distinct("org_id")
             .values_list("id", flat=True)
@@ -2630,6 +2707,7 @@ class OrgActivity(models.Model):
        * total # of active contacts (that sent or received a message)
        * total # of messages sent
        * total # of message received
+       * total # of active contacts in plan period up to that date (if there is one)
     """
 
     # the org this contact activity is being tracked for
@@ -2650,11 +2728,16 @@ class OrgActivity(models.Model):
     # the number of messages received on this day
     incoming_count = models.IntegerField(default=0)
 
+    # the number of active contacts in the plan period (if they are on a plan)
+    plan_active_contact_count = models.IntegerField(null=True)
+
     @classmethod
     def update_day(cls, now):
         """
         Updates our org activity for the passed in day.
         """
+        from temba.msgs.models import Msg
+
         # truncate to midnight the same day in UTC
         end = pytz.utc.normalize(now.astimezone(pytz.utc)).replace(hour=0, minute=0, second=0, microsecond=0)
         start = end - timedelta(days=1)
@@ -2682,6 +2765,23 @@ class OrgActivity(models.Model):
         ).annotate(msg_count=Count("id"))
         outgoing_count = {o.id: o.msg_count for o in outgoing_count}
 
+        # calculate active count in plan period for orgs with an active plan
+        plan_active_contact_counts = dict()
+        for org in (
+            Org.objects.exclude(plan_end=None)
+            .exclude(plan_start=None)
+            .exclude(plan_end__lt=start)
+            .only("plan_start", "plan_end")
+        ):
+            plan_end = org.plan_end if org.plan_end < end else end
+            count = (
+                Msg.objects.filter(org=org, created_on__gt=org.plan_start, created_on__lt=plan_end)
+                .only("contact")
+                .distinct("contact")
+                .count()
+            )
+            plan_active_contact_counts[org.id] = count
+
         for org in contact_counts:
             OrgActivity.objects.update_or_create(
                 org=org,
@@ -2690,6 +2790,7 @@ class OrgActivity(models.Model):
                 active_contact_count=active_counts.get(org.id, 0),
                 incoming_count=incoming_count.get(org.id, 0),
                 outgoing_count=outgoing_count.get(org.id, 0),
+                plan_active_contact_count=plan_active_contact_counts.get(org.id),
             )
 
     class Meta:
