@@ -16,17 +16,21 @@ from .type import Dialog360Type
 
 
 class Dialog360ClaimViewTest(TembaTest):
-    def test_claim(self):
+    def setUp(self):
+        super().setUp()
+
         Channel.objects.all().delete()
 
-        url = reverse("channels.types.dialog360.claim")
+        self.claim_url = reverse("channels.types.dialog360.claim")
+
+    def test_claim(self):
         self.login(self.admin)
 
         # make sure 360dialog is on the claim page
         response = self.client.get(reverse("channels.channel_claim"), follow=True)
-        self.assertContains(response, url)
+        self.assertContains(response, self.claim_url)
 
-        response = self.client.get(url)
+        response = self.client.get(self.claim_url)
         self.assertEqual(200, response.status_code)
         post_data = response.context["form"].initial
 
@@ -36,7 +40,7 @@ class Dialog360ClaimViewTest(TembaTest):
         post_data["api_key"] = "123456789"
 
         # will fail with invalid phone number
-        response = self.client.post(url, post_data)
+        response = self.client.post(self.claim_url, post_data)
         self.assertFormError(response, "form", None, ["Please enter a valid phone number"])
 
         # valid number
@@ -46,7 +50,7 @@ class Dialog360ClaimViewTest(TembaTest):
         with patch("requests.post") as mock_post:
             mock_post.side_effect = [MockResponse(200, '{ "url": "https://ilhasoft.com.br/whatsapp" }')]
 
-            response = self.client.post(url, post_data)
+            response = self.client.post(self.claim_url, post_data)
             self.assertEqual(302, response.status_code)
 
         channel = Channel.objects.get()
@@ -80,6 +84,35 @@ class Dialog360ClaimViewTest(TembaTest):
             except ValidationError:
                 pass
 
+
+class Dialog360TemplatesRefreshTest(TembaTest):
+    def setUp(self):
+        super().setUp()
+        Channel.objects.all().delete()
+        self.valid_channel = Channel.create(
+            self.org,
+            self.admin,
+            "BR",
+            "D3",
+            name="360Dialog: Templates Refresh Test",
+            address="1234",
+            config={
+                Channel.CONFIG_BASE_URL: "https://ilhasoft.com.br/whatsapp",
+                Channel.CONFIG_AUTH_TOKEN: "123456789",
+            },
+        )
+        self.invalid_channel = Channel.create(
+            self.org,
+            self.admin,
+            "BR",
+            "D3",
+            name="360Dialog: Templates Refresh Test",
+            address="1234",
+            config={Channel.CONFIG_BASE_URL: "https://ilhasoft.com.br/whatsapp",},
+        )
+
+    def test_refresh_templates(self):
+        self.login(self.admin)
         # test refresh_templates (same as channels.types.whatsapp.tests.WhatsAppTypeTest)
         with patch("requests.get") as mock_get:
             mock_get.side_effect = [
@@ -255,23 +288,14 @@ class Dialog360ClaimViewTest(TembaTest):
             # should skip if fail with API
             refresh_360_templates()
             self.assertEqual(0, Template.objects.filter(org=self.org).count())
-            self.assertEqual(0, TemplateTranslation.objects.filter(channel=channel).count())
+            self.assertEqual(0, TemplateTranslation.objects.filter(channel=self.valid_channel).count())
 
             # should skip if locked
             r = get_redis_connection()
             with r.lock("refresh_360_templates", timeout=1800):
                 refresh_360_templates()
                 self.assertEqual(0, Template.objects.filter(org=self.org).count())
-                self.assertEqual(0, TemplateTranslation.objects.filter(channel=channel).count())
-
-            # should skip channel without api_key
-            api_key = channel.config.pop(Channel.CONFIG_AUTH_TOKEN)
-            channel.save()
-            refresh_360_templates()
-            self.assertEqual(0, Template.objects.filter(org=self.org).count())
-            self.assertEqual(0, TemplateTranslation.objects.filter(channel=channel).count())
-            channel.config[Channel.CONFIG_AUTH_TOKEN] = api_key
-            channel.save()
+                self.assertEqual(0, TemplateTranslation.objects.filter(channel=self.valid_channel).count())
 
             # now it should refresh
             refresh_360_templates()
@@ -279,7 +303,7 @@ class Dialog360ClaimViewTest(TembaTest):
             mock_get.assert_called_with(
                 "https://ilhasoft.com.br/whatsapp/v1/configs/templates",
                 headers={
-                    "D360-Api-Key": channel.config[Channel.CONFIG_AUTH_TOKEN],
+                    "D360-Api-Key": self.valid_channel.config[Channel.CONFIG_AUTH_TOKEN],
                     "Content-Type": "application/json",
                 },
             )
@@ -287,24 +311,28 @@ class Dialog360ClaimViewTest(TembaTest):
             # should have 4 templates
             self.assertEqual(4, Template.objects.filter(org=self.org).count())
             # and 7 translations
-            self.assertEqual(6, TemplateTranslation.objects.filter(channel=channel).count())
+            self.assertEqual(6, TemplateTranslation.objects.filter(channel=self.valid_channel).count())
+            # But None for invalid channels
+            self.assertEqual(0, TemplateTranslation.objects.filter(channel=self.invalid_channel).count())
 
             # hit our template page
-            response = self.client.get(reverse("channels.types.dialog360.templates", args=[channel.uuid]))
-
+            response = self.client.get(reverse("channels.types.dialog360.templates", args=[self.valid_channel.uuid]))
             # should have our template translations
             self.assertContains(response, "Bonjour")
             self.assertContains(response, "Hello")
-            self.assertContains(response, reverse("channels.types.dialog360.sync_logs", args=[channel.uuid]))
+            self.assertContains(
+                response, reverse("channels.types.dialog360.sync_logs", args=[self.valid_channel.uuid])
+            )
 
             # Check if message templates link are in sync_logs view
-            response = self.client.get(reverse("channels.types.dialog360.sync_logs", args=[channel.uuid]))
+            response = self.client.get(reverse("channels.types.dialog360.sync_logs", args=[self.valid_channel.uuid]))
             gear_links = response.context["view"].get_gear_links()
             self.assertEqual(gear_links[-1]["title"], "Message Templates")
             self.assertEqual(
-                gear_links[-1]["href"], reverse("channels.types.dialog360.templates", args=[channel.uuid])
+                gear_links[-1]["href"], reverse("channels.types.dialog360.templates", args=[self.valid_channel.uuid])
             )
 
         # deactivate our channel
         with self.settings(IS_PROD=True):
-            channel.release()
+            self.valid_channel.release()
+            self.assertFalse(self.valid_channel.is_active)
