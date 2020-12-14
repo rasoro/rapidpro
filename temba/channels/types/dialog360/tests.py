@@ -84,6 +84,11 @@ class Dialog360ClaimViewTest(TembaTest):
             except ValidationError:
                 pass
 
+        # deactivate our channel
+        with self.settings(IS_PROD=True):
+            channel.release()
+            self.assertFalse(channel.is_active)
+
 
 class Dialog360TemplatesRefreshTest(TembaTest):
     def setUp(self):
@@ -331,8 +336,3 @@ class Dialog360TemplatesRefreshTest(TembaTest):
             self.assertEqual(
                 gear_links[-1]["href"], reverse("channels.types.dialog360.templates", args=[self.valid_channel.uuid])
             )
-
-        # deactivate our channel
-        with self.settings(IS_PROD=True):
-            self.valid_channel.release()
-            self.assertFalse(self.valid_channel.is_active)
