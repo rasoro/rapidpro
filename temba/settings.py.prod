@@ -137,6 +137,8 @@ if env.bool("DATABASE_USE_SSL", default=True):
 BROKER_URL = REDIS_URL
 BROKER_BACKEND = env("BROKER_BACKEND", default="redis")
 
+INTERNAL_IPS = ["127.0.0.1", "192.168.0.10", "192.168.0.0/24", "0.0.0.0"]
+
 # CACHES
 # ------------------------------------------------------------------------------
 CACHES = {
