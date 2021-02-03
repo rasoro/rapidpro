@@ -3,6 +3,9 @@ FROM python:3.6-slim
 ARG COMPRESS_ENABLED
 ARG BRANDING_ENABLED
 
+ARG RAPIDPRO_APPS_GIT_URL
+ARG RAPIDPRO_APPS_GIT_BRANCH
+
 ENV PYTHONUNBUFFERED 1
 ENV DEBIAN_FRONTEND  noninteractive
 
@@ -40,7 +43,7 @@ RUN rm /etc/nginx/sites-enabled/default
 COPY ./docker/pip-freeze.txt /tmp/dep/
 COPY ./pip-freeze.txt ./docker/nginx.site.conf /tmp/
 RUN pip install --no-cache-dir -r /tmp/dep/pip-freeze.txt && \
-    pip install -e git+git://github.com/Ilhasoft/rapidpro-apps.git#egg=rapidpro_apps
+    pip install -e git+${RAPIDPRO_APPS_GIT_URL}}@${RAPIDPRO_APPS_GIT_BRANCH}}#egg=rapidpro_apps
 
 RUN cp /tmp/nginx.site.conf /etc/nginx/sites-available/$PROJECT.conf \
  && ln -s /etc/nginx/sites-available/$PROJECT.conf /etc/nginx/sites-enabled/$PROJECT.conf
