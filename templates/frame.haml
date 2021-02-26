@@ -40,6 +40,18 @@
     -# this view make it possible to process translations from javascript land
     <script src="{% url 'django.views.i18n.javascript_catalog' %}"></script>
 
+    <!-- Hotjar Tracking Code for https://rapidpro.ilhasoft.mobi -->
+    <script>
+        (function(h,o,t,j,a,r){
+            h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+            h._hjSettings={hjid:2221594,hjsv:6};
+            a=o.getElementsByTagName('head')[0];
+            r=o.createElement('script');r.async=1;
+            r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+            a.appendChild(r);
+        })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+    </script>
+
     -compress js
       :javascript
         var static_url = '{{STATIC_URL}}';
@@ -134,6 +146,16 @@
 {% block body %}
 
 %body#pageBody.bg-gradient
+
+  .weni-announcement.h-24.flex.flex-row.justify-center
+      .weni-left
+        Ilhasoft, Push, and BotHub are now Weni.
+      .weni-divider
+      .weni-right
+        From this merger, our purpose is to continue evolving the digital transformation in the communication of organizations.
+      %a.weni-button(href="https://www.ilhasoft.com.br/en/we-are-weni/")
+        Learn more
+
   -include "components-body.html"
 
   -block temba-store
