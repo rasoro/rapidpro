@@ -1,3 +1,15 @@
+FROM python:3.6-slim as build-poetry
+
+WORKDIR /app
+
+COPY ./pyproject.toml .
+COPY ./poetry.lock .
+
+RUN python -m pip install -U poetry
+RUN poetry export --without-hashes --output requirements.txt
+
+RUN cat requirements.txt
+
 FROM python:3.6-slim
 
 ARG COMPRESS_ENABLED
@@ -37,9 +49,10 @@ RUN mkdir $PROJECT_PATH \
 
 RUN rm /etc/nginx/sites-enabled/default
 
+COPY --from=build-poetry /app/requirements.txt /tmp/dep/
 COPY ./docker/pip-freeze.txt /tmp/dep/
-COPY ./pip-freeze.txt ./docker/nginx.site.conf /tmp/
-RUN pip install --no-cache-dir -r /tmp/dep/pip-freeze.txt
+COPY ./docker/nginx.site.conf /tmp/
+RUN pip install --no-cache-dir -r /tmp/dep/requirements.txt -r /tmp/dep/pip-freeze.txt
 
 RUN cp /tmp/nginx.site.conf /etc/nginx/sites-available/$PROJECT.conf \
  && ln -s /etc/nginx/sites-available/$PROJECT.conf /etc/nginx/sites-enabled/$PROJECT.conf
@@ -48,8 +61,7 @@ RUN cp /tmp/nginx.site.conf /etc/nginx/sites-available/$PROJECT.conf \
 # && envsubst < /tmp/nginx.site.conf > $PROJECT_CONF/$PROJECT.conf \
 # && chown -R $PROJECT_USER:$PROJECT_GROUP $PROJECT_CONF
 
-COPY . $PROJECT_PATH
-RUN chown -R $PROJECT_USER:$PROJECT_GROUP $PROJECT_PATH
+COPY --chown=${PROJECT_USER}:${PROJECT_GROUP} . $PROJECT_PATH
 
 #COPY --chown=$PROJECT_USER:$PROJECT_GROUP ./docker/nginx.start.sh /etc/init.d/$PROJECT
 #RUN chmod +x /etc/init.d/$PROJECT \
