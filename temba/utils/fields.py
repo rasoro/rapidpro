@@ -1,22 +1,12 @@
+import ipaddress
 import json
 import socket
 from urllib import parse
 
 from django import forms
 from django.core.validators import URLValidator
-from django.forms import ValidationError, widgets
+from django.forms import ValidationError
 from django.utils.translation import ugettext_lazy as _
-
-
-class Select2Field(forms.Field):
-    default_error_messages = {}
-    widget = widgets.TextInput(attrs={"class": "select2_field", "style": "width:520px"})
-
-    def __init__(self, **kwargs):  # pragma: needs cover
-        super().__init__(**kwargs)
-
-    def to_python(self, value):  # pragma: needs cover
-        return value
 
 
 class JSONField(forms.Field):
@@ -42,7 +32,7 @@ def validate_external_url(value):
 
     # if it isn't http or https, fail
     if parsed.scheme not in ("http", "https"):
-        raise ValidationError(_("%(value)s must be http or https scheme"), params={"value": value})
+        raise ValidationError(_("Must use HTTP or HTTPS."), params={"value": value})
 
     # resolve the host
     try:
@@ -51,11 +41,12 @@ def validate_external_url(value):
             host = parsed.netloc[: -(len(str(parsed.port)) + 1)]
         ip = socket.gethostbyname(host)
     except Exception:
-        raise ValidationError(_("%(value)s host cannot be resolved"), params={"value": value})
+        raise ValidationError(_("Unable to resolve host."), params={"value": value})
 
-    # check it isn't localhost
-    if ip in ("127.0.0.1", "::1"):
-        raise ValidationError(_("%(value)s cannot be localhost"), params={"value": value})
+    ip = ipaddress.ip_address(ip)
+
+    if ip.is_loopback or ip.is_multicast or ip.is_private or ip.is_link_local:
+        raise ValidationError(_("Cannot be a local or private host."), params={"value": value})
 
 
 class ExternalURLField(forms.URLField):
@@ -140,7 +131,7 @@ class OmniboxChoice(forms.Widget):
         return selected
 
 
-class ArbitraryChoiceField(forms.ChoiceField):
+class ArbitraryChoiceField(forms.ChoiceField):  # pragma: needs cover
     def valid_value(self, value):
         return True
 

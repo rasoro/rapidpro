@@ -1,6 +1,9 @@
+from unittest.mock import patch
+
 from django.test.utils import override_settings
 from django.urls import reverse
 
+from temba.orgs.models import Org
 from temba.tests import CRUDLTestMixin, TembaTest
 
 from .models import Global
@@ -72,7 +75,8 @@ class GlobalTest(TembaTest):
     def test_is_valid_name(self):
         self.assertTrue(Global.is_valid_name("Age"))
         self.assertTrue(Global.is_valid_name("Age Now 2"))
-        self.assertFalse(Global.is_valid_name("Age_Now"))  # can't have punctuation
+        self.assertFalse(Global.is_valid_name("Age>Now"))  # can't have punctuation
+        self.assertTrue(Global.is_valid_name("API_KEY-2"))  # except underscores and hypens
         self.assertFalse(Global.is_valid_name("âge"))  # a-z only
 
 
@@ -105,6 +109,7 @@ class GlobalCRUDLTest(TembaTest, CRUDLTestMixin):
         self.assertListFetch(unused_url, allow_viewers=False, allow_editors=False, context_objects=[self.global2])
 
     @override_settings(MAX_ACTIVE_GLOBALS_PER_ORG=4)
+    @patch.object(Org, "LIMIT_DEFAULTS", dict(globals=4))
     def test_create(self):
         create_url = reverse("globals.global_create")
 
@@ -204,3 +209,9 @@ class GlobalCRUDLTest(TembaTest, CRUDLTestMixin):
             self.client.post(delete_url)
 
         self.assertEqual(1, Global.objects.filter(id=self.global1.id).count())
+
+        # a deleted dependency shouldn't prevent deletion
+        self.flow.release()
+
+        response = self.assertDeleteFetch(delete_url)
+        self.assertContains(response, "Are you sure you want to delete")

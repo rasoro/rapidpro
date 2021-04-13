@@ -1,3 +1,620 @@
+v6.3.21
+----------
+ * Fix Javascript error on two factor formax
+ * Beta-gate chatbase integration for now
+
+v6.3.20
+----------
+ * Rework DT One and Chatbase into a new integrations framework
+ * Expose Org.language as default language for new users on org edit form
+
+v6.3.19
+----------
+ * Add support for Zenvia SMS
+ * Cleanup parsing unused code on org model
+ * Fix flow update forms to show correct fields based on flow type
+ * Tweak JSONAsTextField to allow underlying DB column to be migrated to JSONB
+ * Add controls to import preview page for selecting existing groups etc
+
+v6.3.18
+----------
+ * Fix template names
+
+v6.3.17
+----------
+ * Fix font reference in scss
+
+v6.3.16
+----------
+ * Add group name field to contact imports so that it can be customized
+ * Rename Nexmo to Vonage, update icon
+ * Merge the two used icomoon sets into one and delete unused one
+ * Cleanup problems in org view templates
+
+v6.3.15
+----------
+ * Revert wording changes when orgs don't have email settings to clarify that we do send
+ * Fix wording of Results link in editor
+
+v6.3.14
+----------
+ * Fix locale files
+ * Fix SMTP server settings views to explain that we don't send emails if you don't have a config
+ * Add API endpoint to fetch tickets filterable by contact
+
+v6.3.13
+----------
+ * Clarify terms for exports vs downloads
+ * Fix rendering of airtime events in contact history
+ * Add flows import and flow exports links in the flows tab
+
+v6.3.12
+----------
+ * Update to latest flow-editor
+ * Cleanup unused dates methods
+ * Update markdown dependency
+ * Expose exclude_active on flow start read API
+ * Support 3 digits short code on Jasmin channel type
+ * Add support for YYYY-MM-DD date format
+ * Update DT One support to collect api key and secret to use with new API
+ * Update parent remaining credits
+ * Release broadcasts properly
+
+v6.3.11
+----------
+ * Fix redirect after submitting Start In Flow modal
+
+v6.3.10
+----------
+ * Add support to exclude active contacts in other flows when starting a flow on API
+ * Remove unsupported channel field on broadcast create API endpoint
+ * Add Start Flow modal to contact read page
+ * Fix lock file being out of sync with pyproject
+
+v6.3.9
+----------
+ * Revert update to use latest API version to get WA templates
+ * Fix setting Zenvia webhooks
+ * Update Django and Django REST Framework
+
+v6.3.8
+----------
+ * Convert to poetry
+
+v6.3.6
+----------
+ * Update pt_BR translation
+ * Update to use latest API version to get WA templates
+ * Display failed on flow results charts, more translations
+ * Zenvia WhatsApp
+
+v6.3.5
+----------
+ * Fix broken flow results charts
+
+v6.3.4
+----------
+ * Update to latest celery 4.x
+
+v6.3.2
+----------
+ * Support reseting the org limits to the default settings by clearing the form field
+ * Update redis client to latest v3.5.3
+ * Fix manage accounts form blowing up when new user has been created in background
+
+v6.3.1
+----------
+ * Add support for runs with exit_type=F
+ * Support customization for org limits
+
+v6.3.0
+----------
+ * Update stable versions and coverage badge link
+ * Style Outbox broadcasts with megaphone icons and use includes for other places we render contacts and groups
+ * Fix spacing on outbox view
+ * Add discord channel type
+
+v6.2.4
+----------
+ * Update Portuguese translation
+ * Update to floweditor v1.13.5
+
+v6.2.3
+----------
+ * Update to latest floweditor v1.13.4
+
+v6.2.2
+----------
+ * Update to flow editor v1.13.3
+ * Update Spanish translation
+ * Disable old Zenvia channel type
+ * Fix styles on fields list
+
+v6.2.1
+----------
+ * Return registration details to Android if have the same UUID
+ * Add spacing between individual channel log events
+ * Fix external channel claim form
+ * Do not track Android channels creation by anon user
+
+v6.2.0
+----------
+ * Update translations for es, fr and pt-BR
+ * Fix rendering of pending broadcasts in outbox view
+
+v6.1.48
+----------
+ * Update editor with dial router changes
+ * Fix resthook formax validation
+
+v6.1.47
+----------
+ * Change synched to synced
+ * Update to smartmin 2.3.5
+ * Require recent authentication to view backup tokens
+
+v6.1.46
+----------
+ * Update to smartmin 2.3.5
+ * Fix handling of attempts to sync old unclaimed channels
+ * Add view to list all possible channel types
+ * Fix rendering of nameless channels
+
+v6.1.45
+----------
+ * Open up 2FA to all users
+ * Do not allow duplicates invites
+ * Never respond with registration commands in sync handler
+
+v6.1.44
+----------
+ * Enforce time limit between login and two factor verification
+ * Prevent inviting existing users
+ * Add disabled textinputs and better expression selection on selects
+ * Create failed login records when users enter incorrect backup tokens too many times
+ * Logout user to force login to accept invite and require invite email account exactly
+
+v6.1.43
+----------
+ * Backup tokens can only be used once
+ * Add new 2FA management views
+
+v6.1.42
+----------
+ * Use Twilio API to determine capabilities of new Twilio channels
+ * Fix result pages not loading for users using Spanish interface
+
+v6.1.41
+----------
+ * Remove no longer used permissions
+ * Override login view to redirect to new views for two-factor authentication
+ * Reduce recent export window to 4 hours
+ * Change message campaign events to use background flows
+
+v6.1.40
+----------
+ * Remove UserSettings.tel and add UserSettings.last_auth_on
+
+v6.1.39
+----------
+ * Increase max len of URN fields on airtime transfers
+ * Add toggle to display manual flow starts only
+ * Cleanup 2FA models
+
+v6.1.38
+----------
+ * Update flow editor to 1.12.10 with failsafe errors
+ * Make validation of external channel URLs disallow private and link local hosts
+ * Cleanup middleware used to set org, timezone and language
+
+v6.1.37
+----------
+ * Update components and editor to latest versions
+ * Switch to microsecond accuracy timestamps
+ * Switch to default_storage for export assets 
+
+v6.1.33
+----------
+ * Tweaks to how we generate contact histories
+
+v6.1.32
+----------
+ * Mute invalid host errors
+ * Add migration to alter m2ms to use bigints
+ * Drop no longer used database function
+ * Switch to big id for msgs and channel logs
+
+v6.1.31
+----------
+ * Add management command to check sentry
+ * Remove unused context processor and unused code from org_perms
+
+v6.1.29
+----------
+ * Rework contact history so that rendering as events happens in view and we also expose a JSON version
+
+v6.1.26
+----------
+ * Upgrade urllib3
+
+v6.1.25
+----------
+ * Update to elastic search v7
+
+v6.1.24
+----------
+ * Broadcast events in history should be white like message events
+
+v6.1.23
+----------
+ * Add index on flow start by start type
+ * Allow only deleting msg folders without active children labels
+ * Use engine events (with some extra properties) for msgs in contact history
+
+v6.1.22
+----------
+ * Fix API serialization of background flow type
+ * Allow background flows to be used in scheduled triggers
+ * Update pip-tools
+
+v6.1.21
+----------
+ * Configure editor and components to use completions files in current language
+
+v6.1.20
+----------
+ * Update to latest floweditor and temba-components
+
+v6.1.19
+----------
+ * Update to floweditor v1.12.6
+ * Fix deleting classifiers
+
+v6.1.18
+----------
+ * Add support for background flows
+
+v6.1.17
+----------
+ * Update to flow editor v1.12.5
+ * Fix importing dependencies when it's a clone in the same workspace
+ * Allow aliases to be reused on boundaries with different parent
+ * Increase max length on external channels to be configurable up to 6400 chars
+ * Fix contact export warning for existing export
+
+v6.1.16
+----------
+ * Update to latest flow editor 1.12.3
+ * Allow staff users to use the org chooser
+
+v6.1.15
+----------
+ * Add constraint to chek URN identity mathes scheme and path
+ * Add non-empty constraint for URN scheme and path
+ * Fix contact list pagination with searches
+ * Show query on list page for smart groups
+
+v6.1.14
+----------
+ * Change template translations to be TEXT
+ * Set global email timeout, fixes rapidpro #1345
+ * Update tel parsing to match gocommon, fixing how we currently accept local US numbers
+
+v6.1.13
+----------
+ * Bump temba-components to v0.8.11
+
+v6.1.12
+----------
+ * Un-beta-gate Rocket.Chat channels
+
+v6.1.10
+----------
+ * Login summary on org home page should include agents
+ * Rework manage accounts UI to include agents
+
+v6.1.9
+----------
+ * Fix deleted flow dependency preventing global deletion
+ * Cache lookups of auth.Group instances
+
+v6.1.8
+----------
+ * For field columns in imports, only match against user fields
+ * Add agent role and cleanup code around org roles
+
+v6.1.7
+----------
+ * Wire table listeners on pjax reload
+ * Update domain from swag.textit.com to whatsapp.textit.com
+ * Add internal ticketer type for BETA users
+ * Inner scrolling on contact list page
+ * Improve styles for recipient lists
+
+v6.1.6
+----------
+ * Trim our start runs 1,000 at a time and by id
+ * Increase global max value length to 10000 and fix UI to be more consistent with fields
+
+v6.1.5
+----------
+ * Share modals on globals list, truncate values
+ * Squash migrations
+
+v6.1.4
+----------
+ * Add security settings file
+ * Fix intent selection on split by intent
+ * Add empty migrations for squashing in next release
+
+v6.1.3
+----------
+ * Fix intent selection on split by intent
+ * Update callback URL for textit whatsapp
+ * Use Django password validators
+
+v6.1.2
+----------
+ * Add TextIt WhatsApp channel type
+
+v6.1.1
+----------
+ * Fix contact exports when orgs have orphaned URNs in schemes they don't currently use
+
+v6.1.0
+----------
+ * Hide editor language dialog blurb until needed to prevent flashing
+ * Fix broken flows list page if org has no flows
+ * Allow underscores in global names
+ * Improve calculating of URN columns for exports so tests don't break every time we add new URN schemes
+ * Make instruction lists on channel claim pages more consistent
+
+v6.0.8
+----------
+ * Editor fix for split by intents
+ * Add empty migrations for squashing in next release
+
+v6.0.7
+----------
+ * Fix choose org page
+ * Fix recipient search
+ * Fix run deletion
+
+v6.0.6
+----------
+ * Fix for textarea init
+
+v6.0.5
+----------
+ * Adjust contact icon color in recipient lists
+
+v6.0.4
+----------
+ * Fix recipients contacts and urns UI labels
+ * Fix flow starts log page pagination
+ * Update temba-components and flow-editor to common versions
+ * Fix flow label delete modal
+ * Fix global delete modal
+
+v6.0.3
+----------
+ * Update to components v0.8.6, bugfix release
+ * Handle CSV imports in encodings other than UTF8
+
+v6.0.2
+----------
+ * Fix broken ticket re-open button
+ * Missing updated Fr MO file from previous merge
+ * Apply translations in fr
+
+v6.0.1
+----------
+ * Fix orgs being suspended due to invalid topup cache
+ * Set uses_topups on new orgs based on whether our plan is the TOPUP_PLAN
+ * Fix validation issues on trigger update form
+ * Fix hover cursor in lists for viewers
+ * Action button alignment on archived messages
+ * Fix flow table header for viewers
+ * Fix tests for channel deletion
+ * Fix redirects for channel and ticketer deletion.
+ * Fix dialog when deleting channels with dependencies
+  * Match headers and contact fields with labels as well as keys during contact imports
+
+v6.0.0
+----------
+ * Add Rocket.Chat ticketer to test database
+
+v5.7.91
+----------
+ * Add Rocket.Chat ticketers
+
+v5.7.90
+----------
+ * Update rocket.chat icon in correct font
+
+v5.7.89
+----------
+ * Improve Rocket.Chat claim page
+ * Add Rocket.Chat icon
+
+v5.7.87
+----------
+ * Cleanup Rocket.Chat UI
+
+v5.7.86
+----------
+ * Add RocketChat channels (beta-only for now)
+
+v5.7.85
+----------
+ * Add back jquery-migrate and remove debug
+
+v5.7.84
+----------
+ * Remove select2, coffeescript, jquery plugins
+
+v5.7.83
+----------
+ * Fix broken import link on empty contacts page
+ * Use consistent approach for limits on org
+ * Globals UI should limit creation of globals to org limit
+ * Fix archives list styles and add tabs for message and run archives
+ * Restyle the Facebook app channel claim pages
+ * Switch to use FBA type by default
+
+v5.7.82
+----------
+ * Don't blow up if import contains invalid URNs but pass values on to mailroom
+ * Update to version of editor with some small styling tweaks
+ * Include occurred_on with mo_miss events queued to mailroom
+ * Adjust Twilio connect to redirect properly to the original claim page
+ * Remove no longer used FlowRun.timeout_on and drop two unused indexes
+ * Cleanup more localized strings with trimmed
+ * Fix 404 error in channel list
+
+v5.7.81
+----------
+ * Add page title to brand so that its configurable
+ * Dont send alert emails for orgs that aren't using topups
+ * Consider timezone when infering org default country and display on import create page
+ * Add page titles to fields and flows
+ * Allow changing EX channels role on UI
+
+v5.7.80
+----------
+ * Add contact last seen on to list contacts views
+ * Cleanup channel model fields
+ * Add charcount to send message dialog
+ * Show channel logs link for receive only channels
+ * Fix export flow page styles
+ * Allow searching for countries on channel claim views
+
+v5.7.79
+----------
+ * Rework imports to allow importing multiple URNs of same scheme
+ * Cleanup no longer used URN related functionality
+ * Show contact last seen on on contact read page
+
+v5.7.78
+----------
+ * Clean up models fields in contacts app
+
+v5.7.77
+----------
+ * Fix styling on the API explorer page
+ * Fix list page selection for viewers
+ * Move contact field type constants to ContactField class
+ * Allow brand to be set by env variable
+
+v5.7.76
+----------
+ * Drop support for migrating legacy expressions on API endpoints
+ * Fix imports blowing up when header is numerical
+ * Fix 11.4 flow migration when given broken send action
+ * Drop RuleSet and ActionSet models
+
+v5.7.75
+----------
+ * Last tweaks before RuleSet and ActionSet can be dropped
+ * Contact id treatment for details
+ * Update components to ship ajax header and use it in language endpoint
+ * Remove no longer needed legacy editor completion
+
+v5.7.74
+----------
+ * Remove legacy flow code
+ * WA channel tokens refresh catch errors for each channel independently
+
+v5.7.73
+----------
+ * Make flows searchable and clickable on triggers
+ * Make flows searchable on edit campaign event
+
+v5.7.72
+----------
+ * Fix editor whatsapp templates, refresh whatsapp channel pages
+ * Move omnibox module into temba.contacts.search
+
+v5.7.71
+----------
+ * Remove legacy contact searching
+ * Remove code for dynamic group reevaluation and campaign event scheduling
+
+v5.7.70
+----------
+ * Fix pdf selection
+
+v5.7.69
+----------
+ * Validate language codes passed to contact API endpoint
+ * Don't actually create a broadcast if sending to node but nobody is there
+ * Update to latest floweditor
+
+v5.7.67
+----------
+ * Fix globals endpoint so name is required
+ * Filter by is_active when updating fields on API endpoint
+
+v5.7.66
+----------
+ * Replace remaining Contact.get_or_create calls with mailroom's resolve endpoint
+
+v5.7.65
+----------
+ * URN lookups onthe contact API endpoint should be normalized with org country
+ * Archiving a campaign should only recreate events
+
+v5.7.64
+----------
+ * Don't create contacts and URNs for broadcasts but instead defer the raw URNs to mailroom
+
+v5.7.63
+----------
+ * Validate that import files don't contain duplicate UUIDs or URNs
+
+v5.7.62
+----------
+ * Update version of editor and components
+ * Upload imports to use UUID based path
+ * Fix issue where all keywords couldnt be removed from a flow
+
+v5.7.61
+----------
+ * Remove old editor, redirect editor_next to editor
+
+v5.7.60
+----------
+ * Fix contact imports from CSV files
+ * Tweaks to import UI
+
+v5.7.59
+----------
+ * Imports 2.0
+
+v5.7.55
+----------
+ * Use v13 flow as example on definitions endpoint docs
+ * Add URNs field to FlowStart and pass to mailroom so that it creates contacts
+
+v5.7.54
+----------
+ * Update editor to get support for expressions in add to group actions
+ * Remove unused localized text on Msg and Broadcast
+
+v5.7.52
+----------
+ * Migrations and models for new imports
+
+v5.7.51
+----------
+ * Add plan_start, calculate active contacts in plan period, add to OrgActivity
+ * Tweak how mailroom_db creates extra group contacts
+ * Update to latest django-hamlpy
+
+v5.7.50
+----------
+ * Optimizations for orgs with many contact fields
+
 v5.7.49
 ----------
  * Update plan_end when suspending topup orgs

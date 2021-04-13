@@ -5,6 +5,10 @@
 - [Supporting the cause](https://act.unicefusa.org/blm)
 
 # RapidPro [![Build Status](https://travis-ci.org/rapidpro/rapidpro.svg?branch=master)](https://travis-ci.org/rapidpro/rapidpro) [![codecov](https://codecov.io/gh/rapidpro/rapidpro/branch/master/graph/badge.svg)](https://codecov.io/gh/rapidpro/rapidpro)    
+# RapidPro 
+
+[![Build Status](https://github.com/rapidpro/rapidpro/workflows/CI/badge.svg)](https://github.com/rapidpro/rapidpro/actions?query=workflow%3ACI) 
+[![codecov](https://codecov.io/gh/rapidpro/rapidpro/branch/main/graph/badge.svg)](https://codecov.io/gh/rapidpro/rapidpro)
 
 RapidPro is a hosted service for visually building interactive messaging applications.
 To learn more, please visit the project site at http://rapidpro.github.io/rapidpro.
@@ -13,13 +17,13 @@ To learn more, please visit the project site at http://rapidpro.github.io/rapidp
 
 The set of versions that make up the latest stable release are:
 
- * [RapidPro v5.6.5](https://github.com/rapidpro/rapidpro/releases/tag/v5.6.5)
- * [Mailroom v5.6.1](https://github.com/nyaruka/mailroom/releases/tag/v5.6.1)
- * [Courier v5.6.0](https://github.com/nyaruka/courier/releases/tag/v5.6.0)
- * [Archiver v5.6.0](https://github.com/nyaruka/rp-archiver/releases/tag/v5.6.0)
- * [Indexer v5.6.0](https://github.com/nyaruka/rp-indexer/releases/tag/v5.6.0)
+ * [RapidPro v6.2.4](https://github.com/rapidpro/rapidpro/releases/tag/v6.2.4)
+ * [Mailroom v6.2.3](https://github.com/nyaruka/mailroom/releases/tag/v6.2.3)
+ * [Courier v6.2.0](https://github.com/nyaruka/courier/releases/tag/v6.2.0)
+ * [Archiver v6.2.0](https://github.com/nyaruka/rp-archiver/releases/tag/v6.2.0)
+ * [Indexer v6.2.0](https://github.com/nyaruka/rp-indexer/releases/tag/v6.2.0)
  * [Android Channel v2.0.0](https://github.com/rapidpro/android-channel/releases/tag/v2.0.0)
- * [Android Surveyor v13.5.0](https://github.com/rapidpro/surveyor/releases/tag/v13.5.0)
+ * [Android Surveyor v13.7.0](https://github.com/rapidpro/surveyor/releases/tag/v13.7.0)
 
 ### Versioning in RapidPro
 
@@ -27,7 +31,7 @@ Major releases of RapidPro are made every four months on a set schedule. We targ
 as a major release (`v6.0.0`), then March 1st as the first stable dot release (`v6.2.0`) and July 1st
 as the second stable dot release (`v6.4.0`). The next November would start the next major release `v7.0.0`.
 
-Unstable releases have odd minor versions, that is versions `v5.1.*` would indicate an unstable or *development*
+Unstable releases have odd minor versions, that is versions `v6.3.*` would indicate an unstable or *development*
 version of RapidPro. Generally we recommend staying on stable releases unless you
 have experience developing against RapidPro.
 

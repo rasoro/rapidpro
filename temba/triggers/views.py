@@ -5,11 +5,11 @@ from django import forms
 from django.db.models import Min
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ngettext_lazy, ugettext_lazy as _
 
 from temba.channels.models import Channel
 from temba.contacts.models import ContactGroup, ContactURN
-from temba.contacts.omnibox import omnibox_deserialize, omnibox_serialize
+from temba.contacts.search.omnibox import omnibox_deserialize, omnibox_serialize
 from temba.flows.models import Flow
 from temba.formax import FormaxMixin
 from temba.msgs.views import ModalMixin
@@ -36,10 +36,10 @@ class BaseTriggerForm(forms.ModelForm):
     """
 
     flow = forms.ModelChoiceField(
-        Flow.objects.filter(pk__lt=0),
+        Flow.objects.none(),
         label=_("Flow"),
         required=True,
-        widget=SelectWidget(attrs={"placeholder": _("Select a flow")}),
+        widget=SelectWidget(attrs={"placeholder": _("Select a flow"), "searchable": True}),
     )
 
     def __init__(self, user, flows, *args, **kwargs):
@@ -95,7 +95,7 @@ class DefaultTriggerForm(BaseTriggerForm):
     """
 
     def __init__(self, user, *args, **kwargs):
-        flows = Flow.get_triggerable_flows(user.get_org())
+        flows = Flow.get_triggerable_flows(user.get_org(), by_schedule=False)
         super().__init__(user, flows, *args, **kwargs)
 
 
@@ -138,7 +138,7 @@ class CatchAllTriggerForm(GroupBasedTriggerForm):
     """
 
     def __init__(self, user, *args, **kwargs):
-        flows = Flow.get_triggerable_flows(user.get_org())
+        flows = Flow.get_triggerable_flows(user.get_org(), by_schedule=False)
         super().__init__(user, flows, *args, **kwargs)
 
     def get_existing_triggers(self, cleaned_data):
@@ -156,7 +156,7 @@ class KeywordTriggerForm(GroupBasedTriggerForm):
     """
 
     def __init__(self, user, *args, **kwargs):
-        flows = Flow.get_triggerable_flows(user.get_org())
+        flows = Flow.get_triggerable_flows(user.get_org(), by_schedule=False)
         super().__init__(user, flows, *args, **kwargs)
 
     def get_existing_triggers(self, cleaned_data):
@@ -210,12 +210,12 @@ class RegisterTriggerForm(BaseTriggerForm):
     response = forms.CharField(
         widget=CompletionTextarea(attrs={"placeholder": _("Hi @contact.name!")}),
         required=False,
-        label=_("Response"),
+        label=ngettext_lazy("Response", "Responses", 1),
         help_text=_("The message to send in response after they join the group (optional)"),
     )
 
     def __init__(self, user, *args, **kwargs):
-        flows = Flow.get_triggerable_flows(user.get_org())
+        flows = Flow.get_triggerable_flows(user.get_org(), by_schedule=False)
 
         super().__init__(user, flows, *args, **kwargs)
 
@@ -249,10 +249,10 @@ class ScheduleTriggerForm(BaseScheduleForm, forms.ModelForm):
     )
 
     flow = forms.ModelChoiceField(
-        Flow.objects.filter(pk__lt=0),
+        Flow.objects.none(),
         label=_("Flow"),
         required=True,
-        widget=SelectWidget(attrs={"placeholder": _("Select a flow")}),
+        widget=SelectWidget(attrs={"placeholder": _("Select a flow"), "searchable": True}),
         empty_label=None,
     )
 
@@ -269,7 +269,7 @@ class ScheduleTriggerForm(BaseScheduleForm, forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.user = user
         org = user.get_org()
-        flows = Flow.get_triggerable_flows(org)
+        flows = Flow.get_triggerable_flows(org, by_schedule=True)
 
         self.fields["start_datetime"].help_text = _("%s Time Zone" % org.timezone)
         self.fields["flow"].queryset = flows
@@ -304,7 +304,7 @@ class NewConversationTriggerForm(BaseTriggerForm):
     channel = forms.ModelChoiceField(Channel.objects.filter(pk__lt=0), label=_("Channel"), required=True)
 
     def __init__(self, user, *args, **kwargs):
-        flows = Flow.get_triggerable_flows(user.get_org())
+        flows = Flow.get_triggerable_flows(user.get_org(), by_schedule=False)
         super().__init__(user, flows, *args, **kwargs)
 
         self.fields["channel"].queryset = Channel.objects.filter(
@@ -350,7 +350,7 @@ class ReferralTriggerForm(BaseTriggerForm):
     )
 
     def __init__(self, user, *args, **kwargs):
-        flows = Flow.get_triggerable_flows(user.get_org())
+        flows = Flow.get_triggerable_flows(user.get_org(), by_schedule=False)
         super().__init__(user, flows, *args, **kwargs)
 
         self.fields["channel"].queryset = Channel.objects.filter(
