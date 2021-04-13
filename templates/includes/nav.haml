@@ -54,7 +54,7 @@
             margin-left: 0px;
             margin-right: 20px;
             font-size: 36px;
-            color: #fff;
+            color: var(--color-nav-unselected);
           }
         }
       
@@ -70,19 +70,17 @@
           &:hover, &.active{
             text-decoration: none;
             .circle {
-              background: #ffff;
-              color: var(--color-primary-dark);
+              background: var(--color-nav-selected-bg);
+              color: var(--color-nav-selected-text);
             }
           }
 
           .title {
             font-size: 12px;
-            font-family: 'Helvetica Neue', sans-serif;
             letter-spacing: 0.05em;
             margin-top: 3px;
             font-weight: 400;
-            color: rgba(255,255,255,.9);
-
+            color: var(--color-nav-unselected);
           }
 
           .circle {
@@ -121,9 +119,9 @@
             align-items: center;
             font-size:19px;
             background: transparent;
-            color: #fff;
+            color: var(--color-nav-unselected);
             border-radius: 50%;
-            border: 3px solid #fff;
+            border: 3px solid var(--color-nav-unselected);
             transition: all 150ms linear;
           }
         }
@@ -141,21 +139,21 @@
   -if org_perms.contacts.contact_list and not request.user.is_superuser
     %a{href:"{% url 'contacts.contact_list' %}", class:"{% active request 'contact|imports' %}"}
       .circle
-        .icon-vcard
+        .icon-contact
       .title 
         -trans "contacts"
 
   -if org_perms.flows.flow_list and not request.user.is_superuser
     %a{href:"{% url 'flows.flow_list' %}", class:"{% active request '(?<!msg)/flow' %}"}
       .circle
-        .icon-tree-2.icon-3
+        .icon-flow.icon-3
       .title 
         -trans "flows"
 
   -if org_perms.campaigns.campaign_list and not request.user.is_superuser
     %a{href:"{% url 'campaigns.campaign_list' %}", class:"{% active request 'campaign' %}"}
       .circle
-        .icon-instant
+        .icon-campaign
       .title
         -trans "campaigns"
 
@@ -195,7 +193,7 @@
         .circle
           .icon-office.icon-2
         .title
-          -trans "orgs"
+          -trans "workspaces"
 
   -if request.user.is_superuser or perms.apks.apk_list
     %a{href:"{% url 'apks.apk_list' %}", class:"{% active request 'apk' %}"}
@@ -242,12 +240,11 @@
               .title
                 -trans "end"
           -else
-            %a{href:"{% url 'users.user_logout' %}"}
+            %a(href="{% url 'users.user_logout' %}?next=/users/login")
               .circle
                 .icon-exit
-              .title
-                -trans "logout"
-
+              .title.whitespace-no-wrap
+                -trans "sign out"
   -else
     -block temba-login
 

@@ -6,7 +6,7 @@ from smartmin.views import SmartFormView, SmartReadView
 from django import forms
 from django.conf import settings
 from django.contrib import messages
-from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
+from django.http import FileResponse, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils import timezone, translation
@@ -18,7 +18,9 @@ from django.views.generic import View
 
 from temba.orgs.views import OrgPermsMixin
 from temba.utils import json
+from temba.utils.s3 import public_file_storage
 from temba.utils.text import random_string
+from temba.utils.views import ComponentFormMixin
 
 from ...models import Ticketer
 from ...views import BaseConnectView
@@ -91,7 +93,7 @@ class ConnectView(BaseConnectView):
         client = Client(subdomain)
         try:
             access_token = client.get_oauth_token(
-                settings.ZENDESK_CLIENT_ID, settings.ZENDESK_CLIENT_SECRET, code, self.get_absolute_url(),
+                settings.ZENDESK_CLIENT_ID, settings.ZENDESK_CLIENT_SECRET, code, self.get_absolute_url()
             )
         except ClientError:
             messages.error(request, _("Unable to request OAuth token."))
@@ -114,7 +116,7 @@ class ConnectView(BaseConnectView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class ConfigureView(OrgPermsMixin, SmartReadView):
+class ConfigureView(ComponentFormMixin, OrgPermsMixin, SmartReadView):
     model = Ticketer
     fields = ()
     permission = "tickets.ticketer_configure"
@@ -159,7 +161,7 @@ class ManifestView(View):
                 "id": domain,
                 "author": "Nyaruka",
                 "version": "v0.0.1",
-                "channelback_files": False,
+                "channelback_files": True,
                 "push_client_id": settings.ZENDESK_CLIENT_ID,
                 "urls": {
                     "admin_ui": f"https://{domain}{reverse('tickets.types.zendesk.admin_ui')}",
@@ -205,7 +207,7 @@ class AdminUIView(SmartFormView):
             data = self.cleaned_data["secret"]
 
             ticketers = Ticketer.objects.filter(
-                ticketer_type=ZendeskType.slug, config__subdomain=self.subdomain, config__secret=data, is_active=True,
+                ticketer_type=ZendeskType.slug, config__subdomain=self.subdomain, config__secret=data, is_active=True
             )
             if not ticketers.exists():
                 raise forms.ValidationError(_("Secret is incorrect."))
@@ -276,7 +278,7 @@ class AdminUIView(SmartFormView):
         secret = form.cleaned_data["secret"]
 
         ticketer = Ticketer.objects.get(
-            ticketer_type=ZendeskType.slug, config__subdomain=subdomain, config__secret=secret, is_active=True,
+            ticketer_type=ZendeskType.slug, config__subdomain=subdomain, config__secret=secret, is_active=True
         )
 
         # update ticketer config with push credentials we've been given
@@ -292,3 +294,19 @@ class AdminUIView(SmartFormView):
             "metadata": json.dumps({"ticketer": str(ticketer.uuid), "secret": secret}),
         }
         return TemplateResponse(request=self.request, template=self.return_template, context=context)
+
+
+class FileCallbackView(View):
+    """
+    When we use the Zendesk Push API to send attachments, we send relative URLs which Zendesk later POSTs to get the
+    file content.
+    """
+
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        path = "attachments/" + kwargs["path"]
+        assert ".." not in kwargs["path"]
+        return FileResponse(public_file_storage.open(path))

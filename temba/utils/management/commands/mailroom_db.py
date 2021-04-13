@@ -14,7 +14,7 @@ from django.utils import timezone
 from temba.campaigns.models import Campaign, CampaignEvent
 from temba.channels.models import Channel
 from temba.classifiers.models import Classifier
-from temba.contacts.models import Contact, ContactField, ContactGroup
+from temba.contacts.models import Contact, ContactField, ContactGroup, ContactURN
 from temba.flows.models import Flow
 from temba.globals.models import Global
 from temba.locations.models import AdminBoundary
@@ -22,7 +22,6 @@ from temba.msgs.models import Label
 from temba.orgs.models import Org
 from temba.templates.models import Template, TemplateTranslation
 from temba.tickets.models import Ticketer
-from temba.values.constants import Value
 
 # by default every user will have this password including the superuser
 USER_PASSWORD = "Arst1234"
@@ -97,19 +96,29 @@ ORG1 = dict(
         dict(name="Testers", uuid="5e9d8fab-5e7e-4f51-b533-261af5dea70d", size=10),
     ),
     fields=(
-        dict(key="gender", label="Gender", value_type=Value.TYPE_TEXT, uuid="3a5891e4-756e-4dc9-8e12-b7a766168824"),
-        dict(key="age", label="Age", value_type=Value.TYPE_NUMBER, uuid="903f51da-2717-47c7-a0d3-f2f32877013d"),
         dict(
-            key="joined", label="Joined", value_type=Value.TYPE_DATETIME, uuid="d83aae24-4bbf-49d0-ab85-6bfd201eac6d"
+            key="gender",
+            label="Gender",
+            value_type=ContactField.TYPE_TEXT,
+            uuid="3a5891e4-756e-4dc9-8e12-b7a766168824",
         ),
-        dict(key="ward", label="Ward", value_type=Value.TYPE_WARD, uuid="de6878c1-b174-4947-9a65-8910ebe7d10f"),
+        dict(key="age", label="Age", value_type=ContactField.TYPE_NUMBER, uuid="903f51da-2717-47c7-a0d3-f2f32877013d"),
+        dict(
+            key="joined",
+            label="Joined",
+            value_type=ContactField.TYPE_DATETIME,
+            uuid="d83aae24-4bbf-49d0-ab85-6bfd201eac6d",
+        ),
+        dict(key="ward", label="Ward", value_type=ContactField.TYPE_WARD, uuid="de6878c1-b174-4947-9a65-8910ebe7d10f"),
         dict(
             key="district",
             label="District",
-            value_type=Value.TYPE_DISTRICT,
+            value_type=ContactField.TYPE_DISTRICT,
             uuid="3ca3e36b-3d5a-42a4-b292-482282ce9a90",
         ),
-        dict(key="state", label="State", value_type=Value.TYPE_STATE, uuid="1dddea55-9a3b-449f-9d43-57772614ff50"),
+        dict(
+            key="state", label="State", value_type=ContactField.TYPE_STATE, uuid="1dddea55-9a3b-449f-9d43-57772614ff50"
+        ),
     ),
     contacts=(
         dict(
@@ -180,6 +189,7 @@ ORG1 = dict(
             translations=(
                 dict(
                     channel_uuid="0f661e8b-ea9d-4bd3-9953-d368340acf91",
+                    country="US",
                     language="eng",
                     content="Hi {{1}}, are you still experiencing problems with {{2}}?",
                     variable_count=2,
@@ -188,11 +198,27 @@ ORG1 = dict(
                 ),
                 dict(
                     channel_uuid="0f661e8b-ea9d-4bd3-9953-d368340acf91",
+                    country=None,
                     language="fra",
                     content="Bonjour {{1}}, a tu des problems avec {{2}}?",
                     variable_count=2,
                     status="P",
                     external_id="fra1",
+                ),
+            ),
+        ),
+        dict(
+            name="goodbye",
+            uuid="3b8dd151-1a91-411f-90cb-dd9065bb7a71",
+            translations=(
+                dict(
+                    channel_uuid="0f661e8b-ea9d-4bd3-9953-d368340acf91",
+                    country=None,
+                    language="fra",
+                    content="Salut!",
+                    variable_count=0,
+                    status="A",
+                    external_id="fra2",
                 ),
             ),
         ),
@@ -216,6 +242,17 @@ ORG1 = dict(
             ticketer_type="zendesk",
             config=dict(
                 subdomain="nyaruka", oauth_token="754845822", secret="sesame", push_id="1234-abcd", push_token="523562"
+            ),
+        ),
+        dict(
+            uuid="6c50665f-b4ff-4e37-9625-bc464fe6a999",
+            name="Rocket.Chat",
+            ticketer_type="rocketchat",
+            config=dict(
+                base_url="https://temba.rocket.chat/apps/public/1234",
+                secret="123456789",
+                admin_auth_token="1234",
+                admin_user_id="ADMIN346",
             ),
         ),
     ),
@@ -357,9 +394,9 @@ class Command(BaseCommand):
             created_by=superuser,
             modified_by=superuser,
         )
-        org.create_system_groups()
-        org.create_system_contact_fields()
-        org.create_welcome_topup(100_000)
+        ContactGroup.create_system_groups(org)
+        ContactField.create_system_fields(org)
+        org.init_topups(100_000)
 
         # set our sequences to make ids stable across orgs
         with connection.cursor() as cursor:
@@ -382,7 +419,7 @@ class Command(BaseCommand):
         self.create_labels(spec, org, superuser)
         self.create_groups(spec, org, superuser)
         self.create_flows(spec, org, superuser)
-        self.create_contacts(spec, org, locations, superuser)
+        self.create_contacts(spec, org, superuser)
         self.create_group_contacts(spec, org, superuser)
         self.create_campaigns(spec, org, superuser)
         self.create_templates(spec, org, superuser)
@@ -566,6 +603,7 @@ class Command(BaseCommand):
                     channel,
                     t["name"],
                     tt["language"],
+                    tt["country"],
                     tt["content"],
                     tt["variable_count"],
                     tt["status"],
@@ -574,22 +612,18 @@ class Command(BaseCommand):
 
         self._log(self.style.SUCCESS("OK") + "\n")
 
-    def create_contacts(self, spec, org, locations, user):
+    def create_contacts(self, spec, org, user):
         self._log(f"Creating {len(spec['contacts'])} contacts... ")
 
+        fields_by_key = {f.key: f for f in ContactField.user_fields.all()}
+
         for c in spec["contacts"]:
-            contact = Contact.get_or_create_by_urns(org, user, c["name"], c["urns"])
+            values = {fields_by_key[key]: val for key, val in c.get("fields", {}).items()}
+            groups = list(ContactGroup.user_groups.filter(org=org, name__in=c.get("groups", [])))
+
+            contact = Contact.create(org, user, c["name"], language="", urns=c["urns"], fields=values, groups=groups)
             contact.uuid = c["uuid"]
-            contact.save(update_fields=["uuid"], handle_update=False)
-
-            # add to any groups we belong to
-            for g in c.get("groups", []):
-                group = ContactGroup.user_groups.get(org=org, name=g)
-                group.update_contacts(user, [contact], True)
-
-            # set any fields we have
-            for key, value in c.get("fields", {}).items():
-                contact.set_field(user, key, value)
+            contact.save(update_fields=("uuid",))
 
         self._log(self.style.SUCCESS("OK") + "\n")
 
@@ -603,11 +637,13 @@ class Command(BaseCommand):
 
                 contacts = []
                 for i in range(size):
-                    urn = "tel:+250788%06d" % i
-                    contact, _ = Contact.get_or_create(org, urn, user=user)
+                    urn = f"tel:+250788{i:06}"
+                    contact = ContactURN.lookup(org, urn)
+                    if not contact:
+                        contact = Contact.create(org, user, name="", language="", urns=[urn], fields={}, groups=[])
                     contacts.append(contact)
 
-                group.update_contacts(user, contacts, True)
+                Contact.bulk_change_group(user, contacts, group, add=True)
 
         self._log(self.style.SUCCESS("OK") + "\n")
 

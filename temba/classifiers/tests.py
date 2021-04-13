@@ -4,40 +4,27 @@ from django.urls import reverse
 from django.utils import timezone
 
 from temba.request_logs.models import HTTPLog
-from temba.tests import MockResponse, TembaTest
+from temba.tests import CRUDLTestMixin, MockResponse, TembaTest
 
 from .models import Classifier
 from .types.luis import LuisType
 from .types.wit import WitType
 
 INTENT_RESPONSE = """
-{
-  "builtin": false,
-  "name": "intent",
-  "doc": "User-defined entity",
-  "id": "ef9236ec-22c7-e96b-6b29-886c94d23953",
-  "lang": "en",
-  "lookups": [
-    "trait"
-  ],
-  "values": [
+[
     {
-      "value": "book_car",
-      "expressions": [
-      ]
+        "id": "754569408690533",
+        "name": "book_car"
     },
     {
-      "value": "book_hotel",
-      "expressions": [
-      ]
+        "id": "754569408690020",
+        "name": "book_horse"
     },
     {
-      "value": "book_horse",
-      "expressions": [
-      ]
+        "id": "754569408690131",
+        "name": "book_hotel"
     }
-  ]
-}
+]
 """
 
 
@@ -50,15 +37,12 @@ class ClassifierTest(TembaTest):
         self.c1.intents.create(
             name="book_flight", external_id="book_flight", created_on=timezone.now(), is_active=True
         )
-        self.c1.intents.create(name="book_hotel", external_id="book_hotel", created_on=timezone.now(), is_active=False)
-        self.c1.intents.create(name="book_car", external_id="book_car", created_on=timezone.now(), is_active=True)
-
-        self.c2 = Classifier.create(self.org, self.admin, WitType.slug, "Old Booker", {}, sync=False)
-        self.c2.is_active = False
-        self.c2.save()
-
-        # on another org
-        self.c3 = Classifier.create(self.org2, self.admin, LuisType.slug, "Org2 Booker", {}, sync=False)
+        self.c1.intents.create(
+            name="book_hotel", external_id="754569408690131", created_on=timezone.now(), is_active=False
+        )
+        self.c1.intents.create(
+            name="book_car", external_id="754569408690533", created_on=timezone.now(), is_active=True
+        )
 
     def test_syncing(self):
         # will fail due to missing keys
@@ -80,17 +64,46 @@ class ClassifierTest(TembaTest):
             intents = self.c1.active_intents()
             self.assertEqual(3, intents.count())
             self.assertEqual("book_car", intents[0].name)
-            self.assertEqual("book_car", intents[0].external_id)
+            self.assertEqual("754569408690533", intents[0].external_id)
             self.assertEqual("book_horse", intents[1].name)
-            self.assertEqual("book_horse", intents[1].external_id)
+            self.assertEqual("754569408690020", intents[1].external_id)
             self.assertEqual("book_hotel", intents[2].name)
-            self.assertEqual("book_hotel", intents[2].external_id)
+            self.assertEqual("754569408690131", intents[2].external_id)
 
             # one inactive
             self.assertEqual(1, self.c1.intents.filter(is_active=False).count())
 
             # one classifier log
             self.assertEqual(1, HTTPLog.objects.filter(classifier=self.c1, org=self.org).count())
+
+
+class ClassifierCRUDLTest(TembaTest, CRUDLTestMixin):
+    def setUp(self):
+        super().setUp()
+
+        # create some classifiers
+        self.c1 = Classifier.create(self.org, self.admin, WitType.slug, "Booker", {}, sync=False)
+        self.c1.intents.create(
+            name="book_flight", external_id="book_flight", created_on=timezone.now(), is_active=True
+        )
+        self.c1.intents.create(
+            name="book_hotel", external_id="754569408690131", created_on=timezone.now(), is_active=False
+        )
+        self.c1.intents.create(
+            name="book_car", external_id="754569408690533", created_on=timezone.now(), is_active=True
+        )
+
+        self.c2 = Classifier.create(self.org, self.admin, WitType.slug, "Feelings", {}, sync=False)
+
+        self.c3 = Classifier.create(self.org, self.admin, WitType.slug, "Old Booker", {}, sync=False)
+        self.c3.is_active = False
+        self.c3.save()
+
+        # on another org
+        self.other_org = Classifier.create(self.org2, self.admin, LuisType.slug, "Org2 Booker", {}, sync=False)
+
+        self.flow = self.get_flow("color")
+        self.flow.classifier_dependencies.add(self.c1)
 
     def test_views(self):
         # fetch org home page
@@ -99,6 +112,7 @@ class ClassifierTest(TembaTest):
 
         # should contain classifier
         self.assertContains(response, "Booker")
+        self.assertContains(response, "Feelings")
         self.assertNotContains(response, "Old Booker")
         self.assertNotContains(response, "Org 2 Booker")
 
@@ -132,7 +146,7 @@ class ClassifierTest(TembaTest):
             # request a sync
             response = self.client.post(reverse("classifiers.classifier_sync", args=[self.c1.id]), follow=True)
             self.assertEqual(200, response.status_code)
-            self.assertContains(response, "Your classifier has been synched.")
+            self.assertContains(response, "Your classifier has been synced.")
 
             mock_sync.assert_called_once()
 
@@ -141,3 +155,38 @@ class ClassifierTest(TembaTest):
             response = self.client.post(reverse("classifiers.classifier_sync", args=[self.c1.id]), follow=True)
             self.assertEqual(200, response.status_code)
             self.assertContains(response, "Unable to sync classifier. See the log for details.")
+
+    def test_read(self):
+        read_url = reverse("classifiers.classifier_read", args=[self.c1.uuid])
+
+        response = self.assertReadFetch(read_url, allow_viewers=True, allow_editors=True, context_object=self.c1)
+
+        # lists active intents
+        self.assertContains(response, "book_flight")
+        self.assertNotContains(response, "book_hotel")
+        self.assertContains(response, "book_car")
+
+    def test_delete(self):
+        delete_url = reverse("classifiers.classifier_delete", args=[self.c2.uuid])
+
+        response = self.assertDeleteFetch(delete_url)
+        self.assertContains(response, "You are about to delete")
+
+        self.assertDeleteSubmit(delete_url, object_deactivated=self.c2, success_status=200)
+
+        # can't delete if global is being used
+        delete_url = reverse("classifiers.classifier_delete", args=[self.c1.uuid])
+
+        response = self.assertDeleteFetch(delete_url)
+        self.assertContains(response, "Unable to delete classifier still being used by")
+
+        with self.assertRaises(AssertionError):
+            self.client.post(delete_url)
+
+        self.assertTrue(Classifier.objects.filter(id=self.c1.id, is_active=True).exists())
+
+        # a deleted dependency shouldn't prevent deletion
+        self.flow.release()
+
+        response = self.assertDeleteFetch(delete_url)
+        self.assertContains(response, "You are about to delete")

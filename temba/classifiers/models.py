@@ -65,7 +65,7 @@ class ClassifierType(metaclass=ABCMeta):
         """
         return url(r"^connect", self.connect_view.as_view(classifier_type=self), name="connect")
 
-    def get_active_intents_from_api(self, classifier, logs):
+    def get_active_intents_from_api(self, classifier):
         """
         Should return current set of available intents for the passed in classifier by checking the provider API
         """
@@ -173,9 +173,7 @@ class Classifier(SmartModel):
         on_transaction_commit(lambda: sync_classifier_intents.delay(self.id))
 
     def release(self):
-        dependent_flows_count = self.dependent_flows.count()
-        if dependent_flows_count > 0:
-            raise ValueError(f"Cannot delete Classifier: {self.name}, used by {dependent_flows_count} flows")
+        assert not self.dependent_flows.exists(), "can't delete classifier currently in use by flows"
 
         # delete our intents
         self.intents.all().delete()

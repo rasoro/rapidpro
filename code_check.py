@@ -8,6 +8,7 @@ import polib
 
 parser = argparse.ArgumentParser(description="Code checks")
 parser.add_argument("--skip-compilemessages", action="store_true")
+parser.add_argument("--skip-flake", action="store_true")
 parser.add_argument("--debug", action="store_true")
 args = parser.parse_args()
 
@@ -36,6 +37,8 @@ def update_po_files():
         pot = polib.pofile("locale/en_US/LC_MESSAGES/django.po")
         return {e.msgid for e in pot if not e.fuzzy and not e.obsolete}
 
+    cmd(f"git restore --staged --worktree locale")
+
     # get the current set of msgids
     saved_msgids = get_current_msgids()
 
@@ -59,7 +62,7 @@ def update_po_files():
 
     # if there are no actual changes to msgids, revert
     if not added_msgids and not removed_msgids:
-        cmd(f"git checkout -- locale")
+        cmd(f"git restore locale")
 
 
 if __name__ == "__main__":
@@ -71,8 +74,9 @@ if __name__ == "__main__":
     status("Running black")
     cmd("black --line-length=119 --target-version=py36 temba")
 
-    status("Running flake8")
-    cmd("flake8")
+    if not args.skip_flake:
+        status("Running flake8")
+        cmd("flake8")
 
     status("Running isort")
     cmd("isort -rc temba")
