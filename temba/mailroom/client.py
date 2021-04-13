@@ -1,10 +1,13 @@
 import logging
+from typing import Dict, List, NamedTuple
 
 import requests
 
 from django.conf import settings
 
 from temba.utils import json
+
+from .modifiers import Modifier
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +38,18 @@ class FlowValidationException(MailroomException):
 
     def __str__(self):
         return self.message
+
+
+class ContactSpec(NamedTuple):
+    """
+    Describes a contact to be created
+    """
+
+    name: str
+    language: str
+    urns: List[str]
+    fields: Dict[str, str]
+    groups: List[str]
 
 
 class MailroomClient:
@@ -87,6 +102,11 @@ class MailroomClient:
 
         return self._request("flow/inspect", payload)
 
+    def flow_change_language(self, flow, language):
+        payload = {"flow": flow, "language": language}
+
+        return self._request("flow/change_language", payload)
+
     def flow_clone(self, flow, dependency_mapping):
         payload = {"flow": flow, "dependency_mapping": dependency_mapping}
 
@@ -113,14 +133,43 @@ class MailroomClient:
     def sim_resume(self, payload):
         return self._request("sim/resume", payload)
 
-    def contact_modify(self, org_id, user_id, contact_ids, modifiers):
-        payload = {"org_id": org_id, "user_id": user_id, "contact_ids": contact_ids, "modifiers": modifiers}
+    def contact_create(self, org_id: int, user_id: int, contact: ContactSpec):
+        payload = {
+            "org_id": org_id,
+            "user_id": user_id,
+            "contact": contact._asdict(),
+        }
+
+        return self._request("contact/create", payload)
+
+    def contact_modify(self, org_id, user_id, contact_ids, modifiers: List[Modifier]):
+        payload = {
+            "org_id": org_id,
+            "user_id": user_id,
+            "contact_ids": contact_ids,
+            "modifiers": [m.as_def() for m in modifiers],
+        }
 
         return self._request("contact/modify", payload)
 
-    def contact_search(self, org_id, group_uuid, query, sort, offset=0):
-        payload = {"org_id": org_id, "group_uuid": group_uuid, "query": query, "sort": sort, "offset": offset}
+    def contact_resolve(self, org_id: int, channel_id: int, urn: str):
+        payload = {
+            "org_id": org_id,
+            "channel_id": channel_id,
+            "urn": urn,
+        }
 
+        return self._request("contact/resolve", payload)
+
+    def contact_search(self, org_id, group_uuid, query, sort, offset=0, exclude_ids=()):
+        payload = {
+            "org_id": org_id,
+            "group_uuid": group_uuid,
+            "exclude_ids": exclude_ids,
+            "query": query,
+            "sort": sort,
+            "offset": offset,
+        }
         return self._request("contact/search", payload)
 
     def parse_query(self, org_id, query, group_uuid=""):
@@ -169,5 +218,5 @@ class MailroomClient:
         return return_val
 
 
-def get_client():
+def get_client() -> MailroomClient:
     return MailroomClient(settings.MAILROOM_URL, settings.MAILROOM_AUTH_TOKEN)

@@ -36,9 +36,9 @@ class TicketerType(metaclass=ABCMeta):
     # the view that handles connection of a new service
     connect_view = None
 
-    def is_available(self):
+    def is_available_to(self, user):
         """
-        Determines whether this ticketer type is available
+        Determines whether this ticketer type is available to the given user
         """
         return True  # pragma: no cover
 
@@ -82,7 +82,7 @@ class Ticketer(SmartModel):
     config = JSONField()
 
     @classmethod
-    def create(cls, org, user, ticketer_type, name, config):
+    def create(cls, org, user, ticketer_type: str, name: str, config: dict):
         return cls.objects.create(
             uuid=uuid4(),
             ticketer_type=ticketer_type,
@@ -181,12 +181,12 @@ class Ticket(models.Model):
         return mailroom.get_client().ticket_reopen(org.id, [t.id for t in tickets if t.ticketer.is_active])
 
     @classmethod
-    def apply_action_close(cls, tickets):
-        return cls.bulk_close(tickets[0].org, tickets)["changed_ids"]
+    def apply_action_close(cls, user, tickets):
+        cls.bulk_close(tickets[0].org, tickets)
 
     @classmethod
-    def apply_action_reopen(cls, tickets):
-        return cls.bulk_reopen(tickets[0].org, tickets)["changed_ids"]
+    def apply_action_reopen(cls, user, tickets):
+        cls.bulk_reopen(tickets[0].org, tickets)
 
     def __str__(self):
         return f"Ticket[uuid={self.uuid}, subject={self.subject}]"
@@ -194,13 +194,13 @@ class Ticket(models.Model):
     class Meta:
         indexes = [
             # used by the open tickets view
-            models.Index(name="tickets_org_open", fields=["org", "-opened_on"], condition=Q(status="O"),),
+            models.Index(name="tickets_org_open", fields=["org", "-opened_on"], condition=Q(status="O")),
             # used by the closed tickets view
-            models.Index(name="tickets_org_closed", fields=["org", "-opened_on"], condition=Q(status="C"),),
+            models.Index(name="tickets_org_closed", fields=["org", "-opened_on"], condition=Q(status="C")),
             # used by the tickets filtered by ticketer view
-            models.Index(name="tickets_org_ticketer", fields=["ticketer", "-opened_on"],),
+            models.Index(name="tickets_org_ticketer", fields=["ticketer", "-opened_on"]),
             # used by the list of tickets on contact page and also message handling to find open tickets for contact
-            models.Index(name="tickets_contact_open", fields=["contact", "-opened_on"], condition=Q(status="O"),),
+            models.Index(name="tickets_contact_open", fields=["contact", "-opened_on"], condition=Q(status="O")),
             # used by ticket handlers in mailroom to find tickets from their external IDs
             models.Index(name="tickets_ticketer_external_id", fields=["ticketer", "external_id"]),
         ]
