@@ -61,7 +61,8 @@ RUN cp /tmp/nginx.site.conf /etc/nginx/sites-available/$PROJECT.conf \
 # && envsubst < /tmp/nginx.site.conf > $PROJECT_CONF/$PROJECT.conf \
 # && chown -R $PROJECT_USER:$PROJECT_GROUP $PROJECT_CONF
 
-COPY --chown=${PROJECT_USER}:${PROJECT_GROUP} . $PROJECT_PATH
+COPY . $PROJECT_PATH
+RUN chown -R $PROJECT_USER:$PROJECT_GROUP $PROJECT_PATH
 
 #COPY --chown=$PROJECT_USER:$PROJECT_GROUP ./docker/nginx.start.sh /etc/init.d/$PROJECT
 #RUN chmod +x /etc/init.d/$PROJECT \
