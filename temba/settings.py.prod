@@ -333,7 +333,7 @@ SUCCESS_LOGS_TRIM_TIME = env("SUCCESS_LOGS_TRIM_TIME", default=48)
 
 # settings to test (dev environment)
 USE_X_FORWARDED_HOST = env("USE_X_FORWARDED_HOST", default=False)
-SECURE_PROXY_SSL_HEADER = env("SECURE_PROXY_SSL_HEADER", default=None)
+SECURE_PROXY_SSL_HEADER = env.tuple("SECURE_PROXY_SSL_HEADER", default=None)
 # needed to run inside Weni Connect iframe
 CSP_DEFAULT_SRC = env.tuple("CSP_DEFAULT_SRC", default=("'self'",))
 CSP_FRAME_ANCESTORS = env.tuple("CSP_FRAME_ANCESTORS", default=("'self'",))
