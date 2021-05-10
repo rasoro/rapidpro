@@ -116,8 +116,12 @@ COMPRESS_OFFLINE_CONTEXT = dict(
     STATIC_URL=STATIC_URL, base_template="frame.html", brand=BRANDING.get(DEFAULT_BRAND), debug=False, testing=False
 )
 
+# ------------------------------------------------------------------------------
 # MIDDLEWARE
 # ------------------------------------------------------------------------------
+# Firstly, we remove obsolete XFrameOptionsMiddleware from settings_common:
+MIDDLEWARE = tuple(m for m in MIDDLEWARE if 'XFrameOptionsMiddleware' not in m)
+# Now, we can add ours (including csp)
 MIDDLEWARE += (
     "elasticapm.contrib.django.middleware.TracingMiddleware",
     "elasticapm.contrib.django.middleware.Catch404Middleware",
