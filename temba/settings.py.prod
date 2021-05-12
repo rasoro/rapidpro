@@ -120,7 +120,7 @@ COMPRESS_OFFLINE_CONTEXT = dict(
 # MIDDLEWARE
 # ------------------------------------------------------------------------------
 # Firstly, we remove obsolete XFrameOptionsMiddleware from settings_common:
-MIDDLEWARE = tuple(m for m in MIDDLEWARE if 'XFrameOptionsMiddleware' not in m)
+MIDDLEWARE = tuple(m for m in MIDDLEWARE if "XFrameOptionsMiddleware" not in m)
 # Now, we can add ours (including csp)
 MIDDLEWARE += (
     "elasticapm.contrib.django.middleware.TracingMiddleware",
@@ -290,13 +290,15 @@ CELERYBEAT_SCHEDULE["refresh-whatsapp-tokens"] = {"task": "refresh_whatsapp_toke
 FLOW_SESSION_TRIM_DAYS = env.int("FLOW_SESSION_TRIM_DAYS", default=7)
 
 
+# Adds gRPC services
 GRPC_FRAMEWORK = {
     "ROOT_HANDLERS_HOOK": "weni.grpc_central.urls.grpc_handlers",
 }
 
-# -----------------------------------------------------------------------------------
-# OpenID Connect settings ()
-# -----------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------------
+# OpenID Connect settings
+# https://mozilla-django-oidc.readthedocs.io/en/stable/installation.html#add-settings-to-settings-py
+# --------------------------------------------------------------------------------------------------
 OIDC_RP_CLIENT_ID = env("OIDC_RP_CLIENT_ID")
 OIDC_RP_CLIENT_SECRET = env("OIDC_RP_CLIENT_SECRET")
 OIDC_OP_AUTHORIZATION_ENDPOINT = env("OIDC_OP_AUTHORIZATION_ENDPOINT")
@@ -304,8 +306,12 @@ OIDC_OP_TOKEN_ENDPOINT = env("OIDC_OP_TOKEN_ENDPOINT")
 OIDC_OP_USER_ENDPOINT = env("OIDC_OP_USER_ENDPOINT")
 OIDC_OP_JWKS_ENDPOINT = env("OIDC_OP_JWKS_ENDPOINT")
 OIDC_RP_SIGN_ALGO = env("OIDC_RP_SIGN_ALGO", default="RS256")
+
+# Tells Django to authenticate via OIDC
 AUTHENTICATION_BACKENDS += ("weni.auth.backends.WeniOIDCAuthenticationBackend",)
 OIDC_DRF_AUTH_BACKEND = "weni.auth.backends.WeniOIDCAuthenticationBackend"
+
+# Used to enable authentication via Keycloak to legacy users
 SECRET_KEY_CHECK_LEGACY_USER = env("SECRET_KEY_CHECK_LEGACY_USER")
 
 # By default, rapidpro redirects the user to choose an org after login. Inside Weni Connect, the org is already selected, so we can bypass and take user to msg inbox.
@@ -335,7 +341,13 @@ SUCCESS_LOGS_TRIM_TIME = env("SUCCESS_LOGS_TRIM_TIME", default=48)
 # settings to test (dev environment)
 USE_X_FORWARDED_HOST = env("USE_X_FORWARDED_HOST", default=False)
 SECURE_PROXY_SSL_HEADER = env.tuple("SECURE_PROXY_SSL_HEADER", default=None)
-# needed to run inside Weni Connect iframe
+
+
+# ------------------------------------------------------------------------------------------
+# CSP settings: Needed if we want to load rapidpro from inside an iframe with some security.
+#   https://django-csp.readthedocs.io/en/latest/configuration.html
+#   https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy
+# ------------------------------------------------------------------------------------------
 CSP_DEFAULT_SRC = env.tuple("CSP_DEFAULT_SRC", default=("'self'",))
 CSP_FRAME_ANCESTORS = env.tuple("CSP_FRAME_ANCESTORS", default=("'self'",))
 CSP_FONT_SRC = env.tuple("CSP_FONT_SRC", default=CSP_DEFAULT_SRC)
