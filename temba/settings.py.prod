@@ -295,7 +295,7 @@ GRPC_FRAMEWORK = {
 }
 
 # -----------------------------------------------------------------------------------
-# Weni Connect
+# OpenID Connect settings ()
 # -----------------------------------------------------------------------------------
 OIDC_RP_CLIENT_ID = env("OIDC_RP_CLIENT_ID")
 OIDC_RP_CLIENT_SECRET = env("OIDC_RP_CLIENT_SECRET")
@@ -308,7 +308,8 @@ AUTHENTICATION_BACKENDS += ("weni.auth.backends.WeniOIDCAuthenticationBackend",)
 OIDC_DRF_AUTH_BACKEND = "weni.auth.backends.WeniOIDCAuthenticationBackend"
 SECRET_KEY_CHECK_LEGACY_USER = env("SECRET_KEY_CHECK_LEGACY_USER")
 
-LOGIN_REDIRECT_URL = "/msg/inbox/"
+# By default, rapidpro redirects the user to choose an org after login. Inside Weni Connect, the org is already selected, so we can bypass and take user to msg inbox.
+LOGIN_REDIRECT_URL = env("LOGIN_REDIRECT_URL", default="/msg/inbox/")
 
 # Enable Weni Templates
 TEMPLATES[0]["OPTIONS"]["context_processors"] += [
