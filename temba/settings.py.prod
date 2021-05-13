@@ -338,7 +338,11 @@ HOTJAR_ID = env("HOTJAR_ID")
 SUCCESS_LOGS_TRIM_TIME = env("SUCCESS_LOGS_TRIM_TIME", default=48)
 
 
-# settings to test (dev environment)
+# ------------------------------------------------------------------------------------------
+# Production-only: Adjust depending on your proxy
+#   https://docs.djangoproject.com/en/2.2/ref/settings/#use-x-forwarded-host
+#   https://docs.djangoproject.com/en/2.2/ref/settings/#secure-proxy-ssl-header
+# ------------------------------------------------------------------------------------------
 USE_X_FORWARDED_HOST = env("USE_X_FORWARDED_HOST", default=False)
 SECURE_PROXY_SSL_HEADER = env.tuple("SECURE_PROXY_SSL_HEADER", default=None)
 
