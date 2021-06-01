@@ -292,6 +292,8 @@ INSTALLED_APPS = (
     "temba.airtime",
     "temba.sql",
     "temba.two_factor",
+    # Templates (django-template-macros)
+    "macros",
 )
 
 # the last installed app that uses smartmin permissions

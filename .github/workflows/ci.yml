@@ -60,6 +60,7 @@ jobs:
         echo "BRANCH_NAME=${GITHUB_REF##*/}" >> $GITHUB_ENV
         python -m pip install -U pip poetry
         poetry install
+        pip install -r docker/pip-freeze.txt
         npm install
         sudo npm install -g less
         ln -s ${{ github.workspace }}/temba/settings.py.dev ${{ github.workspace }}/temba/settings.py
