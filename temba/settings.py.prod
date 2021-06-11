@@ -308,7 +308,8 @@ OIDC_OP_TOKEN_ENDPOINT = env("OIDC_OP_TOKEN_ENDPOINT")
 OIDC_OP_USER_ENDPOINT = env("OIDC_OP_USER_ENDPOINT")
 OIDC_OP_JWKS_ENDPOINT = env("OIDC_OP_JWKS_ENDPOINT")
 OIDC_RP_SIGN_ALGO = env("OIDC_RP_SIGN_ALGO", default="RS256")
-OIDC_RP_SCOPES = env("OIDC_RP_SCOPES", default= "openid email")
+OIDC_RP_SCOPES = env("OIDC_RP_SCOPES", default="openid email")
+OIDC_EXEMPT_URLS = env.list("OIDC_EXEMPT_URLS", default=[])
 
 # Tells Django to authenticate via OIDC
 AUTHENTICATION_BACKENDS += ("weni.auth.backends.WeniOIDCAuthenticationBackend",)
