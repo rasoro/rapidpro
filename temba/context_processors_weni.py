@@ -4,8 +4,10 @@ from django.conf import settings
 def use_weni_layout(request):
 
     host = request.get_host().split(":")[0]
+    in_weni = host.endswith(settings.WENI_DOMAINS["weni"])
+    in_iframe = request.headers.get("Sec-Fetch-Dest") == "iframe"
 
-    return {"use_weni_layout": host.endswith(settings.WENI_DOMAINS["weni"])}
+    return {"use_weni_layout": in_weni and in_iframe}
 
 
 def show_sidemenu(request):
