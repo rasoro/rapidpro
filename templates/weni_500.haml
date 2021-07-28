@@ -1,5 +1,5 @@
 <!DOCTYPE HTML>
--load compress
+-load compress i18n
 
 <html>
   %head
@@ -36,13 +36,14 @@
       %div.unnnic-maintenance__content-container
         %div.unnnic-maintenance__content-container__content
           %div.unnnic-maintenance__content-container__content__title
-            Algo de errado aconteceu...
+            -trans "Something went wrong..."
           %div.unnnic-maintenance__content-container__content__description
-            O módulo Weni Fluxos está passando por algumas instabilidades e atualizações, logo mais voltará ao normal.
+            -blocktrans
+              The <b>Weni Flows</b> module is going through some instabilities and updates, soon it will return to normal.
 
           %button.unnnic-maintenance__content-container__content__refresh-button{onclick:"refresh()"}
             .icon.unnnic-button-refresh-arrow-1.unnnic-icon-md.unnnic-maintenance__content-container__content__refresh-button__icon
-            Atualizar Página
+            -trans "Refresh Page"
 
   :javascript
 
