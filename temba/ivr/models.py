@@ -6,14 +6,14 @@ from temba.channels.models import ChannelConnection
 
 class IVRManager(models.Manager):
     def create(self, *args, **kwargs):
-        return super().create(*args, connection_type=IVRCall.IVR, **kwargs)
+        return super().create(*args, connection_type=IVRCall.TYPE_VOICE, **kwargs)
 
     def get_queryset(self):
-        return super().get_queryset().filter(connection_type__in=[IVRCall.IVR, IVRCall.VOICE])
+        return super().get_queryset().filter(connection_type=IVRCall.TYPE_VOICE)
 
 
 class IVRCall(ChannelConnection):
-    IVR_EXPIRES_CHOICES = (
+    EXPIRES_CHOICES = (
         (1, _("After 1 minute")),
         (2, _("After 2 minutes")),
         (3, _("After 3 minutes")),
@@ -23,7 +23,7 @@ class IVRCall(ChannelConnection):
         (15, _("After 15 minutes")),
     )
 
-    IVR_RETRY_CHOICES = ((30, _("After 30 minutes")), (60, _("After 1 hour")), (1440, _("After 1 day")))
+    RETRY_CHOICES = ((-1, _("Never")), (30, _("After 30 minutes")), (60, _("After 1 hour")), (1440, _("After 1 day")))
 
     objects = IVRManager()
 

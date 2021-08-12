@@ -1,5 +1,6 @@
 from rest_framework import relations, serializers
 
+from django.contrib.auth.models import User
 from django.db.models import Q
 
 from temba.campaigns.models import Campaign, CampaignEvent
@@ -7,6 +8,7 @@ from temba.channels.models import Channel
 from temba.contacts.models import URN, Contact, ContactField as ContactFieldModel, ContactGroup, ContactURN
 from temba.flows.models import Flow
 from temba.msgs.models import Label, Msg
+from temba.tickets.models import Ticket, Ticketer
 
 # default maximum number of items in a posted list or dict
 DEFAULT_MAX_LIST_ITEMS = 100
@@ -58,7 +60,7 @@ class TranslatableField(serializers.Field):
 
     def to_internal_value(self, data):
         org = self.context["org"]
-        base_language = org.primary_language.iso_code if org.primary_language else "base"
+        base_language = org.flow_languages[0] if org.flow_languages else "base"
 
         if isinstance(data, str):
             if len(data) > self.max_length:
@@ -146,7 +148,10 @@ class TembaModelField(serializers.RelatedField):
 
     def get_queryset(self):
         manager = getattr(self.model, self.model_manager)
-        return manager.filter(org=self.context["org"], is_active=True)
+        kwargs = {"org": self.context["org"]}
+        if hasattr(self.model, "is_active"):
+            kwargs["is_active"] = True
+        return manager.filter(**kwargs)
 
     def get_object(self, value):
         query = Q()
@@ -239,8 +244,8 @@ class ContactGroupField(TembaModelField):
     lookup_fields = ("uuid", "name")
     ignore_case_for_fields = ("name",)
 
-    def __init__(self, **kwargs):
-        self.allow_dynamic = kwargs.pop("allow_dynamic", True)
+    def __init__(self, allow_dynamic=True, **kwargs):
+        self.allow_dynamic = allow_dynamic
         super().__init__(**kwargs)
 
     def to_internal_value(self, data):
@@ -272,3 +277,33 @@ class MessageField(TembaModelField):
 
     def get_queryset(self):
         return self.model.objects.filter(org=self.context["org"]).exclude(visibility=Msg.VISIBILITY_DELETED)
+
+
+class TicketerField(TembaModelField):
+    model = Ticketer
+
+
+class TicketField(TembaModelField):
+    model = Ticket
+
+
+class UserField(TembaModelField):
+    model = User
+    lookup_fields = ("email",)
+    ignore_case_for_fields = ("email",)
+
+    def __init__(self, assignable_only=False, **kwargs):
+        self.assignable_only = assignable_only
+        super().__init__(**kwargs)
+
+    def to_representation(self, obj):
+        return {"email": obj.email, "name": obj.name}
+
+    def get_queryset(self):
+        org = self.context["org"]
+        if self.assignable_only:
+            qs = org.get_users_with_perm(Ticket.ASSIGNEE_PERMISSION)
+        else:
+            qs = org.get_users()
+
+        return qs.filter(is_active=True)

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-03-24 17:23+0000\n"
+"POT-Creation-Date: 2021-07-13 16:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -69,12 +69,6 @@ msgid "File not found"
 msgstr ""
 
 msgid "You do not have permission to access this file"
-msgstr ""
-
-msgid "The name of this campaign"
-msgstr ""
-
-msgid "The group this campaign operates on"
 msgstr ""
 
 msgid "Minutes"
@@ -140,7 +134,16 @@ msgstr[1] ""
 msgid "on"
 msgstr ""
 
-msgid "Select a group to base the campaign on"
+msgid "Select group"
+msgstr ""
+
+msgid "Group"
+msgstr ""
+
+msgid "Only contacts in this group will be included in this campaign's events."
+msgstr ""
+
+msgid "Name"
 msgstr ""
 
 msgid "Export"
@@ -239,9 +242,6 @@ msgid "JSON - application/json"
 msgstr ""
 
 msgid "XML - text/xml; charset=utf-8"
-msgstr ""
-
-msgid "Name"
 msgstr ""
 
 msgid "Descriptive label for this channel"
@@ -746,6 +746,9 @@ msgid "Delivered URL"
 msgstr ""
 
 msgid "This endpoint should be called by Dart Media when a message has been to the final recipient. (delivery reports) You can set the delivery callback URL on your Dart Media account by contacting your sales agent."
+msgstr ""
+
+msgid "Message Templates"
 msgstr ""
 
 #, python-format
@@ -1299,39 +1302,6 @@ msgstr ""
 msgid "The service ID as provided by Mtarget"
 msgstr ""
 
-msgid "Your Nexmo configuration URLs are as follows. These should have been set up automatically when claiming your number, but if not you can set them from your Nexmo dashboard."
-msgstr ""
-
-msgid "Callback URL for Inbound Messages"
-msgstr ""
-
-msgid "The callback URL is called by Nexmo when you receive new incoming messages."
-msgstr ""
-
-msgid "Callback URL for Delivery Receipt"
-msgstr ""
-
-msgid "The delivery URL is called by Nexmo when a message is successfully delivered to a recipient."
-msgstr ""
-
-msgid "Callback URL for Incoming Call"
-msgstr ""
-
-msgid "The callback URL is called by Nexmo when you receive an incoming call."
-msgstr ""
-
-msgid "The phone number being added"
-msgstr ""
-
-msgid "That number is not currently supported."
-msgstr ""
-
-msgid "There was a problem claiming that number, please check the balance on your account. Note that you can only claim numbers after adding credit to your Nexmo account."
-msgstr ""
-
-msgid "There was a problem claiming that number, please check the balance on your account."
-msgstr ""
-
 #, python-format
 msgid "If you are based in Trinidad & Tobago, you can purchase a short code from %(link)s and connect it in a few simple steps."
 msgstr ""
@@ -1371,6 +1341,15 @@ msgid "The base URL for PlayMobile"
 msgstr ""
 
 msgid "Shortcode"
+msgstr ""
+
+msgid "The phone number being added"
+msgstr ""
+
+msgid "That number is not currently supported."
+msgstr ""
+
+msgid "There was a problem claiming that number, please check the balance on your account."
 msgstr ""
 
 msgid "There was a problem updating that number, please try again."
@@ -1562,6 +1541,12 @@ msgstr ""
 msgid "Short code not found on your Twilio Account. Please check you own the short code and Try again"
 msgstr ""
 
+msgid "Sorry, no numbers found, please enter another area code and try again."
+msgstr ""
+
+msgid "Sorry, no numbers found, please enter another pattern and try again."
+msgstr ""
+
 #, python-format
 msgid "You can connect a messaging service from your Twilio account to benefit from %(link)s features."
 msgstr ""
@@ -1715,6 +1700,30 @@ msgstr ""
 msgid "The callback verification string"
 msgstr ""
 
+msgid "Your Vonage configuration URLs are as follows. These should have been set up automatically when claiming your number, but if not you can set them from your Vonage dashboard."
+msgstr ""
+
+msgid "Callback URL for Inbound Messages"
+msgstr ""
+
+msgid "The callback URL is called by Vonage when you receive new incoming messages."
+msgstr ""
+
+msgid "Callback URL for Delivery Receipt"
+msgstr ""
+
+msgid "The delivery URL is called by Vonage when a message is successfully delivered to a recipient."
+msgstr ""
+
+msgid "Callback URL for Incoming Call"
+msgstr ""
+
+msgid "The callback URL is called by Vonage when you receive an incoming call."
+msgstr ""
+
+msgid "There was a problem claiming that number, please check the balance on your account. Note that you can only claim numbers after adding credit to your Vonage account."
+msgstr ""
+
 msgid "To finish connecting your channel, you need to have Movile/Wavy configure the URL below for your number."
 msgstr ""
 
@@ -1746,9 +1755,6 @@ msgstr ""
 msgid "The WeChat App secret"
 msgstr ""
 
-msgid "Message Templates"
-msgstr ""
-
 msgid "If you have an enterprise WhatsApp account, you can connect it to communicate with your contacts"
 msgstr ""
 
@@ -1758,12 +1764,6 @@ msgstr ""
 
 #, python-format
 msgid "Unable to configure channel: %s"
-msgstr ""
-
-msgid "Contacts refresh begun, it may take a few minutes to complete."
-msgstr ""
-
-msgid "Sync Logs"
 msgstr ""
 
 msgid "The base URL for your WhatsApp enterprise installation"
@@ -1844,6 +1844,10 @@ msgid "The account password provided by Zenvia"
 msgstr ""
 
 #, python-format
+msgid "If you have a %(link)s number, you can connect it to communicate with your contacts."
+msgstr ""
+
+#, python-format
 msgid "Unable to register webhook subscriptions: %(resp)s"
 msgstr ""
 
@@ -1857,13 +1861,7 @@ msgstr ""
 msgid "The API token for your integration as provided by Zenvia"
 msgstr ""
 
-msgid "United Kingdom"
-msgstr ""
-
-msgid "Scension Island"
-msgstr ""
-
-msgid "Kosovo"
+msgid "Invalid token. Please check your Zenvia account settings."
 msgstr ""
 
 msgid "POST Required"
@@ -1947,29 +1945,20 @@ msgstr ""
 msgid "An error occured contacting the Facebook API"
 msgstr ""
 
-msgid "Remove Android"
+msgid "Your channel has been removed."
 msgstr ""
 
 msgid "We have disconnected your Twilio number. If you do not need this number you can delete it from the Twilio website."
 msgstr ""
 
-msgid "Your channel has been removed."
-msgstr ""
-
-#, python-format
-msgid "Twilio reported an error removing your channel (Twilio error %s). Please try again later."
-msgstr ""
-
-msgid "We encountered an error removing your channel, please try again later."
+#, python-brace-format
+msgid "Twilio reported an error removing your channel (error code {e.code}). Please try again later."
 msgstr ""
 
 msgid "Save Changes"
 msgstr ""
 
-msgid "or"
-msgstr ""
-
-msgid "A connection to a Nexmo account is required"
+msgid "A connection to a Vonage account is required"
 msgstr ""
 
 msgid "A connection to a Twilio account is required"
@@ -1985,15 +1974,6 @@ msgid "Channels"
 msgstr ""
 
 msgid "Unknown"
-msgstr ""
-
-msgid "The area code you want to search for a new number in"
-msgstr ""
-
-msgid "Sorry, no numbers found, please enter another area code and try again."
-msgstr ""
-
-msgid "Sorry, no numbers found, please enter another pattern and try again."
 msgstr ""
 
 msgid "Calls"
@@ -2047,9 +2027,6 @@ msgstr ""
 msgid "Connect"
 msgstr ""
 
-msgid "Delete Classifier"
-msgstr ""
-
 msgid "Your classifier has been deleted."
 msgstr ""
 
@@ -2057,6 +2034,9 @@ msgid "Log"
 msgstr ""
 
 msgid "Sync"
+msgstr ""
+
+msgid "Delete Classifier"
 msgstr ""
 
 msgid "Your classifier has been synced."
@@ -2131,12 +2111,6 @@ msgstr ""
 msgid "Ward"
 msgstr ""
 
-msgid "Label"
-msgstr ""
-
-msgid "Field Type"
-msgstr ""
-
 msgid "The name of this contact"
 msgstr ""
 
@@ -2153,15 +2127,6 @@ msgid "Evaluating"
 msgstr ""
 
 msgid "Ready"
-msgstr ""
-
-msgid "The name of this contact group"
-msgstr ""
-
-msgid "Query"
-msgstr ""
-
-msgid "The membership query for this group"
 msgstr ""
 
 msgid "The unique group to export"
@@ -2267,6 +2232,12 @@ msgstr ""
 msgid "You cannot update the query of a group that is evaluating."
 msgstr ""
 
+msgid "Query"
+msgstr ""
+
+msgid "Only contacts matching this query will belong to this group."
+msgstr ""
+
 msgid "Active"
 msgstr ""
 
@@ -2301,8 +2272,8 @@ msgstr ""
 msgid "Select groups for this contact"
 msgstr ""
 
-#, python-format
-msgid "%s (Missing)"
+#, python-brace-format
+msgid "{lang_name} (Missing)"
 msgstr ""
 
 msgid "The groups which this contact belongs to"
@@ -2392,23 +2363,26 @@ msgstr ""
 msgid "Can only contain letters, numbers and hypens."
 msgstr ""
 
+msgid "Can't be a reserved word."
+msgstr ""
+
 msgid "Must be unique."
 msgstr ""
 
-msgid "Can't be a reserved word"
+msgid "Data Type"
 msgstr ""
 
-#, python-format
-msgid "Cannot create a new field as limit is %(limit)s."
+msgid "Featured"
 msgstr ""
 
-msgid "Field Name"
+msgid "The type of the values that will be stored in this field."
 msgstr ""
 
 msgid "Manage Contact Fields"
 msgstr ""
 
-msgid "Featured"
+#, python-format
+msgid "Cannot create a new field as limit is %(limit)s."
 msgstr ""
 
 msgid "Update"
@@ -2417,8 +2391,13 @@ msgstr ""
 msgid "Contact field uses"
 msgstr ""
 
-#, python-format
-msgid "This workspace has reached the limit of %(count)d groups. You must delete existing ones before you can perform an import."
+msgid "new group"
+msgstr ""
+
+msgid "existing group"
+msgstr ""
+
+msgid "Select a group"
 msgstr ""
 
 #, python-format
@@ -2437,6 +2416,19 @@ msgstr ""
 msgid "Field name '%(name)s' is repeated."
 msgstr ""
 
+msgid "Required."
+msgstr ""
+
+msgid "Invalid group name."
+msgstr ""
+
+msgid "Already exists."
+msgstr ""
+
+#, python-format
+msgid "This workspace has reached the limit of %(count)d groups."
+msgstr ""
+
 msgid "Phone Call"
 msgstr ""
 
@@ -2446,34 +2438,13 @@ msgstr ""
 msgid "The name for this flow"
 msgstr ""
 
-msgid "Labels"
-msgstr ""
-
-msgid "Any labels on this flow"
-msgstr ""
-
-msgid "Whether this flow is archived"
-msgstr ""
-
-msgid "Whether this is a system created flow"
-msgstr ""
-
 msgid "Minutes of inactivity that will cause expiration from flow"
 msgstr ""
 
 msgid "Ignore keyword triggers while in this flow"
 msgstr ""
 
-msgid "When this item was saved"
-msgstr ""
-
-msgid "The user which last saved this flow"
-msgstr ""
-
 msgid "The authoring language, additional languages can be added later"
-msgstr ""
-
-msgid "The flow version this definition is in"
 msgstr ""
 
 msgid "Archive delete"
@@ -2483,6 +2454,9 @@ msgid "User delete"
 msgstr ""
 
 msgid "The JSON flow definition"
+msgstr ""
+
+msgid "The flow version this definition is in"
 msgstr ""
 
 msgid "Revision number for this definition"
@@ -2504,12 +2478,6 @@ msgid "Complete"
 msgstr ""
 
 msgid "Failed"
-msgstr ""
-
-msgid "The name of this flow label"
-msgstr ""
-
-msgid "Parent"
 msgstr ""
 
 msgid "After 5 minutes"
@@ -2603,12 +2571,6 @@ msgstr ""
 msgid "Choose a name to describe this flow, e.g. Demographic Survey"
 msgstr ""
 
-msgid "Expire inactive contacts"
-msgstr ""
-
-msgid "When inactive contacts should be removed from the flow"
-msgstr ""
-
 msgid "Create a contact "
 msgstr ""
 
@@ -2627,11 +2589,20 @@ msgstr ""
 msgid "Retries call three times for the chosen interval"
 msgstr ""
 
+msgid "Expire inactive contacts"
+msgstr ""
+
+msgid "When inactive contacts should be removed from the flow"
+msgstr ""
+
 msgid "Keywords"
 msgstr ""
 
 #, python-format
 msgid "The following flows are still used by campaigns so could not be archived: %(flows)s"
+msgstr ""
+
+msgid "Import"
 msgstr ""
 
 msgid "Edit Label"
@@ -2693,9 +2664,6 @@ msgstr ""
 msgid "Replace flow translations in this language."
 msgstr ""
 
-msgid "Import"
-msgstr ""
-
 msgid "Optional: Group memberships"
 msgstr ""
 
@@ -2753,9 +2721,6 @@ msgid "Saturday"
 msgstr ""
 
 msgid "Download"
-msgstr ""
-
-msgid "Download Flow Results"
 msgstr ""
 
 msgid "Contacts & Groups"
@@ -2819,7 +2784,13 @@ msgstr ""
 msgid "Your message template {template.name} is not approved and cannot be sent."
 msgstr ""
 
-msgid "Optional: Select parent label"
+msgid "Parent"
+msgstr ""
+
+msgid "Select label"
+msgstr ""
+
+msgid "Optional parent label which can be used to group related labels."
 msgstr ""
 
 msgid "Name already used"
@@ -2892,19 +2863,10 @@ msgstr ""
 msgid "Resent message"
 msgstr ""
 
-msgid "When this broadcast was created"
-msgstr ""
-
 msgid "Whether this count is for archived messages"
 msgstr ""
 
 msgid "Number of items with this system label"
-msgstr ""
-
-msgid "Choose a name for your label"
-msgstr ""
-
-msgid "Folder"
 msgstr ""
 
 msgid "The date for the oldest message to export"
@@ -2943,7 +2905,7 @@ msgstr ""
 msgid "Schedules"
 msgstr ""
 
-msgid "Export Messages"
+msgid "Download Messages"
 msgstr ""
 
 msgid "Schedule Message"
@@ -3018,6 +2980,9 @@ msgstr ""
 msgid "Send All"
 msgstr ""
 
+msgid "Delete Folder"
+msgstr ""
+
 msgid "Name must not be blank or begin with punctuation"
 msgstr ""
 
@@ -3028,16 +2993,43 @@ msgstr ""
 msgid "This org has %(count)d labels and the limit is %(limit)d. You must delete existing ones before you can create new ones."
 msgstr ""
 
-msgid "Optional: Parent Folder"
+msgid "Folder"
 msgstr ""
 
-msgid "Choose a name for your folder"
+msgid "Select folder"
+msgstr ""
+
+msgid "Optional folder which can be used to group related labels."
 msgstr ""
 
 msgid "Update Folder"
 msgstr ""
 
 msgid "Update Label"
+msgstr ""
+
+msgid "Your label has been deleted."
+msgstr ""
+
+msgid "Your label folder has been deleted."
+msgstr ""
+
+msgid "Agent Name"
+msgstr ""
+
+msgid "Your Chatbase agent's name."
+msgstr ""
+
+msgid "The chatbase agent's API Key."
+msgstr ""
+
+msgid "Version"
+msgstr ""
+
+msgid "Missing agent name or API key."
+msgstr ""
+
+msgid "Your DT One API key and secret seem invalid. Please check them again and retry."
 msgstr ""
 
 msgid "Administrators"
@@ -3073,7 +3065,10 @@ msgstr ""
 msgid "Our Stripe customer id for your organization"
 msgstr ""
 
-msgid "The main language used by this organization"
+msgid "Default Language"
+msgstr ""
+
+msgid "The default website language for new users."
 msgstr ""
 
 msgid "Timezone"
@@ -3115,9 +3110,6 @@ msgstr ""
 msgid "Whether this organization can have multiple logins"
 msgstr ""
 
-msgid "The primary language will be used for contacts with no language preference."
-msgstr ""
-
 msgid "Brand"
 msgstr ""
 
@@ -3142,9 +3134,6 @@ msgid "Sorry, your card was declined, please contact your provider or try anothe
 msgstr ""
 
 msgid "Sorry, we were unable to process your payment, please try again later or contact us."
-msgstr ""
-
-msgid "Org"
 msgstr ""
 
 #, python-format
@@ -3296,6 +3285,18 @@ msgstr ""
 msgid "Deleted user {username}"
 msgstr ""
 
+msgid "Your Email"
+msgstr ""
+
+msgid "Password Recovery"
+msgstr ""
+
+msgid "An Email has been sent to your account with further instructions."
+msgstr ""
+
+msgid "Password Recovery Request"
+msgstr ""
+
 msgid "First Name"
 msgstr ""
 
@@ -3309,6 +3310,9 @@ msgid "Email"
 msgstr ""
 
 msgid "Current Password"
+msgstr ""
+
+msgid "Password Required"
 msgstr ""
 
 msgid "New Password"
@@ -3395,28 +3399,28 @@ msgstr ""
 msgid "The Twilio account SID and Token seem invalid. Please check them again and retry."
 msgstr ""
 
-msgid "You must enter your Nexmo Account API Key"
+msgid "You must enter your account API Key"
 msgstr ""
 
-msgid "You must enter your Nexmo Account API Secret"
+msgid "You must enter your account API Secret"
 msgstr ""
 
-msgid "Your Nexmo API key and secret seem invalid. Please check them again and retry."
+msgid "Your API key and secret seem invalid. Please check them again and retry."
 msgstr ""
 
-msgid "Your Nexmo API key"
+msgid "Your Vonage API key"
 msgstr ""
 
-msgid "Your Nexmo API secret"
+msgid "Your Vonage API secret"
 msgstr ""
 
-msgid "Your Plivo AUTH ID"
+msgid "Your Plivo auth ID"
 msgstr ""
 
-msgid "Your Plivo AUTH TOKEN"
+msgid "Your Plivo auth token"
 msgstr ""
 
-msgid "Your Plivo AUTH ID and AUTH TOKEN seem invalid. Please check them again and retry."
+msgid "Your Plivo auth ID and auth token seem invalid. Please check them again and retry."
 msgstr ""
 
 msgid "Email Address"
@@ -3480,6 +3484,9 @@ msgid "Flag"
 msgstr ""
 
 msgid "Verify"
+msgstr ""
+
+msgid "Delete Workspace"
 msgstr ""
 
 msgid "This password is not valid. Choose a new password and try again."
@@ -3564,15 +3571,6 @@ msgstr ""
 msgid "New Event"
 msgstr ""
 
-msgid "Agent Name"
-msgstr ""
-
-msgid "Version"
-msgstr ""
-
-msgid "Missing data: Agent Name or API Key.Please check them again and retry."
-msgstr ""
-
 msgid "Your Account"
 msgstr ""
 
@@ -3589,16 +3587,6 @@ msgid "Help"
 msgstr ""
 
 msgid "Sign Out"
-msgstr ""
-
-msgid "Login"
-msgstr ""
-
-msgid "Your DT One API key and secret seem invalid. Please check them again and retry."
-msgstr ""
-
-#, python-format
-msgid "Connecting to your DT One account failed with error text: %s"
 msgstr ""
 
 msgid "Account Token"
@@ -3629,23 +3617,22 @@ msgstr ""
 msgid "The country used for location values. (optional)"
 msgstr ""
 
-msgid "Primary Language"
+msgid "Default Flow Language"
 msgstr ""
 
-msgid "Select the primary language for contacts with no language preference"
+msgid "Used for contacts with no language preference."
+msgstr ""
+
+msgid "Select a language"
 msgstr ""
 
 msgid "Additional Languages"
 msgstr ""
 
-msgid "Additional languages you would like to provid translations for"
+msgid "The languages that your flows can be translated into."
 msgstr ""
 
-msgid " and "
-msgstr ""
-
-#, python-format
-msgid "%(lang1)s and %(lang2)s"
+msgid "Select languages"
 msgstr ""
 
 #, python-format
@@ -3761,21 +3748,29 @@ msgstr ""
 msgid "each month on the %(dayofmonth)s"
 msgstr ""
 
+msgid "Start Time"
+msgstr ""
+
+msgid "Select a date and time"
+msgstr ""
+
+msgid "Repeat"
+msgstr ""
+
+msgid "Repeat On Days"
+msgstr ""
+
+msgid "The days of the week to repeat on for weekly schedules"
+msgstr ""
+
+msgid "Select days"
+msgstr ""
+
 #, python-format
-msgid "%(day)s is not a valid day of the week"
+msgid "First time this should happen in the %s timezone."
 msgstr ""
 
-msgid "Must specify at least one day of the week"
-msgstr ""
-
-msgid "Select days to repeat on"
-msgstr ""
-
-msgid " "
-msgstr ""
-
-#, python-format
-msgid "%s Time Zone"
+msgid "Must specify at least one day of the week."
 msgstr ""
 
 msgid "English"
@@ -3808,7 +3803,13 @@ msgstr ""
 msgid "Closed"
 msgstr ""
 
-msgid "Enabling this will allow you to handle tickets within this application."
+msgid "My Tickets"
+msgstr ""
+
+msgid "Unassigned"
+msgstr ""
+
+msgid "Enabling this will allow you to handle tickets within {{brand.name}}."
 msgstr ""
 
 #, python-format
@@ -3894,46 +3895,37 @@ msgstr ""
 msgid "Connect %(ticketer)s"
 msgstr ""
 
-msgid "Open Tickets"
-msgstr ""
-
-msgid "Closed Tickets"
-msgstr ""
-
-msgid "Delete Ticket Service"
-msgstr ""
-
-msgid "HTTP Log"
-msgstr ""
-
-msgid "Delete Ticketing Service"
+msgid "Notes can only be seen by the support team"
 msgstr ""
 
 msgid "Your ticketing service has been deleted."
 msgstr ""
 
-msgid "Keyword Trigger"
+msgid "Keyword Triggers"
 msgstr ""
 
-msgid "Schedule Trigger"
+msgid "Scheduled"
 msgstr ""
 
-msgid "Inbound Call Trigger"
+msgid "Scheduled Triggers"
 msgstr ""
 
-msgid "Missed Call Trigger"
+msgid "Call Triggers"
 msgstr ""
 
-msgid "Catch All Trigger"
+msgid "Social Media"
 msgstr ""
 
-msgid "New Conversation Trigger"
+msgid "Social Media Triggers"
 msgstr ""
 
-msgid "USSD Pull Session Trigger"
+msgid "Ticket Triggers"
 msgstr ""
 
-msgid "Referral Trigger"
+msgid "Catch All"
+msgstr ""
+
+msgid "Catch All Triggers"
 msgstr ""
 
 msgid "Message starts with the keyword"
@@ -3945,55 +3937,82 @@ msgstr ""
 msgid "Keyword"
 msgstr ""
 
-msgid "Word to match in the message text"
-msgstr ""
-
-msgid "Referrer Id"
-msgstr ""
-
-msgid "The referrer id that triggers us"
+msgid "Word to match in the message text."
 msgstr ""
 
 msgid "Flow"
 msgstr ""
 
-msgid "Which flow will be started"
-msgstr ""
-
-msgid "The groups to broadcast the flow to"
-msgstr ""
-
-msgid "Individual contacts to broadcast the flow to"
-msgstr ""
-
-msgid "Schedule"
-msgstr ""
-
-msgid "Our recurring schedule"
+msgid "Which flow will be started."
 msgstr ""
 
 msgid "Trigger When"
 msgstr ""
 
-msgid "How to match a message with a keyword"
+msgid "How to match a message with a keyword."
 msgstr ""
 
-msgid "The associated channel"
+msgid "The associated channel."
+msgstr ""
+
+msgid "Contacts To Include"
+msgstr ""
+
+msgid "Additional specific contacts that will be started in the flow."
+msgstr ""
+
+msgid "Optional: Select contacts"
+msgstr ""
+
+msgid "Must provide at least one group or contact to include."
+msgstr ""
+
+msgid "The groups that will be started in the flow."
+msgstr ""
+
+msgid "Any contacts in these groups will not be started in the flow."
+msgstr ""
+
+msgid "The channel to apply this trigger to, leave blank for all Facebook channels"
+msgstr ""
+
+msgid "Referrer Id"
+msgstr ""
+
+msgid "The referrer id that will trigger us"
 msgstr ""
 
 msgid "Select a flow"
 msgstr ""
 
-msgid "Keywords must be a single word containing only letter and numbers"
+msgid "Groups To Include"
 msgstr ""
 
-msgid "An active trigger already exists, triggers must be unique for each group"
+msgid "Only includes contacts in these groups."
 msgstr ""
 
-msgid "Optional: Trigger only applies to these groups"
+msgid "Optional: Select contact groups"
 msgstr ""
 
-msgid "The first word of the message text"
+msgid "Groups To Exclude"
+msgstr ""
+
+msgid "Excludes contacts in these groups."
+msgstr ""
+
+msgid "Must be a single word containing only letters and numbers."
+msgstr ""
+
+msgid "Can't include and exclude the same group."
+msgstr ""
+
+msgid "There already exists a trigger of this type with these options."
+msgstr ""
+
+msgid "Join Keyword"
+msgstr ""
+
+msgid "The first word of the message"
 msgstr ""
 
 msgid "Group to Join"
@@ -4010,37 +4029,22 @@ msgstr[1] ""
 msgid "The message to send in response after they join the group (optional)"
 msgstr ""
 
-msgid "Start Time"
-msgstr ""
-
-msgid "The groups and contacts the flow will be broadcast to"
-msgstr ""
-
-msgid "Trigger with this Channel already exists."
-msgstr ""
-
-msgid "The channel to apply this trigger to, leave blank for all Facebook channels"
-msgstr ""
-
-msgid "The referrer id that will trigger us"
-msgstr ""
-
 msgid "Create Trigger"
 msgstr ""
 
 msgid "Triggers"
 msgstr ""
 
-msgid "Join Keyword"
+msgid "Archived Triggers"
 msgstr ""
 
-msgid "The first word of the message"
+msgid "United Kingdom"
 msgstr ""
 
-msgid "Create Referral Trigger"
+msgid "Ascension Island"
 msgstr ""
 
-msgid "Create Schedule"
+msgid "Kosovo"
 msgstr ""
 
 msgid "Processing"
@@ -4116,6 +4120,12 @@ msgid ", "
 msgstr ""
 
 msgid "An error occurred while making your changes. Please try again."
+msgstr ""
+
+msgid "Contacts refresh begun, it may take a few minutes to complete."
+msgstr ""
+
+msgid "Sync Logs"
 msgstr ""
 
 msgid "HTTP Logs"
@@ -4260,16 +4270,16 @@ msgstr ""
 msgid "Bulk senders typically can send a higher volume of messages and in some cases are even cheaper than local messaging rates. If you have an account with a bulk sender, you can use your local Android phone number to receive messages, and use a bulk sender for your outgoing messages."
 msgstr ""
 
-msgid "Connect Nexmo"
+msgid "Connect Vonage"
 msgstr ""
 
-msgid "A great way to connect if you are outside the United States or UK. Connect a Nexmo Account to send messages to over 200 countries worldwide."
+msgid "A great way to connect if you are outside the United States or UK. Connect a Vonage Account to send messages to over 200 countries worldwide."
 msgstr ""
 
-msgid "Send with Nexmo"
+msgid "Send with Vonage"
 msgstr ""
 
-msgid "Instead of using your Android phone to send messages, you can use your Nexmo Account to send messages to over 200 countries."
+msgid "Instead of using your Android phone to send messages, you can use your Vonage Account to send messages to over 200 countries."
 msgstr ""
 
 msgid "Connect External API"
@@ -4335,39 +4345,6 @@ msgid "IP Addresses"
 msgstr ""
 
 msgid "Additionally you will need to make sure the following IP addresses are whitelisted"
-msgstr ""
-
-#, python-format
-msgid ""
-"\n"
-"        There is an active flow using this channel. It cannot be deleted until it is removed from the\n"
-"\n"
-"      "
-msgid_plural ""
-"\n"
-"        There are %(counter)s flows using this flow. It cannot be deleted until it is removed from the\n"
-"\n"
-"      "
-msgstr[0] ""
-msgstr[1] ""
-
-msgid ""
-"\n"
-"        flow.\n"
-"      "
-msgid_plural ""
-"\n"
-"        flows.\n"
-"      "
-msgstr[0] ""
-msgstr[1] ""
-
-#, python-format
-msgid "You are about to disable bulk sending for <span class='font-normal'> %(object)s. </span> There is no way to undo this. Are you sure?"
-msgstr ""
-
-#, python-format
-msgid "You are about to delete the channel <span class='font-normal'> %(object)s. </span> There is no way to undo this. Are you sure?"
 msgstr ""
 
 msgid "Bulk sending"
@@ -5178,21 +5155,6 @@ msgstr ""
 msgid "In the case of a new WhatsApp install or replacement of an existing WhatsApp channel you may need to refresh the contacts on the WhatsApp application. This may take a few minutes."
 msgstr ""
 
-msgid "WhatsApp Templates Events"
-msgstr ""
-
-msgid "No syncs yet. Check back later."
-msgstr ""
-
-msgid "Templates"
-msgstr ""
-
-msgid "Templates are synced from your WhatsApp account every 15 minutes."
-msgstr ""
-
-msgid "No synced templates at this time."
-msgstr ""
-
 msgid "Connect a Classifier"
 msgstr ""
 
@@ -5200,13 +5162,6 @@ msgid "Classifiers let you interpret words and phrases into intents you can act 
 msgstr ""
 
 msgid "Select your provider below to get started."
-msgstr ""
-
-msgid "Unable to delete classifier still being used by"
-msgstr ""
-
-#, python-format
-msgid "You are about to delete <span class='font-normal'> %(name)s. </span> There is no way to undo this. Are you sure?"
 msgstr ""
 
 msgid "Classifier"
@@ -5225,9 +5180,6 @@ msgid "No synced intents at this time."
 msgstr ""
 
 msgid "Intents are synced automatically every 5 minutes"
-msgstr ""
-
-msgid "Ok"
 msgstr ""
 
 msgid "These contacts have been removed from all groups and can be deleted permanently."
@@ -5347,7 +5299,23 @@ msgid "Run result <b>%(name)s</b> updated to <b>%(value)s</b> with category <b>%
 msgstr ""
 
 #, python-format
-msgid "Opened ticket on <a href=\"%(ticketer_url)s\">%(ticketer)s</a> with subject <b>%(subject)s</b>"
+msgid "<b>%(assigner)s</b> took <b>%(subject)s</b>"
+msgstr ""
+
+#, python-format
+msgid "<b>%(assigner)s</b> assigned <b>%(subject)s</b> to <b>%(assignee)s</b>"
+msgstr ""
+
+#, python-format
+msgid "Opened ticket <b>%(subject)s</b>"
+msgstr ""
+
+#, python-format
+msgid "Reopened ticket <b>%(subject)s</b>"
+msgstr ""
+
+#, python-format
+msgid "Closed ticket <b>%(subject)s</b>"
 msgstr ""
 
 msgid "Successfully called"
@@ -5412,6 +5380,9 @@ msgstr ""
 msgid "Contact Id"
 msgstr ""
 
+msgid "Open Tickets"
+msgstr ""
+
 msgid "Upcoming"
 msgstr ""
 
@@ -5428,6 +5399,12 @@ msgid "Full"
 msgstr ""
 
 msgid "These contacts have opted out and you can no longer send them messages, they have been removed from all groups."
+msgstr ""
+
+msgid "Add Connection"
+msgstr ""
+
+msgid "Add a new way connect with this contact"
 msgstr ""
 
 #, python-format
@@ -5594,6 +5571,12 @@ msgstr ""
 msgid "a <strong>%(scheme)s</strong> URN"
 msgstr ""
 
+msgid "Add contacts to"
+msgstr ""
+
+msgid "called"
+msgstr ""
+
 msgid "Contact Import"
 msgstr ""
 
@@ -5724,6 +5707,17 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
+msgid ""
+"\n"
+"        flow.\n"
+"      "
+msgid_plural ""
+"\n"
+"        flows.\n"
+"      "
+msgstr[0] ""
+msgstr[1] ""
+
 #, python-format
 msgid ""
 "\n"
@@ -5797,13 +5791,19 @@ msgstr ""
 msgid "Create Flow"
 msgstr ""
 
+msgid "Labels"
+msgstr ""
+
 msgid "Webhook Call Log"
+msgstr ""
+
+msgid "Label"
 msgstr ""
 
 msgid "New Label"
 msgstr ""
 
-msgid "Export Results"
+msgid "Has issues"
 msgstr ""
 
 msgid "No matching flows."
@@ -6040,7 +6040,7 @@ msgid "%(name)s also keeps track of calls that are received on your channel so y
 msgstr ""
 
 #, python-format
-msgid "Uh oh, we couldn't delete %(name)s."
+msgid "<b>%(name)s</b> cannot be deleted as it still contains labels."
 msgstr ""
 
 msgid "Numeric Value:"
@@ -6092,6 +6092,19 @@ msgid "No matching messages."
 msgstr ""
 
 msgid "Your workspace is suspended and no longer processing messages."
+msgstr ""
+
+msgid "is used by the following flows which may not work as expected if you delete it:"
+msgstr ""
+
+#, python-format
+msgid "and %(count)s more"
+msgstr ""
+
+msgid "You are about to delete"
+msgstr ""
+
+msgid "There is no way to undo this. Are you sure?"
 msgstr ""
 
 #, python-format
@@ -6323,6 +6336,110 @@ msgid ""
 "\n"
 msgstr ""
 
+#, python-format
+msgid ""
+"\n"
+"\n"
+"<br/>\n"
+"Hi from %(hostname)s,\n"
+"<br/>\n"
+"<br/>\n"
+"Someone has requested that the password for this email address be reset.\n"
+"<br/>\n"
+"<br/>\n"
+"Clicking on the following link will allow you to reset the password for the account %(account_name)s:\n"
+"<br/>\n"
+"<a href='%(brand_link)s%(path)s'>Reset password</a>.\n"
+"<br/>\n"
+"<br/>\n"
+"If you did not request this, don't worry, this email has only been sent to you and your account remains secure.\n"
+"<br/>\n"
+"Thank you.\n"
+"<br/>\n"
+"<br/>\n"
+"Please do not reply to this email.\n"
+"<br/>\n"
+"<br/>\n"
+msgstr ""
+
+#, python-format
+msgid ""
+"\n"
+"\n"
+"Hi from %(hostname)s,\n"
+"\n"
+"Someone has requested that the password for this email address be reset.\n"
+"\n"
+"Clicking on the following link will allow you to reset the password for the account %(account_name)s:\n"
+"\n"
+"%(brand_link)s%(path)s\n"
+"\n"
+"If you did not request this, don't worry, this email has only been sent to you and your account remains secure.\n"
+"\n"
+"Thank you.\n"
+"\n"
+"Please do not reply to this email.\n"
+"\n"
+msgstr ""
+
+#, python-format
+msgid "Connected to your Chatbase account as agent <b>%(agent)s</b>."
+msgstr ""
+
+msgid "Connect your Chatbase account."
+msgstr ""
+
+msgid "Connecting your Chatbase account will allow you to monitor your bot, fix broken experiences and better understand your users. To signup for an account, visit"
+msgstr ""
+
+msgid "Your Chatbase account is connected to the Agent"
+msgstr ""
+
+msgid "If you no longer want it connected, you can"
+msgstr ""
+
+msgid "disconnect"
+msgstr ""
+
+msgid "your Chatbase account. Doing so will interrupt the data sent to your Chatbase console."
+msgstr ""
+
+msgid "Disconnect Chatbase"
+msgstr ""
+
+msgid "This will disconnect your Chatbase account. Are you sure you want to proceed?"
+msgstr ""
+
+msgid "Connected to your DT One account."
+msgstr ""
+
+msgid "Transfer Log"
+msgstr ""
+
+msgid "Connect your DT One account."
+msgstr ""
+
+#, python-format
+msgid "Adding a DT One account will allow you to send airtime credit over 400+ operators in over 100 countries. Once connected you can transfer airtime credit within your flows. To signup for an account, visit %(link)s."
+msgstr ""
+
+#, python-format
+msgid "You can find your credentials on the Developer tab on your %(link)s page."
+msgstr ""
+
+msgid "Your account is connected to a DT One account."
+msgstr ""
+
+#, python-format
+msgid "If you no longer want it connected, you can <a href=\"%(disconnect_url)s\">disconnect</a> it. Doing so will cause the payment actions in your flows to no longer be processed."
+msgstr ""
+
+msgid "Disconnect DT One"
+msgstr ""
+
+msgid "This will disconnect your DT One account. Payment actions will no longer be processed. Are you sure you want to proceed?"
+msgstr ""
+
 msgid "Confirm Access"
 msgstr ""
 
@@ -6372,36 +6489,6 @@ msgstr ""
 msgid "Your workspace has"
 msgstr ""
 
-msgid "Chatbase Account"
-msgstr ""
-
-msgid "Connected to Chatbase Account"
-msgstr ""
-
-msgid "Connect your Chatbase account"
-msgstr ""
-
-msgid "Connecting your Chatbase account will allow you to monitor your bot, fix broken experiences and better understand your users. To signup for an account, visit"
-msgstr ""
-
-msgid "Your Chatbase account is connected to the Agent"
-msgstr ""
-
-msgid "If you no longer want it connected, you can"
-msgstr ""
-
-msgid "disconnect"
-msgstr ""
-
-msgid "your Chatbase account. Doing so will interrupt the data sent to your Chatbase console."
-msgstr ""
-
-msgid "Disconnect Chatbase"
-msgstr ""
-
-msgid "This will disconnect your Chatbase account. Are you sure you want to proceed?"
-msgstr ""
-
 msgid "Choose Workspace"
 msgstr ""
 
@@ -6433,44 +6520,11 @@ msgstr ""
 msgid "credits since signing up."
 msgstr ""
 
-msgid "You are about to delete"
-msgstr ""
-
-msgid "Are you sure you want to delete everything for this org? This cannot be undone. Any logins which only belong to this workspace will also be deleted."
-msgstr ""
-
-msgid "DT One Account"
-msgstr ""
-
 #, python-format
-msgid "Connected to DT One account <b>%(login)s</b>."
+msgid "This will schedule deletion of <b>%(org)s</b> on <b>%(date)s</b>."
 msgstr ""
 
-msgid "Transfer Log"
-msgstr ""
-
-msgid "No DT One account connected."
-msgstr ""
-
-msgid "Adding a DT One account will allow you to send airtime credit for 400+ operators in over 100 countries. Once connected you can transfer airtime credit within your Flows. To signup for an account, visit"
-msgstr ""
-
-msgid "You can find your API Token by clicking on "
-msgstr ""
-
-msgid " on the DT One site."
-msgstr ""
-
-msgid "Your account is connected to a DT One account"
-msgstr ""
-
-msgid "your DT One account. Doing so will cause the payment actions in your flows to no longer be processed."
-msgstr ""
-
-msgid "Disconnect DT One"
-msgstr ""
-
-msgid "This will disconnect your DT One account. Payment actions will no longer be processed. Are you sure you want to proceed?"
+msgid "Are you sure you want to delete everything belonging to this workspace? This cannot be undone. Any logins which belong only to this workspace will also be deleted."
 msgstr ""
 
 #, python-format
@@ -6506,9 +6560,6 @@ msgid "Hide Archived"
 msgstr ""
 
 msgid "Select all of the items below that you would like to include in your export. We've grouped them together based on which flows and campaigns work with each other. Any related triggers will automatically be included in the export."
-msgstr ""
-
-msgid "Group"
 msgstr ""
 
 msgid "Select Group"
@@ -6555,14 +6606,16 @@ msgid "Please click Join to accept the invitation."
 msgstr ""
 
 #, python-format
-msgid "The primary language is <b>%(lang)s</b>."
+msgid "The default flow language is <b>%(lang)s</b>."
 msgstr ""
 
-#, python-format
-msgid "Translations are provided in <b>%(lang)s</b>."
+msgid "Translations are provided in"
 msgstr ""
 
 msgid "Your workspace is configured to use a single language."
+msgstr ""
+
+msgid "Login"
 msgstr ""
 
 msgid "Remove"
@@ -6574,24 +6627,6 @@ msgstr ""
 msgid "Invite New Users"
 msgstr ""
 
-msgid "Disconnect Nexmo"
-msgstr ""
-
-msgid "Disconnecting your Nexmo account will also remove any Nexmo channels connected to it. Are you sure you want to proceed?"
-msgstr ""
-
-msgid "To connect your Nexmo Account you will need to provide us your Nexmo API key and secret."
-msgstr ""
-
-msgid "Both values can be found on your"
-msgstr ""
-
-msgid "Nexmo Settings Page"
-msgstr ""
-
-msgid "in the API Settings section."
-msgstr ""
-
 msgid "You are currently on the {{org.plan}} plan."
 msgstr ""
 
@@ -6599,6 +6634,9 @@ msgid "Connect Plivo"
 msgstr ""
 
 msgid "To connect your Plivo Account you will need to provide us your Plivo AUTH ID and AUTH TOKEN."
+msgstr ""
+
+msgid "Both values can be found on your"
 msgstr ""
 
 msgid "Plivo Dashboard"
@@ -6644,23 +6682,23 @@ msgstr ""
 msgid "Creating a %(brand)s account is free and only takes a minute."
 msgstr ""
 
-msgid "Remove SMTP configuration"
+#, python-format
+msgid "Emails sent from flows will be sent from <b>%(from_email)s</b>."
 msgstr ""
 
 #, python-format
-msgid "Emails sent from flows will come from <b>%(from_email)s</b>."
+msgid "You can configure %(brand)s to send emails generated within flows from an email address of your choosing."
 msgstr ""
 
 #, python-format
-msgid "You can configure %(brand)s to send emails generated within flows from an email address of your choosing. <br/> This will let you receive replies from your recipients."
+msgid "If you no longer want to use %(from_email)s to send emails, you can <a href='javascript:confirmSMTPRemove();'>remove your SMTP settings</a>."
+msgstr ""
+
+msgid "Remove SMTP Settings"
 msgstr ""
 
 #, python-format
-msgid "If you no longer want to use %(from_email)s to send emails, you can <a href='javascript:confirmSMTPRemove();'>remove your SMTP configuration</a>."
-msgstr ""
-
-#, python-format
-msgid "Removing your SMTP configuration will result in emails being delivered from %(brand)s that cannot be replied to. Are you sure you want to continue?"
+msgid "Removing these settings will mean that emails sent from flows will come from %(from_email)s. Are you sure you want to continue?"
 msgstr ""
 
 #, python-format
@@ -6686,10 +6724,25 @@ msgstr ""
 msgid "Your API Token is <b>%(token)s</b>."
 msgstr ""
 
+#, python-format
+msgid "Connected to Twilio Account <b>%(account_sid)s</b>."
+msgstr ""
+
+#, python-format
+msgid "If you no longer want it connected, you can <a href=\"%(url)s\">disconnect your Twilio account</a>."
+msgstr ""
+
 msgid "Disconnect Twilio"
 msgstr ""
 
 msgid "Disconnecting your Twilio account will also remove any Twilio channels connected to it. Are you sure you want to proceed?"
+msgstr ""
+
+msgid "Connect Twilio"
+msgstr ""
+
+#, python-format
+msgid "To connect your Twilio Account you will need to provide us your Twilio account SID and auth token. Both values can be found on your <a target=\"twilio\" href=\"%(settings_url)s\">Twilio account page</a>."
 msgstr ""
 
 msgid "This workspace has been suspended"
@@ -6702,6 +6755,24 @@ msgid "This workspace has been verified"
 msgstr ""
 
 msgid "This workspace has been scheduled for deletion"
+msgstr ""
+
+#, python-format
+msgid "Connected to Vonage account with API key %(api_key)s."
+msgstr ""
+
+#, python-format
+msgid "If you no longer want it connected, you can <a href=\"%(url)s\">disconnect your Vonage account</a>."
+msgstr ""
+
+msgid "Disconnect Vonage"
+msgstr ""
+
+msgid "Disconnecting your Vonage account will also remove any Vonage channels connected to it. Are you sure you want to proceed?"
+msgstr ""
+
+#, python-format
+msgid "To connect your Vonage Account you will need to provide us your API key and secret. Both values can be found on your <a target=\"vonage\" href=\"%(settings_url)s\">Vonage settings</a> page in the API Settings section."
 msgstr ""
 
 msgid "Top Ups"
@@ -6742,10 +6813,25 @@ msgstr ""
 msgid "Complementary credits, thanks for trying %(brand)s."
 msgstr ""
 
+msgid "Confirm your current password to save these changes"
+msgstr ""
+
 #, python-format
 msgid ""
 "\n"
 "    Your email address is <b>%(email)s</b>.\n"
+"\n"
+"  "
+msgstr ""
+
+msgid "Reset Password"
+msgstr ""
+
+msgid ""
+"\n"
+"    Enter the email address you used to sign up. We will\n"
+"    send you an email with details on how to reset your password.\n"
+"\n"
 "  "
 msgstr ""
 
@@ -7062,10 +7148,18 @@ msgstr ""
 msgid "Connection Error"
 msgstr ""
 
+msgid "Schedule"
+msgstr ""
+
 msgid "Select when you would like the message to be sent"
 msgstr ""
 
-msgid "The next message will be sent on"
+#, python-format
+msgid "The next message will be sent <b>%(when)s</b>."
+msgstr ""
+
+#, python-format
+msgid "It will repeat every <b>month</b> on the %(date)s."
 msgstr ""
 
 msgid "It will repeat every"
@@ -7074,16 +7168,10 @@ msgstr ""
 msgid "at around the same time."
 msgstr ""
 
-msgid "on the"
+msgid "It will repeat <d>daily</b> at around the same time."
 msgstr ""
 
-msgid "It will repeat"
-msgstr ""
-
-msgid "It will "
-msgstr ""
-
-msgid "not repeat"
+msgid "It will <b>not repeat</b>."
 msgstr ""
 
 msgid "Unschedule"
@@ -7120,17 +7208,6 @@ msgstr ""
 msgid "Reset"
 msgstr ""
 
-msgid "Reset Password"
-msgstr ""
-
-msgid ""
-"\n"
-"    Enter the email address you used to sign up. We will\n"
-"    send you an email with details on how to reset your password.\n"
-"\n"
-"  "
-msgstr ""
-
 msgid "Pick a new password and enter it below. A good password will be at least eight characters long and have a mixture of upper and lower case letters."
 msgstr ""
 
@@ -7141,9 +7218,6 @@ msgid "Confirm new password"
 msgstr ""
 
 msgid "Delete "
-msgstr ""
-
-msgid "Delete Workspace"
 msgstr ""
 
 msgid "Delete Login"
@@ -7170,37 +7244,17 @@ msgid ""
 "            "
 msgstr ""
 
-msgid "Ticketing Service"
+msgid "All done!"
 msgstr ""
 
-msgid "Ticketing Service over"
+msgid "Nice work, there aren't any more tickets here that need your attention."
 msgstr ""
 
-msgid "Services"
+#, python-format
+msgid "%(name)s Tickets makes it easy to chat directly with your contacts."
 msgstr ""
 
-msgid "Close"
-msgstr ""
-
-msgid "Reopen"
-msgstr ""
-
-msgid "No tickets."
-msgstr ""
-
-msgid "Through"
-msgstr ""
-
-msgid "Body"
-msgstr ""
-
-msgid "Opened On"
-msgstr ""
-
-msgid "Close Ticket"
-msgstr ""
-
-msgid "Are you sure you want to close this ticket?"
+msgid "Sometimes an automated chatbot isn't enough. When your contacts need to chat with a real person, you can use the Open Ticket action to open a new ticket."
 msgstr ""
 
 msgid "Connect a Ticketing Service"
@@ -7212,10 +7266,25 @@ msgstr ""
 msgid "Select the ticketing service you want to connect below to get started."
 msgstr ""
 
+#, python-format
+msgid "%(brand)s Tickets"
+msgstr ""
+
 msgid "No ticketing services are available."
 msgstr ""
 
-msgid "Unable to delete service still being used by"
+#, python-format
+msgid "%(type_name)s ticketing service over <b>%(name)s</b>. Contacts who have open tickets with this service will have their messages forwarded to the service, and replies made using the service will be sent back to the contact."
+msgstr ""
+
+msgid "HTTP Log"
+msgstr ""
+
+msgid "Delete Ticket Service"
+msgstr ""
+
+#, python-format
+msgid "%(type_name)s ticketing service over <b>%(name)s</b>."
 msgstr ""
 
 #, python-format
@@ -7237,6 +7306,9 @@ msgstr ""
 msgid "This will connect your account to Zendesk allowing you to open tickets in flows."
 msgstr ""
 
+msgid "Ticketing Service"
+msgstr ""
+
 msgid "To complete connecting your account here to your Zendesk account you need to complete the following steps."
 msgstr ""
 
@@ -7252,16 +7324,37 @@ msgstr ""
 msgid "Add account for the channel and enter <code>%(secret)s</code> as the secret."
 msgstr ""
 
-msgid "Start a flow after receiving a message not handled elsewhere."
+msgid "Triggers allow users to start flows based on user actions or schedules."
 msgstr ""
 
-msgid "Triggers allow users to start flows based on user actions or schedules."
+msgid "Start a flow after receiving a message that doesn't match any keywords."
+msgstr ""
+
+msgid "Start a flow after a ticket is closed."
 msgstr ""
 
 msgid "Start a flow after receiving a call."
 msgstr ""
 
 msgid "Create a message keyword that launches a flow."
+msgstr ""
+
+msgid "Start a flow after a missed call."
+msgstr ""
+
+msgid "Start a flow when a conversation is started by a contact."
+msgstr ""
+
+msgid "Start a flow when Facebook refers a contact."
+msgstr ""
+
+msgid "Create a message keyword that allows people to join a group."
+msgstr ""
+
+msgid "Start a flow in the future or on a schedule."
+msgstr ""
+
+msgid "Types"
 msgstr ""
 
 msgid "The keyword"
@@ -7285,6 +7378,9 @@ msgstr ""
 msgid "on the channel"
 msgstr ""
 
+msgid "A closed ticket"
+msgstr ""
+
 msgid "starts"
 msgstr ""
 
@@ -7297,24 +7393,24 @@ msgstr ""
 msgid "Update Trigger"
 msgstr ""
 
-msgid "Start a flow after a missed call."
-msgstr ""
-
-msgid "Start a flow when a conversation is started by a contact."
-msgstr ""
-
-msgid "Start a flow when Facebook refers a contact."
-msgstr ""
-
-msgid "Create a message keyword that allows people to join a group."
-msgstr ""
-
-msgid "Start a flow in the future or on a schedule."
-msgstr ""
-
 msgid "Enter a query"
 msgstr ""
 
 #, python-brace-format
 msgid "Found ${count} for ${query}"
+msgstr ""
+
+msgid "Templates Events"
+msgstr ""
+
+msgid "No syncs yet. Check back later."
+msgstr ""
+
+msgid "Templates"
+msgstr ""
+
+msgid "Templates are synced from your account every 15 minutes."
+msgstr ""
+
+msgid "No synced templates at this time."
 msgstr ""

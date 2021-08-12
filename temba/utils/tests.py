@@ -9,14 +9,13 @@ from unittest import mock
 from unittest.mock import MagicMock, PropertyMock, patch
 
 import intercom.errors
-import pycountry
 import pytz
 from django_redis import get_redis_connection
 from openpyxl import load_workbook
-from smartmin.tests import SmartminTestMixin
+from smartmin.tests import SmartminTest, SmartminTestMixin
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.core import checks
 from django.core.management import CommandError, call_command
 from django.db import connection, models
@@ -30,16 +29,16 @@ from celery.app.task import Task
 import temba.utils.analytics
 from temba.contacts.models import Contact, ContactField, ContactGroup, ContactGroupCount, ExportContactsTask
 from temba.flows.models import FlowRun
-from temba.orgs.models import Org, UserSettings
+from temba.orgs.models import Org
 from temba.tests import ESMockWithScroll, TembaTest, matchers
 from temba.utils import json, uuid
-from temba.utils.json import TembaJsonAdapter
 
 from . import (
     chunk_list,
+    countries,
     dict_to_struct,
     format_number,
-    get_country_code_by_name,
+    languages,
     percentage,
     redact,
     sizeof_fmt,
@@ -47,16 +46,7 @@ from . import (
 )
 from .cache import get_cacheable_attr, get_cacheable_result, incrby_existing
 from .celery import nonoverlapping_task
-from .currencies import currency_for_country
-from .dates import (
-    date_to_day_range_utc,
-    datetime_to_str,
-    datetime_to_timestamp,
-    str_to_date,
-    str_to_datetime,
-    str_to_time,
-    timestamp_to_datetime,
-)
+from .dates import datetime_to_str, datetime_to_timestamp, timestamp_to_datetime
 from .email import is_valid_address, send_simple_email
 from .export import TableExporter
 from .fields import validate_external_url
@@ -209,14 +199,6 @@ class InitTest(TembaTest):
         self.assertEqual(75, percentage(75, 100))
         self.assertEqual(76, percentage(759, 1000))
 
-    def test_get_country_code_by_name(self):
-        self.assertEqual("RW", get_country_code_by_name("Rwanda"))
-        self.assertEqual("US", get_country_code_by_name("United States of America"))
-        self.assertEqual("US", get_country_code_by_name("United States"))
-        self.assertEqual("GB", get_country_code_by_name("United Kingdom"))
-        self.assertEqual("CI", get_country_code_by_name("Ivory Coast"))
-        self.assertEqual("CD", get_country_code_by_name("Democratic Republic of the Congo"))
-
     def test_remove_control_charaters(self):
         self.assertIsNone(clean_string(None))
         self.assertEqual(clean_string("ngert\x07in."), "ngertin.")
@@ -255,200 +237,13 @@ class DatesTest(TembaTest):
         self.assertEqual(datetime_to_str(d2, "%Y-%m-%d %H:%M", tz=tz), "2014-01-02 03:04")
         self.assertEqual(datetime_to_str(d2, "%Y/%m/%d %H:%M", tz=pytz.UTC), "2014/01/02 01:04")
 
-    def test_str_to_date(self):
-        self.assertIsNone(str_to_date(""))
-        self.assertIsNone(str_to_date(None))
-        self.assertIsNone(str_to_date("not a date"))
-        self.assertIsNone(str_to_date("2017 10 23"))
 
-        # full iso8601 timestamp
-        self.assertEqual(str_to_date("2013-02-01T04:38:09.100000+02:00"), datetime.date(2013, 2, 1))
-        self.assertEqual(str_to_date("2013-02-01 04:38:09.100000+02:00"), datetime.date(2013, 2, 1))
-
-        # iso date
-        self.assertEqual(str_to_date("2012-02-21", dayfirst=True), datetime.date(2012, 2, 21))
-        self.assertEqual(str_to_date("2012-21-02", dayfirst=True), None)
-
-        # similar to iso date
-        self.assertEqual(str_to_date("2012-2-21", dayfirst=True), datetime.date(2012, 2, 21))
-        self.assertEqual(str_to_date("2012.2.21", dayfirst=True), datetime.date(2012, 2, 21))
-        self.assertEqual(str_to_date("2012\\2\\21", dayfirst=True), datetime.date(2012, 2, 21))
-        self.assertEqual(str_to_date("2012/2/21", dayfirst=True), datetime.date(2012, 2, 21))
-        self.assertEqual(str_to_date("2012_2_21", dayfirst=True), datetime.date(2012, 2, 21))
-
-        # mixed delimiters
-        self.assertEqual(str_to_date("2012-2/21", dayfirst=True), datetime.date(2012, 2, 21))
-
-        # day and month are switched, depends on org conf
-        self.assertEqual(str_to_date("12/11/16", dayfirst=True), datetime.date(2016, 11, 12))
-        self.assertEqual(str_to_date("12/11/16", dayfirst=False), datetime.date(2016, 12, 11))
-
-        # there is no 21st month
-        self.assertEqual(str_to_date("11/21/17 at 12:00PM", dayfirst=True), None)
-        self.assertEqual(str_to_date("11/21/17 at 12:00PM", dayfirst=False), datetime.date(2017, 11, 21))
-
-    def test_str_to_datetime(self):
-        tz = pytz.timezone("Asia/Kabul")
-        with patch.object(timezone, "now", return_value=tz.localize(datetime.datetime(2014, 1, 2, 3, 4, 5, 6))):
-            self.assertIsNone(str_to_datetime(None, tz))  # none
-            self.assertIsNone(str_to_datetime("", tz))  # empty string
-            self.assertIsNone(str_to_datetime("xxx", tz))  # unparseable string
-            self.assertIsNone(str_to_datetime("xxx", tz, fill_time=False))  # unparseable string
-            self.assertIsNone(str_to_datetime("31-02-2017", tz))  # day out of range
-            self.assertIsNone(str_to_datetime("03-13-2017", tz))  # month out of range
-            self.assertIsNone(str_to_datetime("03-12-99999", tz))  # year out of range
-
-            self.assertEqual(
-                tz.localize(datetime.datetime(2013, 2, 1, 3, 4, 5, 6)),
-                str_to_datetime(" 2013-02-01 ", tz, dayfirst=True),
-            )  # iso
-
-            self.assertEqual(
-                tz.localize(datetime.datetime(2013, 2, 1, 3, 4, 5, 6)),
-                str_to_datetime("01-02-2013", tz, dayfirst=True),
-            )  # day first
-
-            self.assertEqual(
-                tz.localize(datetime.datetime(2013, 1, 2, 3, 4, 5, 6)),
-                str_to_datetime("01-02-2013", tz, dayfirst=False),
-            )  # month first
-
-            # two digit years
-            self.assertEqual(
-                tz.localize(datetime.datetime(2013, 1, 2, 3, 4, 5, 6)), str_to_datetime("01-02-13", tz, dayfirst=False)
-            )
-            self.assertEqual(
-                tz.localize(datetime.datetime(1999, 1, 2, 3, 4, 5, 6)), str_to_datetime("01-02-99", tz, dayfirst=False)
-            )
-
-            # no two digit iso date
-            self.assertEqual(None, str_to_datetime("99-02-01", tz, dayfirst=False))
-
-            # single digit months in iso-like date
-            self.assertEqual(
-                tz.localize(datetime.datetime(1999, 1, 2, 3, 4, 5, 6)), str_to_datetime("1999-2-1", tz, dayfirst=False)
-            )
-
-            self.assertEqual(
-                tz.localize(datetime.datetime(2013, 2, 1, 7, 8, 0, 0)),
-                str_to_datetime("01-02-2013 07:08", tz, dayfirst=True),
-            )  # hour and minute provided
-
-            # AM / PM edge cases
-            self.assertEqual(
-                tz.localize(datetime.datetime(2017, 11, 21, 12, 0, 0, 0)),
-                str_to_datetime("11/21/17 at 12:00PM", tz, dayfirst=False),
-            )
-            self.assertEqual(
-                tz.localize(datetime.datetime(2017, 11, 21, 0, 0, 0, 0)),
-                str_to_datetime("11/21/17 at 12:00 am", tz, dayfirst=False),
-            )
-            self.assertEqual(
-                tz.localize(datetime.datetime(2017, 11, 21, 23, 59, 0, 0)),
-                str_to_datetime("11/21/17 at 11:59 pm", tz, dayfirst=False),
-            )
-            self.assertEqual(
-                tz.localize(datetime.datetime(2017, 11, 21, 0, 30, 0, 0)),
-                str_to_datetime("11/21/17 at 00:30 am", tz, dayfirst=False),
-            )
-
-            self.assertEqual(
-                tz.localize(datetime.datetime(2017, 11, 21, 0, 0, 0, 0)),  # illogical time ignored
-                str_to_datetime("11/21/17 at 34:62", tz, dayfirst=False, fill_time=False),
-            )
-
-            self.assertEqual(
-                tz.localize(datetime.datetime(2013, 2, 1, 7, 8, 9, 100_000)),
-                str_to_datetime("01-02-2013 07:08:09.100000", tz, dayfirst=True),
-            )  # complete time provided
-
-            self.assertEqual(
-                datetime.datetime(2013, 2, 1, 7, 8, 9, 100_000, tzinfo=pytz.UTC),
-                str_to_datetime("2013-02-01T07:08:09.100000Z", tz, dayfirst=True),
-            )  # Z marker
-            self.assertEqual(
-                tz.localize(datetime.datetime(2013, 2, 1, 7, 8, 9, 100_000)),
-                str_to_datetime("2013-02-01T07:08:09.100000+04:30", tz, dayfirst=True),
-            )  # ISO in local tz
-            self.assertEqual(
-                tz.localize(datetime.datetime(2013, 2, 1, 7, 8, 9, 100_000)),
-                str_to_datetime("2013-02-01T04:38:09.100000+02:00", tz, dayfirst=True),
-            )  # ISO in other tz
-            self.assertEqual(
-                tz.localize(datetime.datetime(2013, 2, 1, 7, 8, 9, 100_000)),
-                str_to_datetime("2013-02-01T00:38:09.100000-02:00", tz, dayfirst=True),
-            )  # ISO in other tz
-            self.assertEqual(
-                datetime.datetime(2013, 2, 1, 7, 8, 9, 0, tzinfo=pytz.UTC),
-                str_to_datetime("2013-02-01T07:08:09Z", tz, dayfirst=True),
-            )  # with no second fraction
-            self.assertEqual(
-                datetime.datetime(2013, 2, 1, 7, 8, 9, 198_000, tzinfo=pytz.UTC),
-                str_to_datetime("2013-02-01T07:08:09.198Z", tz, dayfirst=True),
-            )  # with milliseconds
-            self.assertEqual(
-                datetime.datetime(2013, 2, 1, 7, 8, 9, 198_537, tzinfo=pytz.UTC),
-                str_to_datetime("2013-02-01T07:08:09.198537686Z", tz, dayfirst=True),
-            )  # with nanoseconds
-            self.assertEqual(
-                datetime.datetime(2013, 2, 1, 7, 8, 9, 198_500, tzinfo=pytz.UTC),
-                str_to_datetime("2013-02-01T07:08:09.1985Z", tz, dayfirst=True),
-            )  # with 4 second fraction digits
-            self.assertEqual(
-                tz.localize(datetime.datetime(2013, 2, 1, 7, 8, 9, 100_000)),
-                str_to_datetime("2013-02-01T07:08:09.100000+04:30.", tz, dayfirst=True),
-            )  # trailing period
-            self.assertEqual(
-                tz.localize(datetime.datetime(2013, 2, 1, 0, 0, 0, 0)),
-                str_to_datetime("01-02-2013", tz, dayfirst=True, fill_time=False),
-            )  # no time filling
-
-        # localizing while in DST to something outside DST
-        tz = pytz.timezone("US/Eastern")
-        with patch.object(timezone, "now", return_value=tz.localize(datetime.datetime(2029, 11, 1, 12, 30, 0, 0))):
-            parsed = str_to_datetime("06-11-2029", tz, dayfirst=True)
-            self.assertEqual(tz.localize(datetime.datetime(2029, 11, 6, 12, 30, 0, 0)), parsed)
-
-            # assert there is no DST offset
-            self.assertFalse(parsed.tzinfo.dst(parsed))
-
-            self.assertEqual(
-                tz.localize(datetime.datetime(2029, 11, 6, 13, 45, 0, 0)),
-                str_to_datetime("06-11-2029 13:45", tz, dayfirst=True),
-            )
-
-        # deal with datetimes that have timezone info
-        self.assertEqual(
-            pytz.utc.localize(datetime.datetime(2016, 11, 21, 20, 36, 51, 215_681)).astimezone(tz),
-            str_to_datetime("2016-11-21T20:36:51.215681Z", tz),
-        )
-
-        self.assertEqual(
-            pytz.utc.localize(datetime.datetime(2017, 8, 9, 18, 38, 24, 469_581)).astimezone(tz),
-            str_to_datetime("2017-08-09 18:38:24.469581+00:00", tz),
-        )
-
-    def test_str_to_time(self):
-        self.assertEqual(str_to_time(""), None)
-        self.assertEqual(str_to_time("x"), None)
-        self.assertEqual(str_to_time("32:01"), None)
-        self.assertEqual(str_to_time("12:61"), None)
-        self.assertEqual(str_to_time("12:30:61"), None)
-
-        tz = pytz.timezone("Asia/Kabul")
-        with patch.object(timezone, "now", return_value=tz.localize(datetime.datetime(2014, 1, 2, 3, 4, 5, 6))):
-            self.assertEqual(str_to_time("03:04"), datetime.time(3, 4))  # hour zero padded
-            self.assertEqual(str_to_time("3:04"), datetime.time(3, 4))  # hour not zero padded
-            self.assertEqual(str_to_time("01-02-2013 03:04"), datetime.time(3, 4))  # with date
-            self.assertEqual(str_to_time("3:04 PM"), datetime.time(15, 4))  # as PM
-            self.assertEqual(str_to_time("03:04:30"), datetime.time(3, 4, 30))  # with seconds
-            self.assertEqual(str_to_time("03:04:30.123"), datetime.time(3, 4, 30, 123_000))  # with milliseconds
-            self.assertEqual(str_to_time("03:04:30.123000"), datetime.time(3, 4, 30, 123_000))  # with microseconds
-
-    def test_date_to_day_range_utc(self):
-        result = date_to_day_range_utc(datetime.date(2017, 2, 20), self.org)
-        self.assertEqual(result[0].isoformat(), "2017-02-19T22:00:00+00:00")
-        self.assertEqual(result[1].isoformat(), "2017-02-20T22:00:00+00:00")
+class CountriesTest(TembaTest):
+    def test_from_tel(self):
+        self.assertIsNone(countries.from_tel(""))
+        self.assertIsNone(countries.from_tel("123"))
+        self.assertEqual("EC", countries.from_tel("+593979123456"))
+        self.assertEqual("US", countries.from_tel("+1 213 621 0002"))
 
 
 class TimezonesTest(TembaTest):
@@ -521,6 +316,17 @@ class TemplateTagTest(TembaTest):
             test_date = datetime.datetime(2012, 7, 20, 17, 5, 0, 0).replace(tzinfo=pytz.utc)
             self.assertEqual("07-20-2012 19:05", format_datetime(context, test_date))
 
+            # the org has year first configured
+            self.org.date_format = "Y"
+            self.org.save()
+
+            # date without timezone
+            test_date = datetime.datetime(2012, 7, 20, 17, 5, 0, 0)
+            self.assertEqual("2012-07-20 19:05", format_datetime(context, test_date))
+
+            test_date = datetime.datetime(2012, 7, 20, 17, 5, 0, 0).replace(tzinfo=pytz.utc)
+            self.assertEqual("2012-07-20 19:05", format_datetime(context, test_date))
+
     def test_short_datetime(self):
         with patch.object(timezone, "now", return_value=datetime.datetime(2015, 9, 15, 0, 0, 0, 0, pytz.UTC)):
             self.org.date_format = "D"
@@ -538,11 +344,11 @@ class TemplateTagTest(TembaTest):
             self.assertEqual("08:10", short_datetime(context, now.replace(hour=6, minute=10)))
             self.assertEqual("19:05", short_datetime(context, now.replace(hour=17, minute=5)))
 
-            # given the time beyond 12 hours ago within the same month, should display "MonthName DayOfMonth" eg. "Jan 2"
+            # given the time beyond 12 hours ago within the same month, should display "DayOfMonth MonthName" eg. "2 Jan"
             test_date = now.replace(day=2)
             self.assertEqual("2 " + test_date.strftime("%b"), short_datetime(context, test_date))
 
-            # last month should still be pretty
+            # last February should still be pretty
             test_date = test_date.replace(month=2)
             self.assertEqual("2 " + test_date.strftime("%b"), short_datetime(context, test_date))
 
@@ -563,13 +369,39 @@ class TemplateTagTest(TembaTest):
             test_date = now.replace(day=2)
             self.assertEqual(test_date.strftime("%b") + " 2", short_datetime(context, test_date))
 
-            # last month should still be pretty
+            # last February should still be pretty
             test_date = test_date.replace(month=2)
             self.assertEqual(test_date.strftime("%b") + " 2", short_datetime(context, test_date))
 
             # but a different year is different
             jan_2 = datetime.datetime(2012, 7, 20, 17, 5, 0, 0).replace(tzinfo=pytz.utc)
             self.assertEqual("7/20/12", short_datetime(context, jan_2))
+
+            # the org has year first configured
+            self.org.date_format = "Y"
+            self.org.save()
+
+            # date without timezone
+            test_date = datetime.datetime.now()
+            modified_now = test_date.replace(hour=17, minute=5)
+            self.assertEqual("19:05", short_datetime(context, modified_now))
+
+            # given the time as now, should display as 24 hour time
+            now = timezone.now()
+            self.assertEqual("08:10", short_datetime(context, now.replace(hour=6, minute=10)))
+            self.assertEqual("19:05", short_datetime(context, now.replace(hour=17, minute=5)))
+
+            # given the time beyond 12 hours ago within the same month, should display "MonthName DayOfMonth" eg. "Jan 2"
+            test_date = now.replace(day=2)
+            self.assertEqual(test_date.strftime("%b") + " 2", short_datetime(context, test_date))
+
+            # last February should still be pretty
+            test_date = test_date.replace(month=2)
+            self.assertEqual(test_date.strftime("%b") + " 2", short_datetime(context, test_date))
+
+            # but a different year is different
+            jan_2 = datetime.datetime(2012, 7, 20, 17, 5, 0, 0).replace(tzinfo=pytz.utc)
+            self.assertEqual("2012/7/20", short_datetime(context, jan_2))
 
 
 class TemplateTagTestSimple(TestCase):
@@ -1090,28 +922,8 @@ class ExportTest(TembaTest):
         os.unlink(temp_file.name)
 
 
-class CurrencyTest(TembaTest):
-    def test_currencies(self):
-
-        self.assertEqual(currency_for_country("US").alpha_3, "USD")
-        self.assertEqual(currency_for_country("EC").alpha_3, "USD")
-        self.assertEqual(currency_for_country("FR").alpha_3, "EUR")
-        self.assertEqual(currency_for_country("DE").alpha_3, "EUR")
-        self.assertEqual(currency_for_country("YE").alpha_3, "YER")
-        self.assertEqual(currency_for_country("AF").alpha_3, "AFN")
-
-        for country in list(pycountry.countries):
-
-            currency = currency_for_country(country.alpha_2)
-            if currency is None:
-                self.fail(f"Country missing currency: {country}")
-
-        # a country that does not exist
-        self.assertIsNone(currency_for_country("XX"))
-
-
 class MiddlewareTest(TembaTest):
-    def test_org_header(self):
+    def test_org(self):
         response = self.client.get(reverse("public.public_index"))
         self.assertFalse(response.has_header("X-Temba-Org"))
 
@@ -1138,17 +950,25 @@ class MiddlewareTest(TembaTest):
         with self.settings(BRANDING=branding):
             self.assertRedirect(self.client.get(reverse("public.public_index")), "/redirect")
 
-    def test_activate_language(self):
-        self.assertContains(self.client.get(reverse("public.public_index")), "Sign Up")
+    def test_language(self):
+        def assert_text(text: str):
+            self.assertContains(self.client.get(reverse("public.public_index")), text)
 
+        # default is English
+        assert_text("Visually build nationally scalable mobile applications")
+
+        # can be overridden in Django settings
+        with override_settings(DEFAULT_LANGUAGE="es"):
+            assert_text("Cree visualmente aplicaciones móviles")
+
+        # if we have an authenticated user, their setting takes priority
         self.login(self.admin)
 
-        self.assertContains(self.client.get(reverse("public.public_index")), "Sign Up")
-        self.assertContains(self.client.get(reverse("contacts.contact_list")), "Import Contacts")
+        user_settings = self.admin.get_settings()
+        user_settings.language = "fr"
+        user_settings.save(update_fields=("language",))
 
-        UserSettings.objects.filter(user=self.admin).update(language="fr")
-
-        self.assertContains(self.client.get(reverse("contacts.contact_list")), "Importer des contacts")
+        assert_text("Créez visuellement des applications mobiles")
 
 
 class MakeTestDBTest(SmartminTestMixin, TransactionTestCase):
@@ -1168,17 +988,17 @@ class MakeTestDBTest(SmartminTestMixin, TransactionTestCase):
         )
         assertOrgCounts(ContactField.user_fields.all(), [6, 6, 6])
         assertOrgCounts(ContactGroup.user_groups.all(), [10, 10, 10])
-        assertOrgCounts(Contact.objects.all(), [13, 13, 4])
+        assertOrgCounts(Contact.objects.all(), [10, 11, 9])
 
         org_1_active_contacts = ContactGroup.system_groups.get(org=org1, name="Active")
 
-        self.assertEqual(org_1_active_contacts.contacts.count(), 12)
+        self.assertEqual(org_1_active_contacts.contacts.count(), 9)
         self.assertEqual(
-            list(ContactGroupCount.objects.filter(group=org_1_active_contacts).values_list("count")), [(12,)]
+            list(ContactGroupCount.objects.filter(group=org_1_active_contacts).values_list("count")), [(9,)]
         )
 
         # same seed should generate objects with same UUIDs
-        self.assertEqual(ContactGroup.user_groups.order_by("id").first().uuid, "86f15ec5-3a37-431c-a891-f9f4ff519987")
+        self.assertEqual("7a7ab82c-9fff-49f3-a390-a2957fd60834", ContactGroup.user_groups.order_by("id").first().uuid)
 
         # check if contact fields are serialized
         self.assertIsNotNone(Contact.objects.first().fields)
@@ -1241,7 +1061,6 @@ class TestJSONAsTextField(TestCase):
         )
 
     def test_to_python(self):
-
         field = JSONAsTextField(default=dict)
 
         self.assertEqual(field.to_python({}), {})
@@ -1249,7 +1068,6 @@ class TestJSONAsTextField(TestCase):
         self.assertEqual(field.to_python("{}"), {})
 
     def test_default_with_null(self):
-
         model = JsonModelTestDefaultNull()
         model.save()
         model.refresh_from_db()
@@ -1265,7 +1083,6 @@ class TestJSONAsTextField(TestCase):
         self.assertEqual(data[0][1], None)
 
     def test_default_without_null(self):
-
         model = JsonModelTestDefault()
         model.save()
         model.refresh_from_db()
@@ -1291,6 +1108,14 @@ class TestJSONAsTextField(TestCase):
         model.field = ""
         self.assertRaises(ValueError, model.save)
 
+    def test_invalid_unicode(self):
+        # invalid unicode escape sequences are stripped out
+        model = JsonModelTestDefault()
+        model.field = {"foo": "bar\u0000"}
+        model.save()
+
+        self.assertEqual({"foo": "bar"}, JsonModelTestDefault.objects.first().field)
+
     def test_write_None_value(self):
         model = JsonModelTestDefault()
         # assign None (null) value to the field
@@ -1298,12 +1123,32 @@ class TestJSONAsTextField(TestCase):
 
         self.assertRaises(Exception, model.save)
 
-    def test_read_None_value(self):
-        with connection.cursor() as null_cur:
-            null_cur.execute("DELETE FROM utils_jsonmodeltestnull")
-            null_cur.execute("INSERT INTO utils_jsonmodeltestnull (field) VALUES (%s)", (None,))
-
+    def test_read_values_db(self):
+        with connection.cursor() as cur:
+            # read a NULL as None
+            cur.execute("DELETE FROM utils_jsonmodeltestnull")
+            cur.execute("INSERT INTO utils_jsonmodeltestnull (field) VALUES (%s)", (None,))
             self.assertEqual(JsonModelTestNull.objects.first().field, None)
+
+            # read JSON object as dict
+            cur.execute("DELETE FROM utils_jsonmodeltestdefault")
+            cur.execute("INSERT INTO utils_jsonmodeltestdefault (field) VALUES (%s)", ('{"foo": "bar"}',))
+            self.assertEqual({"foo": "bar"}, JsonModelTestDefault.objects.first().field)
+
+    def test_jsonb_columns(self):
+        with connection.cursor() as cur:
+            # simulate field being converted to actual JSONB
+            cur.execute("DELETE FROM utils_jsonmodeltestdefault")
+            cur.execute("INSERT INTO utils_jsonmodeltestdefault (field) VALUES (%s)", ('{"foo": "bar"}',))
+            cur.execute("ALTER TABLE utils_jsonmodeltestdefault ALTER COLUMN field TYPE jsonb USING field::jsonb;")
+
+            obj = JsonModelTestDefault.objects.first()
+            self.assertEqual({"foo": "bar"}, obj.field)
+
+            obj.field = {"zed": "doh"}
+            obj.save()
+
+            self.assertEqual({"zed": "doh"}, JsonModelTestDefault.objects.first().field)
 
     def test_invalid_field_values_db(self):
         with connection.cursor() as cur:
@@ -1319,32 +1164,83 @@ class TestJSONAsTextField(TestCase):
             cur.execute("INSERT INTO utils_jsonmodeltestdefault (field) VALUES (%s)", ("null",))
             self.assertRaises(ValueError, JsonModelTestDefault.objects.first)
 
+            # simulate field being something non-JSON at db-level
+            cur.execute("DELETE FROM utils_jsonmodeltestdefault")
+            cur.execute("INSERT INTO utils_jsonmodeltestdefault (field) VALUES (%s)", ("1234",))
+            cur.execute("ALTER TABLE utils_jsonmodeltestdefault ALTER COLUMN field TYPE int USING field::int;")
+            self.assertRaises(ValueError, JsonModelTestDefault.objects.first)
+
 
 class TestJSONField(TembaTest):
     def test_jsonfield_decimal_encoding(self):
         contact = self.create_contact("Xavier", phone="+5939790990001")
 
-        with connection.cursor() as cur:
-            cur.execute(
-                "UPDATE contacts_contact SET fields = %s where id = %s",
-                (
-                    TembaJsonAdapter({"1eaf5c91-8d56-4ca0-8e00-9b1c0b12e722": {"number": Decimal("123.45")}}),
-                    contact.id,
-                ),
+        contact.fields = {"1eaf5c91-8d56-4ca0-8e00-9b1c0b12e722": {"number": Decimal("123.4567890")}}
+        contact.save(update_fields=("fields",))
+
+        contact.refresh_from_db()
+        self.assertEqual(contact.fields, {"1eaf5c91-8d56-4ca0-8e00-9b1c0b12e722": {"number": Decimal("123.4567890")}})
+
+
+class LanguagesTest(TembaTest):
+    def test_get_name(self):
+        with override_settings(NON_ISO6391_LANGUAGES={"acx", "frc"}):
+            languages.reload()
+            self.assertEqual("French", languages.get_name("fra"))
+            self.assertEqual("Arabic (Omani, ISO-639-3)", languages.get_name("acx"))  # name is overridden
+            self.assertEqual("Cajun French", languages.get_name("frc"))  # non ISO-639-1 lang explicitly included
+
+            self.assertEqual("", languages.get_name("cpi"))  # not in our allowed languages
+            self.assertEqual("", languages.get_name("xyz"))
+
+            # should strip off anything after an open paren or semicolon
+            self.assertEqual("Haitian", languages.get_name("hat"))
+
+        languages.reload()
+
+    def test_search_by_name(self):
+        # check that search returns results and in the proper order
+        self.assertEqual(
+            [
+                {"value": "afr", "name": "Afrikaans"},
+                {"value": "fra", "name": "French"},
+                {"value": "fry", "name": "Western Frisian"},
+            ],
+            languages.search_by_name("Fr"),
+        )
+
+        # usually only return ISO-639-1 languages but can add inclusions in settings
+        with override_settings(NON_ISO6391_LANGUAGES={"afr", "afb", "acx", "frc"}):
+            languages.reload()
+
+            # order is based on name rather than code
+            self.assertEqual(
+                [
+                    {"value": "afr", "name": "Afrikaans"},
+                    {"value": "frc", "name": "Cajun French"},
+                    {"value": "fra", "name": "French"},
+                    {"value": "fry", "name": "Western Frisian"},
+                ],
+                languages.search_by_name("Fr"),
             )
 
-            cur.execute("SELECT cast(fields as text) from contacts_contact where id = %s", (contact.id,))
+            # searching and ordering uses overridden names
+            self.assertEqual(
+                [
+                    {"value": "ara", "name": "Arabic"},
+                    {"value": "afb", "name": "Arabic (Gulf, ISO-639-3)"},
+                    {"value": "acx", "name": "Arabic (Omani, ISO-639-3)"},
+                ],
+                languages.search_by_name("Arabic"),
+            )
 
-            raw_fields = cur.fetchone()[0]
+        languages.reload()
 
-            self.assertEqual(raw_fields, '{"1eaf5c91-8d56-4ca0-8e00-9b1c0b12e722": {"number": 123.45}}')
-
-            cur.execute("SELECT fields from contacts_contact where id = %s", (contact.id,))
-
-            dict_fields = cur.fetchone()[0]
-            number_field = dict_fields.get("1eaf5c91-8d56-4ca0-8e00-9b1c0b12e722", {}).get("number")
-
-            self.assertEqual(number_field, Decimal("123.45"))
+    def alpha2_to_alpha3(self):
+        self.assertEqual("eng", languages.alpha2_to_alpha3("en"))
+        self.assertEqual("eng", languages.alpha2_to_alpha3("en-us"))
+        self.assertEqual("spa", languages.alpha2_to_alpha3("es"))
+        self.assertIsNone(languages.alpha2_to_alpha3("xx"))
 
 
 class MatchersTest(TembaTest):
@@ -1413,7 +1309,7 @@ class JSONTest(TestCase):
         )
 
 
-class AnalyticsTest(TestCase):
+class AnalyticsTest(SmartminTest):
     def setUp(self):
         super().setUp()
 
@@ -1422,22 +1318,13 @@ class AnalyticsTest(TestCase):
             id=1000, name="Some Org", brand="Some Brand", created_on=timezone.now(), account_value=lambda: 1000
         )
         self.admin = SimpleNamespace(
-            username="admin@example.com", first_name="", last_name="", email="admin@example.com"
+            username="admin@example.com", first_name="", last_name="", email="admin@example.com", is_authenticated=True
         )
 
         self.intercom_mock = MagicMock()
         temba.utils.analytics._intercom = self.intercom_mock
         temba.utils.analytics.init_analytics()
 
-    @override_settings(IS_PROD=False)
-    def test_identify_not_prod_env(self):
-        result = temba.utils.analytics.identify(self.admin, "test", self.org)
-
-        self.assertIsNone(result)
-        self.intercom_mock.users.create.assert_not_called()
-        self.intercom_mock.users.save.assert_not_called()
-
-    @override_settings(IS_PROD=True)
     def test_identify_intercom_exception(self):
         self.intercom_mock.users.create.side_effect = Exception("Kimi says bwoah...")
 
@@ -1446,7 +1333,6 @@ class AnalyticsTest(TestCase):
 
         mocked_logging.error.assert_called_with("error posting to intercom", exc_info=True)
 
-    @override_settings(IS_PROD=True)
     def test_identify_intercom(self):
         temba.utils.analytics.identify(self.admin, "test", self.org)
 
@@ -1458,7 +1344,7 @@ class AnalyticsTest(TestCase):
                 "org": self.org.name,
                 "paid": self.org.account_value(),
             },
-            email=self.admin.email,
+            email=self.admin.username,
             name=" ",
         )
         self.assertListEqual(
@@ -1475,32 +1361,29 @@ class AnalyticsTest(TestCase):
         # did we actually call save?
         self.intercom_mock.users.save.assert_called_once()
 
-    @override_settings(IS_PROD=True)
     def test_track_intercom(self):
-        temba.utils.analytics.track(self.admin.email, "test event", properties={"plan": "free"})
+        temba.utils.analytics.track(self.admin, "test event", properties={"plan": "free"})
 
         self.intercom_mock.events.create.assert_called_with(
-            event_name="test event", created_at=mock.ANY, email=self.admin.email, metadata={"plan": "free"}
+            event_name="test event", created_at=mock.ANY, email=self.admin.username, metadata={"plan": "free"}
         )
 
-    @override_settings(IS_PROD=False)
-    def test_track_not_prod_env(self):
-        result = temba.utils.analytics.track(self.admin.email, "test event", properties={"plan": "free"})
+    def test_track_not_anon_user(self):
+        anon = AnonymousUser()
+        result = temba.utils.analytics.track(anon, "test event", properties={"plan": "free"})
 
         self.assertIsNone(result)
 
         self.intercom_mock.events.create.assert_not_called()
 
-    @override_settings(IS_PROD=True)
     def test_track_intercom_exception(self):
         self.intercom_mock.events.create.side_effect = Exception("It's raining today")
 
         with patch("temba.utils.analytics.logger") as mocked_logging:
-            temba.utils.analytics.track(self.admin.email, "test event", properties={"plan": "free"})
+            temba.utils.analytics.track(self.admin, "test event", properties={"plan": "free"})
 
         mocked_logging.error.assert_called_with("error posting to intercom", exc_info=True)
 
-    @override_settings(IS_PROD=True)
     def test_consent_missing_user(self):
         self.intercom_mock.users.find.return_value = None
         temba.utils.analytics.change_consent(self.admin.email, consent=True)
@@ -1509,7 +1392,6 @@ class AnalyticsTest(TestCase):
             email=self.admin.email, custom_attributes=dict(consent=True, consent_changed=mock.ANY)
         )
 
-    @override_settings(IS_PROD=True)
     def test_consent_invalid_user_decline(self):
         self.intercom_mock.users.find.return_value = None
         temba.utils.analytics.change_consent(self.admin.email, consent=False)
@@ -1517,7 +1399,6 @@ class AnalyticsTest(TestCase):
         self.intercom_mock.users.create.assert_not_called()
         self.intercom_mock.users.delete.assert_not_called()
 
-    @override_settings(IS_PROD=True)
     def test_consent_valid_user(self):
 
         # valid user which did not consent
@@ -1529,7 +1410,6 @@ class AnalyticsTest(TestCase):
             email=self.admin.email, custom_attributes=dict(consent=True, consent_changed=mock.ANY)
         )
 
-    @override_settings(IS_PROD=True)
     def test_consent_valid_user_already_consented(self):
         # valid user which did not consent
         self.intercom_mock.users.find.return_value = MagicMock(custom_attributes={"consent": True})
@@ -1538,7 +1418,6 @@ class AnalyticsTest(TestCase):
 
         self.intercom_mock.users.create.assert_not_called()
 
-    @override_settings(IS_PROD=True)
     def test_consent_valid_user_decline(self):
 
         # valid user which did not consent
@@ -1551,7 +1430,6 @@ class AnalyticsTest(TestCase):
         )
         self.intercom_mock.users.delete.assert_called_with(mock.ANY)
 
-    @override_settings(IS_PROD=True)
     def test_consent_exception(self):
         self.intercom_mock.users.find.side_effect = Exception("Kimi says bwoah...")
 
@@ -1559,15 +1437,6 @@ class AnalyticsTest(TestCase):
             temba.utils.analytics.change_consent(self.admin.email, consent=False)
 
         mocked_logging.error.assert_called_with("error posting to intercom", exc_info=True)
-
-    @override_settings(IS_PROD=False)
-    def test_consent_not_prod_env(self):
-        result = temba.utils.analytics.change_consent(self.admin.email, consent=False)
-
-        self.assertIsNone(result)
-        self.intercom_mock.users.find.assert_not_called()
-        self.intercom_mock.users.create.assert_not_called()
-        self.intercom_mock.users.delete.assert_not_called()
 
     def test_get_intercom_user(self):
         temba.utils.analytics.get_intercom_user(email="an email")
@@ -1581,16 +1450,6 @@ class AnalyticsTest(TestCase):
 
         self.assertIsNone(result)
 
-    @override_settings(IS_PROD=False)
-    def test_set_orgs_not_prod_env(self):
-        result = temba.utils.analytics.set_orgs(email="an email", all_orgs=[self.org])
-
-        self.assertIsNone(result)
-
-        self.intercom_mock.users.find.assert_not_called()
-        self.intercom_mock.users.save.assert_not_called()
-
-    @override_settings(IS_PROD=True)
     def test_set_orgs_invalid_user(self):
         self.intercom_mock.users.find.return_value = None
 
@@ -1599,7 +1458,6 @@ class AnalyticsTest(TestCase):
         self.intercom_mock.users.find.assert_called_with(email="an email")
         self.intercom_mock.users.save.assert_not_called()
 
-    @override_settings(IS_PROD=True)
     def test_set_orgs_valid_user_same_company(self):
         intercom_user = MagicMock(companies=[MagicMock(company_id=self.org.id)])
         self.intercom_mock.users.find.return_value = intercom_user
@@ -1612,7 +1470,6 @@ class AnalyticsTest(TestCase):
 
         self.intercom_mock.users.save.assert_called_with(mock.ANY)
 
-    @override_settings(IS_PROD=True)
     def test_set_orgs_valid_user_new_company(self):
         intercom_user = MagicMock(companies=[MagicMock(company_id=-1), MagicMock(company_id=self.org.id)])
         self.intercom_mock.users.find.return_value = intercom_user
@@ -1628,7 +1485,6 @@ class AnalyticsTest(TestCase):
 
         self.intercom_mock.users.save.assert_called_with(mock.ANY)
 
-    @override_settings(IS_PROD=True)
     def test_set_orgs_valid_user_without_a_company(self):
         intercom_user = MagicMock(companies=[MagicMock(company_id=-1), MagicMock(company_id=self.org.id)])
         self.intercom_mock.users.find.return_value = intercom_user
@@ -1644,15 +1500,6 @@ class AnalyticsTest(TestCase):
 
         self.intercom_mock.users.save.assert_called_with(mock.ANY)
 
-    @override_settings(IS_PROD=False)
-    def test_identify_org_not_prod_env(self):
-        result = temba.utils.analytics.identify_org(org=self.org, attributes=None)
-
-        self.assertIsNone(result)
-
-        self.intercom_mock.companies.create.assert_not_called()
-
-    @override_settings(IS_PROD=True)
     def test_identify_org_empty_attributes(self):
         result = temba.utils.analytics.identify_org(org=self.org, attributes=None)
 
@@ -1665,7 +1512,6 @@ class AnalyticsTest(TestCase):
             name=self.org.name,
         )
 
-    @override_settings(IS_PROD=True)
     def test_identify_org_with_attributes(self):
         attributes = dict(
             website="https://example.com",

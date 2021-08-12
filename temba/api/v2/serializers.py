@@ -9,6 +9,7 @@ import regex
 from rest_framework import serializers
 
 from django.conf import settings
+from django.contrib.auth.models import User
 
 from temba import mailroom
 from temba.api.models import Resthook, ResthookSubscriber, WebHookEvent
@@ -22,9 +23,9 @@ from temba.globals.models import Global
 from temba.locations.models import AdminBoundary
 from temba.mailroom import modifiers
 from temba.msgs.models import ERRORED, FAILED, INITIALIZING, PENDING, QUEUED, SENT, Broadcast, Label, Msg
-from temba.orgs.models import Org
+from temba.orgs.models import Org, OrgRole
 from temba.templates.models import Template, TemplateTranslation
-from temba.tickets.models import Ticketer
+from temba.tickets.models import Ticket, Ticketer
 from temba.utils import extract_constants, json, on_transaction_commit
 
 from . import fields
@@ -112,8 +113,7 @@ class WriteSerializer(serializers.Serializer):
             )
 
         if self.context["org"].is_flagged or self.context["org"].is_suspended:
-            state = "flagged" if self.context["org"].is_flagged else "suspended"
-            msg = f"Sorry, your workspace is currently {state}. To enable sending messages, please contact support."
+            msg = Org.BLOCKER_FLAGGED if self.context["org"].is_flagged else Org.BLOCKER_SUSPENDED
             raise serializers.ValidationError(detail={"non_field_errors": [msg]})
 
         return super().run_validation(data)
@@ -204,6 +204,7 @@ class BroadcastWriteSerializer(WriteSerializer):
     urns = fields.URNListField(required=False)
     contacts = fields.ContactField(many=True, required=False)
     groups = fields.ContactGroupField(many=True, required=False)
+    ticket = fields.TicketField(required=False)
 
     def validate(self, data):
         if not (data.get("urns") or data.get("contacts") or data.get("groups")):
@@ -228,6 +229,7 @@ class BroadcastWriteSerializer(WriteSerializer):
             contacts=self.validated_data.get("contacts", []),
             urns=self.validated_data.get("urns", []),
             template_state=Broadcast.TEMPLATE_STATE_UNEVALUATED,
+            ticket=self.validated_data.get("ticket"),
         )
 
         # send it
@@ -667,13 +669,17 @@ class ContactFieldReadSerializer(ReadSerializer):
     }
 
     value_type = serializers.SerializerMethodField()
+    pinned = serializers.SerializerMethodField()
 
     def get_value_type(self, obj):
         return self.VALUE_TYPES[obj.value_type]
 
+    def get_pinned(self, obj):
+        return obj.show_in_table
+
     class Meta:
         model = ContactField
-        fields = ("key", "label", "value_type")
+        fields = ("key", "label", "value_type", "pinned")
 
 
 class ContactFieldWriteSerializer(WriteSerializer):
@@ -1389,6 +1395,7 @@ class TemplateReadSerializer(ReadSerializer):
                 {
                     "language": translation.language,
                     "content": translation.content,
+                    "namespace": translation.namespace,
                     "variable_count": translation.variable_count,
                     "status": translation.get_status_display(),
                     "channel": {"uuid": translation.channel.uuid, "name": translation.channel.name},
@@ -1412,3 +1419,166 @@ class TicketerReadSerializer(ReadSerializer):
     class Meta:
         model = Ticketer
         fields = ("uuid", "name", "type", "created_on")
+
+
+class TicketReadSerializer(ReadSerializer):
+    STATUSES = {Ticket.STATUS_OPEN: "open", Ticket.STATUS_CLOSED: "closed"}
+
+    ticketer = fields.TicketerField()
+    contact = fields.ContactField()
+    assignee = serializers.SerializerMethodField()
+    status = serializers.SerializerMethodField()
+    opened_on = serializers.DateTimeField(default_timezone=pytz.UTC)
+    closed_on = serializers.DateTimeField(default_timezone=pytz.UTC)
+
+    def get_assignee(self, obj):
+        return (
+            {"id": obj.assignee.id, "first_name": obj.assignee.first_name, "last_name": obj.assignee.last_name}
+            if obj.assignee
+            else None
+        )
+
+    def get_status(self, obj):
+        return self.STATUSES.get(obj.status)
+
+    class Meta:
+        model = Ticket
+        fields = ("uuid", "ticketer", "assignee", "contact", "status", "subject", "body", "opened_on", "closed_on")
+
+
+class TicketWriteSerializer(WriteSerializer):
+    STATUSES = {"open": Ticket.STATUS_OPEN, "closed": Ticket.STATUS_CLOSED}
+
+    status = serializers.CharField(
+        required=True,
+    )
+
+    def validate_status(self, value):
+        return self.STATUSES[value]
+
+    def save(self):
+        """
+        Update our ticket
+        """
+        status = self.validated_data.get("status")
+        if self.instance:
+            if status == Ticket.STATUS_CLOSED:
+                Ticket.bulk_close(self.context["org"], self.context["user"], [self.instance])
+            elif status == Ticket.STATUS_OPEN:
+                Ticket.bulk_reopen(self.context["org"], self.context["user"], [self.instance])
+
+        return self.instance
+
+
+class TicketBulkActionSerializer(WriteSerializer):
+    ACTION_ASSIGN = "assign"
+    ACTION_NOTE = "note"
+    ACTION_CLOSE = "close"
+    ACTION_REOPEN = "reopen"
+    ACTION_CHOICES = (ACTION_ASSIGN, ACTION_NOTE, ACTION_CLOSE, ACTION_REOPEN)
+
+    tickets = fields.TicketField(many=True)
+    action = serializers.ChoiceField(required=True, choices=ACTION_CHOICES)
+    assignee = fields.UserField(required=False, assignable_only=True)
+    note = serializers.CharField(required=False, max_length=Ticket.MAX_NOTE_LEN)
+
+    def validate(self, data):
+        action = data["action"]
+        assignee = data.get("assignee")
+        note = data.get("note")
+
+        if action == self.ACTION_ASSIGN and not assignee:
+            raise serializers.ValidationError('For action "%s" you must also specify the assignee' % action)
+        elif action == self.ACTION_NOTE and not note:
+            raise serializers.ValidationError('For action "%s" you must also specify the note' % action)
+
+        return data
+
+    def save(self):
+        org = self.context["org"]
+        user = self.context["user"]
+        tickets = self.validated_data["tickets"]
+        action = self.validated_data["action"]
+        assignee = self.validated_data.get("assignee")
+        note = self.validated_data.get("note")
+
+        if action == self.ACTION_ASSIGN:
+            Ticket.bulk_assign(org, user, tickets, assignee=assignee, note=note)
+        elif action == self.ACTION_NOTE:
+            Ticket.bulk_note(org, user, tickets, note=note)
+        elif action == self.ACTION_CLOSE:
+            Ticket.bulk_close(org, user, tickets)
+        elif action == self.ACTION_REOPEN:
+            Ticket.bulk_reopen(org, user, tickets)
+
+
+class UserReadSerializer(ReadSerializer):
+    ROLES = {
+        OrgRole.ADMINISTRATOR: "administrator",
+        OrgRole.EDITOR: "editor",
+        OrgRole.VIEWER: "viewer",
+        OrgRole.AGENT: "agent",
+        OrgRole.SURVEYOR: "surveyor",
+    }
+
+    role = serializers.SerializerMethodField()
+    created_on = serializers.DateTimeField(default_timezone=pytz.UTC, source="date_joined")
+
+    def get_role(self, obj):
+        role = self.context["user_roles"][obj]
+        return self.ROLES[role]
+
+    class Meta:
+        model = User
+        fields = ("email", "first_name", "last_name", "role", "created_on")
+
+
+class WorkspaceReadSerializer(ReadSerializer):
+    DATE_STYLES = {
+        Org.DATE_FORMAT_DAY_FIRST: "day_first",
+        Org.DATE_FORMAT_MONTH_FIRST: "month_first",
+        Org.DATE_FORMAT_YEAR_FIRST: "year_first",
+    }
+
+    country = serializers.SerializerMethodField()
+    languages = serializers.SerializerMethodField()
+    primary_language = serializers.SerializerMethodField()
+    timezone = serializers.SerializerMethodField()
+    date_style = serializers.SerializerMethodField()
+    credits = serializers.SerializerMethodField()
+    anon = serializers.SerializerMethodField()
+
+    def get_country(self, obj):
+        return obj.default_country_code
+
+    def get_languages(self, obj):
+        return obj.flow_languages
+
+    def get_primary_language(self, obj):
+        return obj.flow_languages[0] if obj.flow_languages else None
+
+    def get_timezone(self, obj):
+        return str(obj.timezone)
+
+    def get_date_style(self, obj):
+        return self.DATE_STYLES.get(obj.date_format)
+
+    def get_credits(self, obj):
+        return {"used": obj.get_credits_used(), "remaining": obj.get_credits_remaining()}
+
+    def get_anon(self, obj):
+        return obj.is_anon
+
+    class Meta:
+        model = Org
+        fields = (
+            "uuid",
+            "name",
+            "country",
+            "languages",
+            "primary_language",
+            "timezone",
+            "date_style",
+            "credits",
+            "anon",
+        )

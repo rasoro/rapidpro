@@ -1,17 +1,22 @@
+import logging
 import time
 import types
+from abc import abstractmethod
 from collections import OrderedDict
 
 from smartmin.models import SmartModel
 
-from django.contrib.postgres.fields import HStoreField, JSONField as DjangoJSONField
+from django.contrib.postgres.fields import HStoreField
 from django.core import checks
 from django.core.exceptions import ValidationError
 from django.db import connection, models
+from django.db.models import JSONField as DjangoJSONField, Sum
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 
 from temba.utils import json, uuid
+
+logger = logging.getLogger(__name__)
 
 
 def generate_uuid():
@@ -220,7 +225,7 @@ class JSONAsTextField(CheckFieldDefaultMixin, models.Field):
             else:
                 return data
         else:
-            raise ValueError('Unexpected type "%s" for JSONAsTextField' % (type(value),))  # pragma: no cover
+            raise ValueError('Unexpected type "%s" for JSONAsTextField' % (type(value),))
 
     def get_db_prep_value(self, value, *args, **kwargs):
         # if the value is falsy we will save is as null
@@ -233,7 +238,10 @@ class JSONAsTextField(CheckFieldDefaultMixin, models.Field):
         if type(value) not in (list, dict, OrderedDict):
             raise ValueError("JSONAsTextField should be a dict or a list, got %s => %s" % (type(value), value))
 
-        return json.dumps(value)
+        serialized = json.dumps(value)
+
+        # strip out unicode sequences which aren't valid in JSONB
+        return serialized.replace("\\u0000", "")
 
     def to_python(self, value):
         if isinstance(value, str):
@@ -255,6 +263,7 @@ class JSONField(DjangoJSONField):
 
     def __init__(self, *args, **kwargs):
         kwargs["encoder"] = json.TembaEncoder
+        kwargs["decoder"] = json.TembaDecoder
         super().__init__(*args, **kwargs)
 
 
@@ -286,11 +295,10 @@ class SquashableModel(models.Model):
     Base class for models which track counts by delta insertions which are then periodically squashed
     """
 
-    SQUASH_OVER = None
+    squash_over = ()
 
-    id = models.BigAutoField(auto_created=True, primary_key=True, verbose_name="ID")
-
-    is_squashed = models.BooleanField(default=False, help_text=_("Whether this row was created by squashing"))
+    id = models.BigAutoField(auto_created=True, primary_key=True)
+    is_squashed = models.BooleanField(default=False)
 
     @classmethod
     def get_unsquashed(cls):
@@ -301,7 +309,7 @@ class SquashableModel(models.Model):
         start = time.time()
         num_sets = 0
 
-        for distinct_set in cls.get_unsquashed().order_by(*cls.SQUASH_OVER).distinct(*cls.SQUASH_OVER)[:5000]:
+        for distinct_set in cls.get_unsquashed().order_by(*cls.squash_over).distinct(*cls.squash_over)[:5000]:
             with connection.cursor() as cursor:
                 sql, params = cls.get_squash_query(distinct_set)
 
@@ -311,7 +319,17 @@ class SquashableModel(models.Model):
 
         time_taken = time.time() - start
 
-        print("Squashed %d distinct sets of %s in %0.3fs" % (num_sets, cls.__name__, time_taken))
+        logging.debug("Squashed %d distinct sets of %s in %0.3fs" % (num_sets, cls.__name__, time_taken))
+
+    @classmethod
+    @abstractmethod
+    def get_squash_query(cls, distinct_set) -> tuple:  # pragma: no cover
+        pass
+
+    @classmethod
+    def sum(cls, instances) -> int:
+        count_sum = instances.aggregate(count_sum=Sum("count"))["count_sum"]
+        return count_sum if count_sum else 0
 
     class Meta:
         abstract = True

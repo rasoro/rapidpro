@@ -23,15 +23,18 @@
   .flex.flex-wrap.mt-1
 
     -if contact.status == 'B'
-      .lbl-group.mt-2.mr-2.bg-secondary.linked.inverted.cursor-pointer{onclick:"goto(event)", href:"{% url 'contacts.contact_blocked' %}"}
+      .lbl-group.linked.inverted.bg-secondary.mr-2.mb-2(onclick="goto(event)" href="{% url 'contacts.contact_blocked' %}")
+        %temba-icon(name="slash")
         -trans "Blocked"
   
     -elif contact.status == 'S'
-      .lbl-group.inverted.linked.mt-2.mr-2.bg-secondary.font-normal{onclick:"goto(event)", href:"{% url 'contacts.contact_stopped' %}"}
+      .lbl-group.linked.inverted.bg-secondary.mr-2.mb-2(onclick="goto(event)" href="{% url 'contacts.contact_stopped' %}")
+        %temba-icon(name="alert-octagon")
         -trans "Stopped"
 
     -elif contact.status == 'V'
-      .lbl-group.mt-2.mr-2.linked.bg-secondary.inverted.font-normal{onclick:"goto(event)", href:"{% url 'contacts.contact_archived' %}"}
+      .lbl-group.linked.inverted.bg-secondary.mr-2.mb-2(onclick="goto(event)" href="{% url 'contacts.contact_archived' %}")
+        %temba-icon(name="archive")
         -trans "Archived"
 
     -for group in contact_groups
@@ -62,7 +65,7 @@
               .contact-field{data-id:'{{field.id}}'}
                 .contact-field-value.editable.cursor-pointer.hover-linked.font-bold.text-gray-600
                   {{field.value|truncatechars:20}}      
-              .whitespace-no-wrap.pr-12.contact-field{data-id:'{{field.id}}'}
+              .whitespace-nowrap.pr-12.contact-field{data-id:'{{field.id}}'}
                 .contact-field-value.tracking-wider.font-normal.text-xs
                   {{field.label|title}}
         
@@ -75,7 +78,7 @@
     %tbody
       %tr
         %td
-          .whitespace-no-wrap.pr-24.contact-field
+          .whitespace-nowrap.pr-24.contact-field
             .contact-field-value.uppercase.tracking-wider.font-normal.text-xs
               -trans "Created On"
         %td.w-full
@@ -83,7 +86,7 @@
             {% format_datetime contact.created_on %}
       %tr
         %td
-          .whitespace-no-wrap.pr-24.contact-field
+          .whitespace-nowrap.pr-24.contact-field
             .contact-field-value.uppercase.tracking-wider.font-normal.text-xs
               -trans "Last Seen On"
         %td.w-full
@@ -96,7 +99,7 @@
       -if contact_language
         %tr
           %td
-            .whitespace-no-wrap.pr-12.contact-field
+            .whitespace-nowrap.pr-12.contact-field
               .contact-field-value.uppercase.tracking-wider.font-normal.text-xs
                 -trans "Language"
           %td.w-full
@@ -108,7 +111,7 @@
       -if user_org.is_anon
         %tr
           %td
-            .whitespace-no-wrap.pr-12.contact-field
+            .whitespace-nowrap.pr-12.contact-field
               .contact-field-value.uppercase.tracking-wider.font-normal.text-xs
                 -trans "Contact Id"
           %td.w-full
@@ -120,7 +123,7 @@
       -for field in all_contact_fields
         %tr
           %td
-            .whitespace-no-wrap.pr-12.contact-field{data-id:'{{field.id}}'}
+            .whitespace-nowrap.pr-12.contact-field{data-id:'{{field.id}}'}
               .contact-field-value.uppercase.tracking-wider.font-normal.text-xs
                 {{field.label|title}}
           %td.w-full
@@ -132,7 +135,7 @@
         -if not user_org.is_anon
           %tr
             %td
-              .whitespace-no-wrap.pr-12.contact-field
+              .whitespace-nowrap.pr-12.contact-field
                 .contact-field-value.uppercase.tracking-wider.font-normal.text-xs
                   .mr-1.leading-none.text-gray-500{class:"glyph {{urn|urn_icon}}", style:"margin-top: -1px; font-size:14px"}
                   -if urn.scheme == 'mailto'
@@ -162,16 +165,14 @@
       -for ticket in open_tickets
         %tr.item
           %td.icon
-            %span.glyph.icon-ticket
-          %td.details
-            %a(href="{% url 'tickets.ticket_filter' ticket.ticketer.uuid %}")
-              {{ ticket.ticketer.name }}
-          %td.details
-            {{ ticket.subject }}
-          %td.details
-            {{ ticket.body }}
+            .pl-2
+              %span.glyph.icon-ticket
+          %td.details.w-full
+            %a(href="{% url 'tickets.ticket_list' %}all/open/{{ticket.uuid}}/")
+              {{ ticket.subject }}
           %td.created_on
-            {% short_datetime ticket.opened_on %}
+            .pr-6
+              {% short_datetime ticket.opened_on %}
 
   -if upcoming_events
     -if upcoming_events|length > 3
@@ -207,7 +208,7 @@
               -elif evt.event_type == 'F'
                 -trans "Start"
                 %a.href{ href: "{% url 'flows.flow_editor' evt.flow_uuid %}" }= evt.flow_name
-          %td.whitespace-no-wrap.text-right
+          %td.whitespace-nowrap.text-right
             .pr-6
               {{ evt.scheduled|naturaltime }}
 

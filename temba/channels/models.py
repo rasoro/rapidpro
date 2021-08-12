@@ -27,8 +27,8 @@ from django.utils.http import urlquote_plus
 from django.utils.translation import ugettext_lazy as _
 
 from temba import mailroom
-from temba.orgs.models import Org
-from temba.utils import analytics, get_anonymous_user, json, on_transaction_commit, redact
+from temba.orgs.models import DependencyMixin, Org
+from temba.utils import analytics, countries, get_anonymous_user, json, on_transaction_commit, redact
 from temba.utils.email import send_template_email
 from temba.utils.gsm7 import calculate_num_segments
 from temba.utils.models import JSONAsTextField, SquashableModel, TembaModel, generate_uuid
@@ -150,25 +150,23 @@ class ChannelType(metaclass=ABCMeta):
     def activate(self, channel):
         """
         Called when a channel of this type has been created. Can be used to setup things like callbacks required by the
-        channel. Note: this will only be called if IS_PROD setting is True.
+        channel.
         """
 
     def deactivate(self, channel):
         """
         Called when a channel of this type has been released. Can be used to cleanup things like callbacks which were
-        used by the channel. Note: this will only be called if IS_PROD setting is True.
+        used by the channel.
         """
 
     def activate_trigger(self, trigger):
         """
-        Called when a trigger that is bound to a channel of this type is being created or restored. Note: this will only
-        be called if IS_PROD setting is True.
+        Called when a trigger that is bound to a channel of this type is being created or restored.
         """
 
     def deactivate_trigger(self, trigger):
         """
-        Called when a trigger that is bound to a channel of this type is being released. Note: this will only be called
-        if IS_PROD setting is True.
+        Called when a trigger that is bound to a channel of this type is being released.
         """
 
     def has_attachment_support(self, channel):
@@ -240,7 +238,7 @@ class UnsupportedAndroidChannelError(Exception):
         self.message = message
 
 
-class Channel(TembaModel):
+class Channel(TembaModel, DependencyMixin):
     """
     Notes:
         - we want to reuse keys as much as possible (2018-10-11)
@@ -279,12 +277,10 @@ class Channel(TembaModel):
     CONFIG_MAX_CONCURRENT_EVENTS = "max_concurrent_events"
     CONFIG_ALLOW_INTERNATIONAL = "allow_international"
 
-    CONFIG_NEXMO_API_KEY = "nexmo_api_key"
-    CONFIG_NEXMO_API_SECRET = "nexmo_api_secret"
-    CONFIG_NEXMO_APP_ID = "nexmo_app_id"
-    CONFIG_NEXMO_APP_PRIVATE_KEY = "nexmo_app_private_key"
-
-    CONFIG_SHORTCODE_MATCHING_PREFIXES = "matching_prefixes"
+    CONFIG_VONAGE_API_KEY = "nexmo_api_key"
+    CONFIG_VONAGE_API_SECRET = "nexmo_api_secret"
+    CONFIG_VONAGE_APP_ID = "nexmo_app_id"
+    CONFIG_VONAGE_APP_PRIVATE_KEY = "nexmo_app_private_key"
 
     ENCODING_DEFAULT = "D"  # we just pass the text down to the endpoint
     ENCODING_SMART = "S"  # we try simple substitutions to GSM7 then go to unicode if it still isn't GSM7
@@ -474,20 +470,18 @@ class Channel(TembaModel):
             org.normalize_contact_tels()
 
         # track our creation
-        if not user.is_anonymous:
-            analytics.track(user.username, "temba.channel_created", dict(channel_type=channel_type.code))
+        analytics.track(user, "temba.channel_created", dict(channel_type=channel_type.code))
 
-        if settings.IS_PROD:
-            if channel_type.async_activation:
-                on_transaction_commit(lambda: channel_type.activate(channel))
-            else:
-                try:
-                    channel_type.activate(channel)
+        if channel_type.async_activation:
+            on_transaction_commit(lambda: channel_type.activate(channel))
+        else:
+            try:
+                channel_type.activate(channel)
 
-                except Exception as e:
-                    # release our channel, raise error upwards
-                    channel.release()
-                    raise e
+            except Exception as e:
+                # release our channel, raise error upwards
+                channel.release(user)
+                raise e
 
         return channel
 
@@ -567,15 +561,15 @@ class Channel(TembaModel):
         )
 
     @classmethod
-    def add_nexmo_bulk_sender(cls, user, channel):
-        # nexmo ships numbers around as E164 without the leading +
+    def add_vonage_bulk_sender(cls, user, channel):
+        # vonage ships numbers around as E164 without the leading +
         parsed = phonenumbers.parse(channel.address, None)
-        nexmo_phone_number = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164).strip("+")
+        vonage_phone_number = phonenumbers.format_number(parsed, phonenumbers.PhoneNumberFormat.E164).strip("+")
 
         org = user.get_org()
         config = {
-            Channel.CONFIG_NEXMO_API_KEY: org.config[Org.CONFIG_NEXMO_KEY],
-            Channel.CONFIG_NEXMO_API_SECRET: org.config[Org.CONFIG_NEXMO_SECRET],
+            Channel.CONFIG_VONAGE_API_KEY: org.config[Org.CONFIG_VONAGE_KEY],
+            Channel.CONFIG_VONAGE_API_SECRET: org.config[Org.CONFIG_VONAGE_SECRET],
             Channel.CONFIG_CALLBACK_DOMAIN: org.get_brand_domain(),
         }
 
@@ -584,13 +578,13 @@ class Channel(TembaModel):
             user,
             channel.country,
             "NX",
-            name="Nexmo Sender",
+            name="Vonage Sender",
             config=config,
             tps=1,
             address=channel.address,
             role=Channel.ROLE_SEND,
             parent=channel,
-            bod=nexmo_phone_number,
+            bod=vonage_phone_number,
         )
 
     @classmethod
@@ -883,10 +877,9 @@ class Channel(TembaModel):
         """
         Claims this channel for the given org/user
         """
-        from temba.contacts.models import ContactURN
 
         if not self.country:  # pragma: needs cover
-            self.country = ContactURN.derive_country_from_tel(phone)
+            self.country = countries.from_tel(phone)
 
         self.alert_email = user.email
         self.org = org
@@ -897,21 +890,29 @@ class Channel(TembaModel):
 
         org.normalize_contact_tels()
 
-    def release(self, trigger_sync=True):
+    def release(self, user, *, trigger_sync: bool = True):
         """
         Releases this channel making it inactive
         """
-        dependent_flows_count = self.dependent_flows.count()
-        if dependent_flows_count > 0:
-            raise ValueError(f"Cannot delete Channel: {self.get_name()}, used by {dependent_flows_count} flows")
+
+        super().release(user)
 
         channel_type = self.get_type()
 
-        # release any channels working on our behalf as well
-        for delegate_channel in Channel.objects.filter(parent=self, org=self.org):
-            delegate_channel.release()
+        # ask the channel type to deactivate - as this usually means calling out to external APIs it can fail
+        try:
+            channel_type.deactivate(self)
+        except TwilioRestException as e:
+            raise e
+        except Exception as e:
+            # proceed with removing this channel but log the problem
+            logger.error(f"Unable to deactivate a channel: {str(e)}", exc_info=True)
 
-        # unassociate them
+        # release any channels working on our behalf
+        for delegate_channel in self.org.channels.filter(parent=self):
+            delegate_channel.release(user)
+
+        # disassociate them
         Channel.objects.filter(parent=self).update(parent=None)
 
         # release any alerts we sent
@@ -922,72 +923,50 @@ class Channel(TembaModel):
         for sync_event in self.sync_events.all():
             sync_event.release()
 
-        # only call out to external aggregator services if we are on prod servers
-        if settings.IS_PROD:
-            try:
-                # if channel is a new style type, deactivate it
-                channel_type.deactivate(self)
-
-            except TwilioRestException as e:
-                raise e
-
-            except Exception as e:  # pragma: no cover
-                # proceed with removing this channel but log the problem
-                logger.error(f"Unable to deactivate a channel: {str(e)}", exc_info=True)
-
         # interrupt any sessions using this channel as a connection
         mailroom.queue_interrupt(self.org, channel=self)
 
-        # save off our org and fcm id before nullifying
-        org = self.org
+        # save the FCM id before clearing
         registration_id = self.config.get(Channel.CONFIG_FCM_ID)
 
         # make the channel inactive
         self.config.pop(Channel.CONFIG_FCM_ID, None)
+        self.modified_by = user
         self.is_active = False
-        self.save(update_fields=["is_active", "config", "modified_on"])
+        self.save(update_fields=("is_active", "config", "modified_by", "modified_on"))
 
         # mark any messages in sending mode as failed for this channel
-        from temba.msgs.models import Msg, OUTGOING, PENDING, QUEUED, ERRORED, FAILED
+        from temba.msgs.models import OUTGOING, PENDING, QUEUED, ERRORED, FAILED
 
-        Msg.objects.filter(channel=self, direction=OUTGOING, status__in=[QUEUED, PENDING, ERRORED]).update(
-            status=FAILED
-        )
+        self.msgs.filter(direction=OUTGOING, status__in=[QUEUED, PENDING, ERRORED]).update(status=FAILED)
 
         # trigger the orphaned channel
         if trigger_sync and self.is_android() and registration_id:
             self.trigger_sync(registration_id)
 
-        from temba.triggers.models import Trigger
-
-        Trigger.objects.filter(channel=self, org=org).update(is_active=False)
-
-        # and any triggers associated with our channel get archived
-        for trigger in Trigger.objects.filter(org=self.org, channel=self).all():
-            trigger.channel = None
-            trigger.save(update_fields=("channel",))
-            trigger.archive(self.modified_by)
+        # any triggers associated with our channel get archived and released
+        for trigger in self.triggers.all():
+            trigger.archive(user)
+            trigger.release(user)
 
     def trigger_sync(self, registration_id=None):  # pragma: no cover
         """
         Sends a FCM command to trigger a sync on the client
         """
+
+        assert self.is_android(), "can only trigger syncs on Android channels"
+
         # androids sync via FCM
-        if self.is_android():
-            fcm_id = self.config.get(Channel.CONFIG_FCM_ID)
+        fcm_id = self.config.get(Channel.CONFIG_FCM_ID)
 
-            if fcm_id is not None:
-                if getattr(settings, "FCM_API_KEY", None):
-                    from .tasks import sync_channel_fcm_task
+        if fcm_id is not None:
+            if getattr(settings, "FCM_API_KEY", None):
+                from .tasks import sync_channel_fcm_task
 
-                    if not registration_id:
-                        registration_id = fcm_id
-                    if registration_id:
-                        on_transaction_commit(lambda: sync_channel_fcm_task.delay(registration_id, channel_id=self.pk))
-
-        # otherwise this is an aggregator, no-op
-        else:
-            raise Exception("Trigger sync called on non Android channel. [%d]" % self.pk)
+                if not registration_id:
+                    registration_id = fcm_id
+                if registration_id:
+                    on_transaction_commit(lambda: sync_channel_fcm_task.delay(registration_id, channel_id=self.pk))
 
     @classmethod
     def sync_channel_fcm(cls, registration_id, channel=None):  # pragma: no cover
@@ -1112,7 +1091,7 @@ class ChannelCount(SquashableModel):
     of message usage over the course of time.
     """
 
-    SQUASH_OVER = ("channel_id", "count_type", "day")
+    squash_over = ("channel_id", "count_type", "day")
 
     INCOMING_MSG_TYPE = "IM"  # Incoming message
     OUTGOING_MSG_TYPE = "OM"  # Outgoing message
@@ -1130,24 +1109,15 @@ class ChannelCount(SquashableModel):
         (ERROR_LOG_TYPE, _("Error Log Record")),
     )
 
-    channel = models.ForeignKey(
-        Channel,
-        on_delete=models.PROTECT,
-        related_name="counts",
-        help_text=_("The channel this is a daily summary count for"),
-    )
-    count_type = models.CharField(
-        choices=COUNT_TYPE_CHOICES, max_length=2, help_text=_("What type of message this row is counting")
-    )
-    day = models.DateField(null=True, help_text=_("The day this count is for"))
-    count = models.IntegerField(default=0, help_text=_("The count of messages on this day and type"))
+    channel = models.ForeignKey(Channel, on_delete=models.PROTECT, related_name="counts")
+    count_type = models.CharField(choices=COUNT_TYPE_CHOICES, max_length=2)
+    day = models.DateField(null=True)
+    count = models.IntegerField(default=0)
 
     @classmethod
     def get_day_count(cls, channel, count_type, day):
-        count = ChannelCount.objects.filter(channel=channel, count_type=count_type, day=day)
-        count = count.order_by("day", "count_type").aggregate(count_sum=Sum("count"))
-
-        return count["count_sum"] if count["count_sum"] is not None else 0
+        counts = cls.objects.filter(channel=channel, count_type=count_type, day=day).order_by("day", "count_type")
+        return cls.sum(counts)
 
     @classmethod
     def get_squash_query(cls, distinct_set):
@@ -1249,10 +1219,6 @@ class ChannelEvent(models.Model):
             on_transaction_commit(lambda: mailroom.queue_mo_miss_event(event))
 
         return event
-
-    @classmethod
-    def get_all(cls, org):
-        return cls.objects.filter(org=org)
 
     def release(self):
         self.delete()
@@ -1358,6 +1324,15 @@ class ChannelLog(models.Model):
 
     def release(self):
         self.delete()
+
+    class Meta:
+        indexes = [
+            models.Index(
+                name="channels_log_error_created",
+                fields=("channel", "is_error", "-created_on"),
+                condition=Q(is_error=True),
+            )
+        ]
 
 
 class SyncEvent(SmartModel):
@@ -1714,84 +1689,56 @@ class ChannelConnection(models.Model):
     Base for IVR sessions which require a connection to specific channel
     """
 
-    PENDING = "P"  # initial state for all sessions
-    QUEUED = "Q"  # the session is queued internally
-    WIRED = "W"  # the API provider has confirmed that it successfully received the API request
+    TYPE_VOICE = "V"
+    TYPE_CHOICES = ((TYPE_VOICE, "Voice"),)
 
-    # valid for IVR sessions
-    RINGING = "R"  # the call in ringing
-    IN_PROGRESS = "I"  # the call has been answered
-    BUSY = "B"  # the call is busy or rejected by the user
-    FAILED = "F"  # the platform failed to initiate the call (bad phone number)
-    NO_ANSWER = "N"  # the call has timed-out or ringed-out
-    CANCELED = "C"  # the call was terminated by platform
-    COMPLETED = "D"  # the call was completed successfully
+    DIRECTION_INCOMING = "I"
+    DIRECTION_OUTGOING = "O"
+    DIRECTION_CHOICES = ((DIRECTION_INCOMING, "Incoming"), (DIRECTION_OUTGOING, "Outgoing"))
 
-    # valid for USSD sessions
-    TRIGGERED = "T"
-    INTERRUPTED = "X"
-    INITIATED = "A"
-    ENDING = "E"
-
-    DONE = (COMPLETED, BUSY, FAILED, NO_ANSWER, CANCELED, INTERRUPTED)
-    RETRY_CALL = (BUSY, NO_ANSWER, FAILED)
-
-    INCOMING = "I"
-    OUTGOING = "O"
-
-    IVR = "F"  # deprecated use VOICE
-    VOICE = "V"
-
-    DIRECTION_CHOICES = ((INCOMING, "Incoming"), (OUTGOING, "Outgoing"))
-
-    TYPE_CHOICES = ((VOICE, "Voice"),)
-
+    STATUS_PENDING = "P"  # used for initial creation in database
+    STATUS_WIRED = "W"  # the call has been requested on the IVR provider
+    STATUS_QUEUED = "Q"  # the call was requested but we've been throttled (will be retried)
+    STATUS_IN_PROGRESS = "I"  # the call has been answered
+    STATUS_BUSY = "B"  # the call is busy (will be retried)
+    STATUS_NO_ANSWER = "N"  # the call has timed-out or ringed-out (will be retried)
+    STATUS_CANCELED = "C"  # the call was terminated by platform
+    STATUS_COMPLETED = "D"  # the call was completed successfully
+    STATUS_ERRORED = "E"  # temporary failure (will be retried)
+    STATUS_FAILED = "F"  # permanent failure
     STATUS_CHOICES = (
-        (PENDING, "Pending"),
-        (QUEUED, "Queued"),
-        (WIRED, "Wired"),
-        (RINGING, "Ringing"),
-        (IN_PROGRESS, "In Progress"),
-        (COMPLETED, "Complete"),
-        (BUSY, "Busy"),
-        (FAILED, "Failed"),
-        (NO_ANSWER, "No Answer"),
-        (CANCELED, "Canceled"),
-        (INTERRUPTED, "Interrupted"),
-        (TRIGGERED, "Triggered"),
-        (INITIATED, "Initiated"),
-        (ENDING, "Ending"),
+        (STATUS_PENDING, "Pending"),
+        (STATUS_WIRED, "Wired"),
+        (STATUS_QUEUED, "Queued"),
+        (STATUS_IN_PROGRESS, "In Progress"),
+        (STATUS_BUSY, "Busy"),
+        (STATUS_NO_ANSWER, "No Answer"),
+        (STATUS_CANCELED, "Canceled"),
+        (STATUS_COMPLETED, "Complete"),
+        (STATUS_FAILED, "Failed"),
+        (STATUS_ERRORED, "Errored"),
     )
 
-    created_on = models.DateTimeField(
-        default=timezone.now, editable=False, blank=True, help_text="When this item was originally created"
-    )
+    org = models.ForeignKey(Org, on_delete=models.PROTECT)
+    connection_type = models.CharField(max_length=1, choices=TYPE_CHOICES)
+    direction = models.CharField(max_length=1, choices=DIRECTION_CHOICES)
+    status = models.CharField(max_length=1, choices=STATUS_CHOICES)
 
-    modified_on = models.DateTimeField(
-        default=timezone.now, editable=False, blank=True, help_text="When this item was last modified"
-    )
-
-    external_id = models.CharField(max_length=255, help_text="The external id for this session, our twilio id usually")
-    status = models.CharField(max_length=1, choices=STATUS_CHOICES, default=PENDING)
     channel = models.ForeignKey("Channel", on_delete=models.PROTECT, related_name="connections")
     contact = models.ForeignKey("contacts.Contact", on_delete=models.PROTECT, related_name="connections")
     contact_urn = models.ForeignKey("contacts.ContactURN", on_delete=models.PROTECT, related_name="connections")
-    direction = models.CharField(max_length=1, choices=DIRECTION_CHOICES)
-    started_on = models.DateTimeField(null=True, blank=True)
-    ended_on = models.DateTimeField(null=True, blank=True)
-    org = models.ForeignKey(Org, on_delete=models.PROTECT)
-    connection_type = models.CharField(max_length=1, choices=TYPE_CHOICES)
-    duration = models.IntegerField(default=0, null=True, help_text="The length of this connection in seconds")
+    external_id = models.CharField(max_length=255)  # e.g. Twilio call ID
 
-    retry_count = models.IntegerField(
-        default=0, verbose_name=_("Retry Count"), help_text="The number of times this call has been retried"
-    )
-    error_count = models.IntegerField(
-        default=0, verbose_name=_("Error Count"), help_text="The number of times this call has errored"
-    )
-    next_attempt = models.DateTimeField(
-        verbose_name=_("Next Attempt"), help_text="When we should next attempt to make this call", null=True
-    )
+    created_on = models.DateTimeField(default=timezone.now)
+    modified_on = models.DateTimeField(default=timezone.now)
+    started_on = models.DateTimeField(null=True)
+    ended_on = models.DateTimeField(null=True)
+    duration = models.IntegerField(null=True)  # in seconds
+
+    retry_count = models.IntegerField()
+    next_attempt = models.DateTimeField(null=True)
+
+    error_count = models.IntegerField(null=True)  # TODO remove, mailroom uses retry_count
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1801,7 +1748,7 @@ class ChannelConnection(models.Model):
         all the methods the proxy model implements. """
 
         if type(self) is ChannelConnection:
-            if self.connection_type == self.IVR:
+            if self.connection_type == self.TYPE_VOICE:
                 from temba.ivr.models import IVRCall
 
                 self.__class__ = IVRCall
@@ -1818,7 +1765,7 @@ class ChannelConnection(models.Model):
         """
         duration = self.duration or 0
 
-        if not duration and self.status == self.IN_PROGRESS and self.started_on:
+        if not duration and self.status == self.STATUS_IN_PROGRESS and self.started_on:
             duration = (timezone.now() - self.started_on).seconds
 
         return timedelta(seconds=duration)
@@ -1848,3 +1795,12 @@ class ChannelConnection(models.Model):
             msg.release()
 
         self.delete()
+
+    class Meta:
+        indexes = [
+            models.Index(
+                name="channelconnection_ivr_to_retry",
+                fields=["next_attempt"],
+                condition=Q(connection_type="V", status__in=("Q", "N", "B", "E"), next_attempt__isnull=False),
+            )
+        ]

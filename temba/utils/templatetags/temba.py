@@ -16,7 +16,8 @@ from django.utils.translation import ugettext, ugettext_lazy as _, ungettext_laz
 
 from temba.utils.dates import datetime_to_str
 
-from ...campaigns.models import Campaign
+from ...campaigns.models import Campaign, CampaignEvent
+from ...contacts.models import ContactGroup
 from ...flows.models import Flow
 from ...triggers.models import Trigger
 
@@ -29,6 +30,19 @@ TIME_SINCE_CHUNKS = (
     (60, ungettext_lazy("%d minute", "%d minutes")),
     (1, ungettext_lazy("%d second", "%d seconds")),
 )
+
+
+OBJECT_URLS = {
+    Flow: lambda o: reverse("flows.flow_editor", args=[o.uuid]),
+    Campaign: lambda o: reverse("campaigns.campaign_read", args=[o.id]),
+    CampaignEvent: lambda o: reverse("campaigns.campaign_read", args=[o.id]),
+    ContactGroup: lambda o: reverse("contacts.contact_filter", args=[o.uuid]),
+}
+
+
+@register.filter
+def object_class_name(obj):
+    return obj.__class__.__name__
 
 
 @register.filter
@@ -62,6 +76,13 @@ def icon(o):
         return "icon-flow"
 
     return ""
+
+
+@register.filter
+def object_url(o):
+    assert type(o) in OBJECT_URLS
+
+    return OBJECT_URLS[type(o)](o)
 
 
 @register.filter
@@ -207,18 +228,26 @@ def short_datetime(context, dtime):
 
     if org_format == "D":
         if dtime > twelve_hours_ago:
-            return "%s:%s" % (dtime.strftime("%H"), dtime.strftime("%M"))
+            return f"{dtime.strftime('%H')}:{dtime.strftime('%M')}"
         elif now.year == dtime.year:
-            return "%d %s" % (int(dtime.strftime("%d")), dtime.strftime("%b"))
+            return f"{int(dtime.strftime('%d'))} {dtime.strftime('%b')}"
         else:
-            return "%d/%d/%s" % (int(dtime.strftime("%d")), int(dtime.strftime("%m")), dtime.strftime("%y"))
+            return f"{int(dtime.strftime('%d'))}/{int(dtime.strftime('%m'))}/{dtime.strftime('%y')}"
+    elif org_format == "Y":
+        if dtime > twelve_hours_ago:
+            return f"{dtime.strftime('%H')}:{dtime.strftime('%M')}"
+        elif now.year == dtime.year:
+            return f"{dtime.strftime('%b')} {int(dtime.strftime('%d'))}"
+        else:
+            return f"{dtime.strftime('%Y')}/{int(dtime.strftime('%m'))}/{int(dtime.strftime('%d'))}"
+
     else:
         if dtime > twelve_hours_ago:
-            return "%d:%s %s" % (int(dtime.strftime("%I")), dtime.strftime("%M"), dtime.strftime("%p").lower())
+            return f"{int(dtime.strftime('%I'))}:{dtime.strftime('%M')} {dtime.strftime('%p').lower()}"
         elif now.year == dtime.year:
-            return "%s %d" % (dtime.strftime("%b"), int(dtime.strftime("%d")))
+            return f"{dtime.strftime('%b')} {int(dtime.strftime('%d'))}"
         else:
-            return "%d/%d/%s" % (int(dtime.strftime("%m")), int(dtime.strftime("%d")), dtime.strftime("%y"))
+            return f"{int(dtime.strftime('%m'))}/{int(dtime.strftime('%d'))}/{dtime.strftime('%y')}"
 
 
 @register.simple_tag(takes_context=True)
