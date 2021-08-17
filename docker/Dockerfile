@@ -5,7 +5,7 @@ ARG RAPIDPRO_APPS_GIT_BRANCH
 
 RUN apt-get update \
  && apt-get install --no-install-recommends --no-install-suggests -y apt-utils \
- && apt-get install -y git ca-certificates
+ && apt-get install --no-install-recommends --no-install-suggests -y git ca-certificates ssh-client
 
 WORKDIR /src
 
