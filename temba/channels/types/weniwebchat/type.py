@@ -5,8 +5,6 @@ from temba.contacts.models import URN
 from ...models import ChannelType
 from .views import ClaimView
 
-CONFIG_BASE_URL = "base_url"
-
 
 class WeniWebChatType(ChannelType):
     """

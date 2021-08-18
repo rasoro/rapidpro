@@ -19,8 +19,6 @@ class ClaimView(ClaimViewMixin, SmartFormView):
     form_class = Form
 
     def form_valid(self, form):
-        from .type import CONFIG_BASE_URL
-
         user = self.request.user
         org = user.get_org()
 
@@ -29,10 +27,10 @@ class ClaimView(ClaimViewMixin, SmartFormView):
         name = form.cleaned_data["name"]
         base_url = data["base_url"]
 
-        config = {CONFIG_BASE_URL: base_url}
+        config = {Channel.CONFIG_BASE_URL: base_url}
 
         self.object = Channel.create(
-            org, self.request.user, None, self.channel_type, config=config, name=name, address=name
+            org, user, None, self.channel_type, config=config, name=name
         )
 
         return super().form_valid(form)

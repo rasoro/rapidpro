@@ -3,7 +3,6 @@ from django.urls import reverse
 from temba.tests import TembaTest
 
 from ...models import Channel
-from .type import CONFIG_BASE_URL
 
 
 class WeniWebChatTest(TembaTest):
@@ -23,4 +22,4 @@ class WeniWebChatTest(TembaTest):
 
         channel = Channel.objects.get(name="Weni Testing")
 
-        self.assertEqual(channel.config[CONFIG_BASE_URL], "https://google.com")
+        self.assertEqual(channel.config[Channel.CONFIG_BASE_URL], "https://google.com")
