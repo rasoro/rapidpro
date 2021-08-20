@@ -70,7 +70,7 @@ class URN:
     FRESHCHAT_SCHEME = "freshchat"
     ROCKETCHAT_SCHEME = "rocketchat"
     DISCORD_SCHEME = "discord"
-    WENIWEBCHAT_SCHEME = "weniwebchat"
+    WEBCHAT_SCHEME = "webchat"
 
     SCHEME_CHOICES = (
         (TEL_SCHEME, _("Phone number")),
@@ -90,7 +90,7 @@ class URN:
         (VK_SCHEME, _("VK identifier")),
         (ROCKETCHAT_SCHEME, _("RocketChat identifier")),
         (DISCORD_SCHEME, _("Discord Identifier")),
-        (WENIWEBCHAT_SCHEME, _("WeniWebChat Identifier")),
+        (WEBCHAT_SCHEME, _("WebChat Identifier")),
     )
 
     VALID_SCHEMES = {s[0] for s in SCHEME_CHOICES}

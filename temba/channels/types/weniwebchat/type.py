@@ -23,7 +23,7 @@ class WeniWebChatType(ChannelType):
     claim_blurb = _("With Weni Web Chat, you can integrate your Rapidpro organization as a chat on your website.")
     claim_view = ClaimView
 
-    schemes = [URN.WENIWEBCHAT_SCHEME]
+    schemes = [URN.WEBCHAT_SCHEME]
     max_length = 320
     attachment_support = True
     free_sending = True
