@@ -2,7 +2,7 @@ name: Build Develop Push
 on:
   push:
     branches:
-      - 'feature/build-ci'
+      - 'dnx'
 jobs:
   docker:
     runs-on: ubuntu-latest
