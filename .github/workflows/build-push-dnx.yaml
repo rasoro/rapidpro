@@ -25,14 +25,18 @@ jobs:
         with:
           repository: Ilhasoft/kubernetes-manifests
           token: ${{ secrets.TOKEN_CI }}
-      - name: set variable
+      - name: Set variable tag for yq
         run: |
             echo "IMAGE_TAG_01=869898323958.dkr.ecr.us-east-1.amazonaws.com/push-backend:$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
             echo "IMAGE_TAG_02=869898323958.dkr.ecr.us-east-1.amazonaws.com/push-backend:$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
-      - name: Set foobar to cool
+      - name: Update image deployment 01
         uses: mikefarah/yq@master
         with:
           cmd: yq e  '.spec.template.spec.containers[0].image = env(IMAGE_TAG_01)' -i rapidpro/nonprod/deployment.yaml
+      - name: Update image deployment 02
+        uses: mikefarah/yq@master
+        with:
+          cmd: yq e  '.spec.template.spec.containers[0].image = env(IMAGE_TAG_02)' -i rapidpro/nonprod/deployment.yaml
       - name: Commit & Push changes
         uses: actions-js/push@master
         with:
