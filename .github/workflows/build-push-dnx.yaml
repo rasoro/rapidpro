@@ -20,42 +20,12 @@ jobs:
       - name: Set output
         id: vars
         run: echo "::set-output name=tag::$(git rev-parse --short $GITHUB_SHA)"
-      - name: Login to ECR
-        uses: docker/login-action@v1 
-        with:
-          registry: 869898323958.dkr.ecr.us-east-1.amazonaws.com
-          username: ${{ secrets.DNX_AK }}
-          password: ${{ secrets.DNX_SK }} 
       - name: Check out Argo Manifests
         uses: actions/checkout@master
         with:
           repository: Ilhasoft/kubernetes-manifests
           token: ${{ secrets.TOKEN_CI }}
-      - name: Build and push - Rapidpro Image
-        id: docker_build1
-        uses: docker/build-push-action@v2
+      - name: Set foobar to cool
+        uses: mikefarah/yq@master
         with:
-          context: .
-          file: docker/Dockerfile
-          push: true
-          tags: 869898323958.dkr.ecr.us-east-1.amazonaws.com/push-backend:${{ steps.vars.outputs.tag }}
-          no-cache: true
-          build-args: |
-            RAPIDPRO_APPS_GIT_URL=https://github.com/Ilhasoft/rapidpro-apps.git
-            RAPIDPRO_APPS_GIT_BRANCH=main
-            PROTOBUFFERS_URL=https://github.com/Ilhasoft/weni-protobuffers.git
-            PROTOBUFFERS_BRANCH=main
-            FLOWEDITOR_REPO=https://github.com/Ilhasoft/floweditor.git
-            FLOWEDITOR_BRANCH=feature/more-options-in-wait-for-response
-            FLOWEDITOR_VERSION=1.13.18
-      - name: Build and push - Varnish Image
-        id: docker_build2
-        uses: docker/build-push-action@v2
-        with:
-          context: docker
-          file: docker/Dockerfile.varnish
-          push: true
-          tags: 869898323958.dkr.ecr.us-east-1.amazonaws.com/push-backend:${{ steps.vars.outputs.tag }}-varnish
-          no-cache: true
-          build-args: |
-            BACKEND_ADDRESS=push-develop:8000
+          cmd: yq e  ".spec.template.spec.containers[0].image = "image:v1_1_2"" -i rapidpro/nonprod/deployment.yaml
