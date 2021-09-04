@@ -26,6 +26,20 @@ jobs:
           registry: 869898323958.dkr.ecr.us-east-1.amazonaws.com
           username: ${{ secrets.DNX_AK }}
           password: ${{ secrets.DNX_SK }} 
+      - name: Update Manifest
+        uses: mikefarah/yq@master
+        run: |
+          git clone "https://`${{ secrets.TOKEN_CI }}`@github.com/ilhasoft/kubernetes-manifests"
+          cd rapidpro/nonprod
+          git config --global user.email "ilhasoft@weni.ai"
+          git config --global user.name "ilhasoft"            
+          TAG_01=869898323958.dkr.ecr.us-east-1.amazonaws.com/push-backend:${{ steps.vars.outputs.tag }}
+          TAG_02=869898323958.dkr.ecr.us-east-1.amazonaws.com/push-backend:${{ steps.vars.outputs.tag }}-varnish
+          yq e  ".spec.template.spec.containers[0].image = \"$TAG_01\"" -i deployment.yaml
+          yq e  ".spec.template.spec.containers[1].image = \"$TAG_02\"" -i deployment.yaml
+          git add .
+          git commit -m "update app tag `${GITHUB_SHA}`"
+          git push
       - name: Build and push - Rapidpro Image
         id: docker_build1
         uses: docker/build-push-action@v2
