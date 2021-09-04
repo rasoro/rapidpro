@@ -28,7 +28,7 @@ jobs:
       - name: Set foobar to cool
         uses: mikefarah/yq@master
         with:
-          cmd: yq e  '.spec.template.spec.containers[0].image = "$GITHUB_SHA"' -i rapidpro/nonprod/deployment.yaml
+          cmd: yq e  '.spec.template.spec.containers[0].image = env(GITHUB_SHA)' -i rapidpro/nonprod/deployment.yaml
       - name: Commit & Push changes
         uses: actions-js/push@master
         with:
