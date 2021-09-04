@@ -28,4 +28,4 @@ jobs:
       - name: Set foobar to cool
         uses: mikefarah/yq@master
         with:
-          cmd: yq e  ".spec.template.spec.containers[0].image = "xxxxxxx:$GITHUB_SHA"" -i rapidpro/nonprod/deployment.yaml
+          cmd: yq e  ".spec.template.spec.containers[0].image = ""xxxxxxx":$GITHUB_SHA"" -i rapidpro/nonprod/deployment.yaml
