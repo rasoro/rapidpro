@@ -13,8 +13,6 @@ FROM python:3.6-slim
 ARG COMPRESS_ENABLED
 ARG BRANDING_ENABLED
  
-ARG RAPIDPRO_APPS_GIT_URL
-ARG RAPIDPRO_APPS_GIT_BRANCH
 ARG FLOWEDITOR_VERSION
 ARG FLOWEDITOR_REPO
 ARG FLOWEDITOR_BRANCH
@@ -52,10 +50,7 @@ RUN mkdir $PROJECT_PATH \
  && chown -R $PROJECT_USER:$PROJECT_GROUP $NPM_CONFIG_PREFIX
 
 COPY --from=build-poetry /app/requirements.txt /tmp/dep/
-COPY ./docker/pip-freeze.txt /tmp/dep/
-RUN pip install --no-cache-dir -r /tmp/dep/requirements.txt \ 
-    -r /tmp/dep/pip-freeze.txt && \
-    pip install -e git+$RAPIDPRO_APPS_GIT_URL@$RAPIDPRO_APPS_GIT_BRANCH#egg=rapidpro_apps   
+RUN pip install --no-cache-dir -r /tmp/dep/requirements.txt 
 
 COPY . $PROJECT_PATH
 RUN chown -R $PROJECT_USER:$PROJECT_GROUP $PROJECT_PATH
