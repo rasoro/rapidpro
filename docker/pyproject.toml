@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "weni-flows"
+version = "0.1.0"
+description = ""
+authors = ["Weni <platform@weni.ai>"]
+license = "AGPL-3"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+temba = {git = "https://github.com/Ilhasoft/rapidpro.git", rev = "main"}
+flower = "^0.9"
+elastic-apm = "^6.4.0"
+django-environ = "^0.7.0"
+django-templates-macros = "^0.2"
+django-csp = "^3.7"
+weni-rp-apps = "^0.2.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
