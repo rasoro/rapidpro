@@ -34,7 +34,7 @@ ENV FLOWEDITOR_TGZ "nyaruka-flow-editor-${FLOWEDITOR_VERSION}.tgz"
 
 RUN apt-get update \
  && apt-get install --no-install-recommends --no-install-suggests -y apt-utils \
- && apt-get install --no-install-recommends --no-install-suggests -y gcc bzip2 git curl nginx libpq-dev gettext \
+ && apt-get install --no-install-recommends --no-install-suggests -y gcc bzip2 git curl libpq-dev gettext \
     libgdal-dev python3-cffi python3-gdal vim
 
 RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - \
@@ -51,17 +51,11 @@ RUN mkdir $PROJECT_PATH \
  && chown -R $PROJECT_USER:$PROJECT_GROUP $PROJECT_PATH \
  && chown -R $PROJECT_USER:$PROJECT_GROUP $NPM_CONFIG_PREFIX
 
-RUN rm /etc/nginx/sites-enabled/default
-
 COPY --from=build-poetry /app/requirements.txt /tmp/dep/
 COPY ./docker/pip-freeze.txt /tmp/dep/
-COPY ./docker/nginx.site.conf /tmp/
 RUN pip install --no-cache-dir -r /tmp/dep/requirements.txt \ 
     -r /tmp/dep/pip-freeze.txt && \
     pip install -e git+$RAPIDPRO_APPS_GIT_URL@$RAPIDPRO_APPS_GIT_BRANCH#egg=rapidpro_apps   
-
-RUN cp /tmp/nginx.site.conf /etc/nginx/sites-available/$PROJECT.conf \
- && ln -s /etc/nginx/sites-available/$PROJECT.conf /etc/nginx/sites-enabled/$PROJECT.conf
 
 COPY . $PROJECT_PATH
 RUN chown -R $PROJECT_USER:$PROJECT_GROUP $PROJECT_PATH
