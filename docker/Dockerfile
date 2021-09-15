@@ -10,6 +10,9 @@ RUN poetry export --without-hashes --output requirements.txt
 
 FROM python:3.6-slim
 
+ARG APP_UID=1000
+ARG APP_GID=1000
+
 ARG COMPRESS_ENABLED
 ARG BRANDING_ENABLED
  
@@ -23,12 +26,19 @@ ENV DEBIAN_FRONTEND  noninteractive
 
 ENV PROJECT           rapidpro
 ENV PROJECT_PATH      /app
-ENV PROJECT_USER      $PROJECT
-ENV PROJECT_GROUP     $PROJECT_USER
 ENV PROJECT_CONF      ${PROJECT_PATH}-conf
 ENV NPM_CONFIG_PREFIX /opt/npm-globals
 ENV PATH              "${NPM_CONFIG_PREFIX}/bin:${PATH}"
 ENV FLOWEDITOR_TGZ "nyaruka-flow-editor-${FLOWEDITOR_VERSION}.tgz"
+
+ENV APP_UID=${APP_UID} 
+ENV APP_GID=${APP_GID} 
+
+RUN addgroup --gid "${APP_GID}" app_group \
+  && useradd --system -m -d ${PROJECT_PATH} -u "${APP_UID}" -g "${APP_GID}" app_user
+
+# set work directory
+WORKDIR ${PROJECT_PATH}
 
 RUN apt-get update \
  && apt-get install --no-install-recommends --no-install-suggests -y apt-utils \
@@ -40,37 +50,28 @@ RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - \
 
 RUN rm -rf /var/lib/apt/lists/*
 
-RUN useradd -Ums /bin/bash $PROJECT_USER \
- && usermod -aG adm $PROJECT_USER
-
-RUN mkdir $PROJECT_PATH \
- && mkdir $PROJECT_CONF \
- && mkdir $NPM_CONFIG_PREFIX \
- && chown -R $PROJECT_USER:$PROJECT_GROUP $PROJECT_PATH \
- && chown -R $PROJECT_USER:$PROJECT_GROUP $NPM_CONFIG_PREFIX
-
 COPY --from=build-poetry /app/requirements.txt /tmp/dep/
 RUN pip install --no-cache-dir -r /tmp/dep/requirements.txt 
 
-COPY . $PROJECT_PATH
-RUN chown -R $PROJECT_USER:$PROJECT_GROUP $PROJECT_PATH
+COPY --chown=app_user:app_group . .
 
-WORKDIR $PROJECT_PATH
-
-RUN su $PROJECT_USER -c "npm install --global \
+RUN npm install --global \
   coffeescript \
   less \
-  yarn"
+  yarn
 
-RUN su $PROJECT_USER -c "npm install"
+RUN npm install
 
-RUN su $PROJECT_USER -c "git clone --branch ${FLOWEDITOR_BRANCH} ${FLOWEDITOR_REPO}"
+RUN git clone --branch ${FLOWEDITOR_BRANCH} ${FLOWEDITOR_REPO} && \
+    cd floweditor && \
+    yarn install && \
+    yarn run build && \
+    npm pack && \
+    cd .. && \
+    npm install ./floweditor/${FLOWEDITOR_TGZ} && \
+    npm prune --production
 
-RUN su $PROJECT_USER -c "cd floweditor && yarn install && yarn run build && npm pack && cd .. && npm install ./floweditor/${FLOWEDITOR_TGZ}"
-
-RUN su $PROJECT_USER -c "npm prune --production"
-
-RUN su $PROJECT_USER -c "ln -s $PROJECT_PATH/temba/settings.py.prod $PROJECT_PATH/temba/settings.py"
+RUN ln -s $PROJECT_PATH/temba/settings.py.prod $PROJECT_PATH/temba/settings.py
 
 EXPOSE 8000
 EXPOSE 8001
