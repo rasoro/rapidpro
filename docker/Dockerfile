@@ -1,3 +1,4 @@
+ARG NODE_VERSION=10
 FROM python:3.6-slim-buster as build-poetry
 
 WORKDIR /app
@@ -8,7 +9,7 @@ COPY ./docker/poetry.lock .
 RUN python -m pip install -U poetry
 RUN poetry export --without-hashes --output requirements.txt
 
-FROM node:10-buster as build-floweditor
+FROM node:${NODE_VERSION}-buster as build-floweditor
  
 ARG FLOWEDITOR_REPO
 ARG FLOWEDITOR_BRANCH
@@ -29,6 +30,7 @@ ARG APP_GID=1000
 
 ARG COMPRESS_ENABLED
 ARG BRANDING_ENABLED
+ARG NODE_VERSION
 
 ENV APP_UID=${APP_UID} \
   APP_GID=${APP_GID} \
@@ -40,7 +42,8 @@ ENV APP_UID=${APP_UID} \
   PROJECT_PATH="/app" \
   PROJECT_CONF=${PROJECT_PATH}-conf \
   NPM_CONFIG_PREFIX="/opt/npm-globals" \
-  PATH="${NPM_CONFIG_PREFIX}/bin:${PATH}"
+  PATH="${NPM_CONFIG_PREFIX}/bin:${PATH}" \
+  NODE_VERSION=${NODE_VERSION}
 
 RUN addgroup --gid "${APP_GID}" app_group \
   && useradd --system -m -d ${PROJECT_PATH} -u "${APP_UID}" -g "${APP_GID}" app_user
