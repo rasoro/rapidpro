@@ -56,16 +56,17 @@ FROM base
 RUN apt-get update \
  && apt-get install --no-install-recommends --no-install-suggests -y apt-utils \
  && apt-get install --no-install-recommends --no-install-suggests -y gcc bzip2 git curl libpq-dev gettext \
-    libgdal-dev python3-cffi python3-gdal vim
+    libgdal-dev python3-cffi python3-gdal vim \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - \
- && apt-get install --no-install-recommends --no-install-suggests -y nodejs
+RUN curl -sL https://deb.nodesource.com/setup_$NODE_VERSION.x | bash - \
+ && apt-get install --no-install-recommends --no-install-suggests -y nodejs \
+ && rm -rf /var/lib/apt/lists/*
 
 RUN rm -rf /var/lib/apt/lists/*
 
 COPY --from=build-poetry /app/requirements.txt /tmp/dep/
-RUN pip install --no-cache-dir -r /tmp/dep/requirements.txt && \
-    pip install weni-rp-apps
+RUN pip install --no-cache-dir -r /tmp/dep/requirements.txt
 
 COPY --chown=app_user:app_group . ./
 
