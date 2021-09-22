@@ -1,14 +1,4 @@
 ARG NODE_VERSION=10
-FROM python:3.6-slim-buster as build-poetry
-
-WORKDIR /app
-
-COPY ./docker/pyproject.toml .
-COPY ./docker/poetry.lock .
-
-RUN python -m pip install -U poetry
-RUN poetry export --without-hashes --output requirements.txt
-
 FROM node:${NODE_VERSION}-buster as build-floweditor
  
 ARG FLOWEDITOR_REPO
@@ -51,8 +41,6 @@ RUN addgroup --gid "${APP_GID}" app_group \
 # set work directory
 WORKDIR ${PROJECT_PATH}
 
-FROM base
-
 RUN apt-get update \
  && apt-get install --no-install-recommends --no-install-suggests -y apt-utils \
  && apt-get install --no-install-recommends --no-install-suggests -y gcc bzip2 git curl libpq-dev gettext \
@@ -63,7 +51,18 @@ RUN curl -sL https://deb.nodesource.com/setup_$NODE_VERSION.x | bash - \
  && apt-get install --no-install-recommends --no-install-suggests -y nodejs \
  && rm -rf /var/lib/apt/lists/*
 
-RUN rm -rf /var/lib/apt/lists/*
+FROM base as build-poetry
+
+WORKDIR /app
+
+COPY pyproject.toml poetry.lock ./
+
+RUN python -m pip install -U pip  \
+ && pip install poetry \
+ && poetry add weni-rp-apps \
+ && poetry export --without-hashes --output requirements.txt
+
+FROM base
 
 COPY --from=build-poetry /app/requirements.txt /tmp/dep/
 RUN pip install --no-cache-dir -r /tmp/dep/requirements.txt
