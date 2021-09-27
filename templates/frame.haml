@@ -19,7 +19,10 @@
 
       // Weni's addition to send a message to Connect about our current route
       {% if use_weni_layout %}
-        window.parent.postMessage(window.location.pathname, "*")
+        window.parent.postMessage({
+          event: 'changePathname',
+          pathname: window.location.pathname,
+        }, "*")
       {% endif %}
 
       window.supportEmail = '{{brand.support_email}}';
