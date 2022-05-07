@@ -12,7 +12,7 @@ class UserCRUDL(UserCRUDLBase):
     class Forget(UserCRUDLBase.Forget):
         class ForgetForm(UserCRUDLBase.Forget.ForgetForm):
             def clean_email(self):
-                if hasattr(settings.USER_RECOVER_TIME_INTERVAL):
+                if hasattr(settings, "USER_RECOVER_TIME_INTERVAL"):
                     USER_RECOVER_TIME_INTERVAL = settings.USER_RECOVER_TIME_INTERVAL * 60 * 60
                     email = super().clean_email()
                     attempts_key = USER_RECOVER_ATTEMPTS_CACHE_KEY.format(email=email)
