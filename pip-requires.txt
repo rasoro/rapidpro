@@ -61,7 +61,6 @@ sentry-sdk
 django-environ
 whitenoise
 elastic-apm
-django-templates-macros@^0.2
 
 ########################## testing ##########################
 black
