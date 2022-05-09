@@ -10,6 +10,7 @@ django-timezone-field
 djangorestframework
 dj-database-url
 smartmin
+django-templates-macros
 
 ########################## services ##########################
 analytics-python

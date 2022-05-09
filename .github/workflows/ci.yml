@@ -59,11 +59,9 @@ jobs:
       run: |
         python -m pip install -U pip poetry
         poetry install
-        pip install django-templates-macros
         npm install
         sudo npm install -g less
         ln -s ${{ github.workspace }}/temba/settings.py.dev ${{ github.workspace }}/temba/settings.py
-        sed -i 's/INSTALLED_APPS = INSTALLED_APPS + ("storages",)/INSTALLED_APPS = INSTALLED_APPS + ("storages", "macros")/g' temba/settings.py
         poetry run ./manage.py migrate
         # fetch and extract rp-indexer
         wget https://github.com/nyaruka/rp-indexer/releases/download/v${{ env.rpindexer_version }}/rp-indexer_${{ env.rpindexer_version }}_linux_amd64.tar.gz
