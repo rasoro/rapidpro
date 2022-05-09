@@ -10,7 +10,6 @@ django-timezone-field
 djangorestframework
 dj-database-url
 smartmin
-django-templates-macros
 
 ########################## services ##########################
 analytics-python
@@ -62,6 +61,7 @@ sentry-sdk
 django-environ
 whitenoise
 elastic-apm
+django-templates-macros@^0.2
 
 ########################## testing ##########################
 black
