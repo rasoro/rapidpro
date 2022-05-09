@@ -68,7 +68,6 @@ isort = "^4.3.16"
 codecov = "^2.1.11"
 responses = "^0.12.1"
 beautifulsoup4 = "^4.9.3"
-django-templates-macros = "^0.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
