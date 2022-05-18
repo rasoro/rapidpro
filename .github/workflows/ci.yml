@@ -58,6 +58,7 @@ jobs:
     - name: Initialize environment
       run: |
         python -m pip install -U pip poetry
+        poetry add -n --lock $(cat docker/pip-requires.txt)
         poetry install
         npm install
         sudo npm install -g less
