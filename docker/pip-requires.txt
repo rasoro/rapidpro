@@ -1,5 +1,5 @@
 django-environ@^0.7.0
-elastic-apm@^6.4.0
+elastic-apm@^6.9.1
 flower@^0.9
 django-templates-macros@^0.2
 django-csp@^3.7
