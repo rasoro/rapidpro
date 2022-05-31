@@ -16,7 +16,7 @@ from .settings_common import *  # noqa
 
 STORAGE_URL = "http://localhost:8000/media"
 
-WENI_DOMAINS = {"weni": os.environ.get("WENI_DOMAIN", "weni.ai"}
+WENI_DOMAINS = {"weni": os.environ.get("WENI_DOMAIN", "weni.ai")}
 
 # -----------------------------------------------------------------------------------
 # Add a custom brand for development
