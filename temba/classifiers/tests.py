@@ -33,7 +33,7 @@ class ClassifierTest(TembaTest):
         super().setUp()
 
         # create some classifiers
-        self.c1 = Classifier.create(self.org, self.admin, WitType.slug, "Booker", {"access_token": "sesame"}, sync=False)
+        self.c1 = Classifier.create(self.org, self.admin, WitType.slug, "Booker", {}, sync=False)
         self.c1.intents.create(
             name="book_flight", external_id="book_flight", created_on=timezone.now(), is_active=True
         )
@@ -45,15 +45,15 @@ class ClassifierTest(TembaTest):
         )
 
     def test_syncing(self):
-        # will fail due to missing keys
+        # fix our config
+        self.c1.config = {WitType.CONFIG_ACCESS_TOKEN: "sesasme", WitType.CONFIG_APP_ID: "1234"}
+        self.c1.save()
+
+        # will not fail due to missing keys
         self.c1.async_sync()
 
         # no intents should have been changed / removed as this was an error
         self.assertEqual(2, self.c1.active_intents().count())
-
-        # ok, fix our config
-        self.c1.config = {WitType.CONFIG_ACCESS_TOKEN: "sesasme", WitType.CONFIG_APP_ID: "1234"}
-        self.c1.save()
 
         # try again
         with patch("requests.get") as mock_get:
