@@ -33,7 +33,7 @@ class ClassifierTest(TembaTest):
         super().setUp()
 
         # create some classifiers
-        self.c1 = Classifier.create(self.org, self.admin, WitType.slug, "Booker", {}, sync=False)
+        self.c1 = Classifier.create(self.org, self.admin, WitType.slug, "Booker", {"access_token": "sesame"}, sync=False)
         self.c1.intents.create(
             name="book_flight", external_id="book_flight", created_on=timezone.now(), is_active=True
         )
