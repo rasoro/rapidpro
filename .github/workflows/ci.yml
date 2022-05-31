@@ -10,7 +10,7 @@ jobs:
       node_version: '10'
       elastic_version: '7.10.1'
       rpindexer_version: '6.4.0'
-      mailroom_version: '6.5.36'
+      mailroom_version: '1.2.1-mailroom-7.0.1'
       DJANGO_SETTINGS_MODULE: temba.settings_ci
     strategy:
       matrix:
@@ -58,6 +58,7 @@ jobs:
     - name: Initialize environment
       run: |
         python -m pip install -U pip poetry
+        poetry add -n --lock $(cat docker/pip-requires.txt)
         poetry install
         npm install
         sudo npm install -g less
@@ -67,7 +68,7 @@ jobs:
         wget https://github.com/nyaruka/rp-indexer/releases/download/v${{ env.rpindexer_version }}/rp-indexer_${{ env.rpindexer_version }}_linux_amd64.tar.gz
         tar -xvf rp-indexer_${{ env.rpindexer_version }}_linux_amd64.tar.gz rp-indexer
         # fetch, extract and start mailroom
-        wget https://github.com/nyaruka/mailroom/releases/download/v${{ env.mailroom_version }}/mailroom_${{ env.mailroom_version }}_linux_amd64.tar.gz
+        wget https://github.com/Ilhasoft/mailroom/releases/download/v${{ env.mailroom_version }}/mailroom_${{ env.mailroom_version }}_linux_amd64.tar.gz
         tar -xvf mailroom_${{ env.mailroom_version }}_linux_amd64.tar.gz mailroom
         ./mailroom -db=postgres://temba:temba@localhost:5432/temba?sslmode=disable -redis=redis://localhost:6379/10 -log-level=info > mailroom.log &
 
