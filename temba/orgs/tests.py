@@ -3685,7 +3685,7 @@ class OrgCRUDLTest(TembaTest, CRUDLTestMixin):
         self.assertEqual(["created_on", "id", "language", "last_seen_on", "name"], system_fields)
         self.assertEqual(["Active", "Archived", "Blocked", "Stopped"], system_groups)
         self.assertEqual(
-            ["Sample Flow - Order Status Checker", "Sample Flow - Satisfaction Survey", "Sample Flow - Simple Poll"],
+            ["Sample Flow - Order Status Checker", "Sample Flow - Satisfaction Survey", "Sample Flow - Simple Poll", "Welcome flow"],
             sample_flows,
         )
         self.assertEqual("RapidPro Tickets", internal_ticketer.name)
