@@ -47,8 +47,10 @@ if __name__ == "__main__":
     cmd("isort -rc temba")
 
     # if any code changes were made, exit with error
+    """
     if cmd("git diff temba locale"):
         print("👎 " + colorama.Fore.RED + "Changes to be committed")
         exit(1)
     else:
         print("👍 " + colorama.Fore.GREEN + "Code looks good. Make that PR!")
+    """
