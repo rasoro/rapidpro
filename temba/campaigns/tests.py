@@ -276,6 +276,8 @@ class CampaignTest(TembaTest):
         # update the planting date for our contacts
         self.set_contact_field(self.farmer1, "planting_date", "1/10/2020")
 
+        current_year = timezone.now().year
+
         # don't log in, try to create a new campaign
         response = self.client.get(reverse("campaigns.campaign_create"))
         self.assertRedirect(response, reverse("users.user_login"))
@@ -575,8 +577,9 @@ class CampaignTest(TembaTest):
         self.assertEqual(5, len(mr_mocks.queued_batch_tasks))
 
         # set a planting date on our other farmer
-        self.set_contact_field(self.farmer2, "planting_date", "1/6/2022")
+        self.set_contact_field(self.farmer2, "planting_date", f"1/6{current_year+1}")
 
+        fires2 = EventFire.objects.filter()
         # should have an event fire now
         fires = EventFire.objects.filter(event__is_active=True)
         self.assertEqual(1, len(fires))
