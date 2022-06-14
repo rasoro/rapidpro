@@ -577,7 +577,7 @@ class CampaignTest(TembaTest):
         self.assertEqual(5, len(mr_mocks.queued_batch_tasks))
 
         # set a planting date on our other farmer
-        self.set_contact_field(self.farmer2, "planting_date", f"1/6{current_year+1}")
+        self.set_contact_field(self.farmer2, "planting_date", f"1/6/{current_year+1}")
 
         fires2 = EventFire.objects.filter()
         # should have an event fire now

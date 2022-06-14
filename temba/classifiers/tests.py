@@ -45,15 +45,14 @@ class ClassifierTest(TembaTest):
         )
 
     def test_syncing(self):
-        # fix our config
-        self.c1.config = {WitType.CONFIG_ACCESS_TOKEN: "sesasme", WitType.CONFIG_APP_ID: "1234"}
-        self.c1.save()
-
-        # will not fail due to missing keys
+        # will fail due to missing keys
         self.c1.async_sync()
 
         # no intents should have been changed / removed as this was an error
         self.assertEqual(2, self.c1.active_intents().count())
+
+        self.c1.config = {WitType.CONFIG_ACCESS_TOKEN: "sesasme", WitType.CONFIG_APP_ID: "1234"}
+        self.c1.save()
 
         # try again
         with patch("requests.get") as mock_get:
